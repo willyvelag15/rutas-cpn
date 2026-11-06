@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rutas CPN</title>
+<meta name="description" content="Tablero de rutas de Comercializadora de Piedras Negras">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0B3F25">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rutas CPN">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{--color-fg:#1d1d1b;--color-fg-muted:#6b6b66;--color-bg:#f6f4ee;--color-panel:#fff;--color-border-line:#e4e1d8;--color-ok:#1f8a4c;--color-warn:#b7791f;--color-bad:#c0392b;
+--cds-gap-lg:20px;--cds-gap-md:14px;--cds-radius:10px;--cds-pad-lg:16px;--cds-pad-xs:4px;--cds-pad-sm:8px;--cds-font-size-title:22px;--cds-font-size-heading:16px;--cds-font-size-body:14px;--cds-font-size-caption:12px;--cds-font-weight-medium:600;
+--cds-chart-grid:#ebe8e0;--cds-chart-reference:#999;--cds-chart-muted:#b9b6ad;--cds-surface-popover:#fff;--cds-border:#ddd;--cds-shadow-popover:0 4px 12px rgba(0,0,0,.12);--cds-dur-slow:.3s;--cds-ease-out:ease-out;
+--font-anthropic-sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-anthropic-serif:Georgia,"Times New Roman",serif}
+@media (prefers-color-scheme:dark){:root{--color-fg:#ECEAE3;--color-fg-muted:#A7A49B;--color-bg:#121412;--color-panel:#1B1E1B;--color-border-line:#2C302C;--color-ok:#4FBF7F;--color-warn:#E0A43A;--color-bad:#EF6B5E;--cds-chart-grid:#2A2D2A;--cds-chart-muted:#5E605A;--cds-surface-popover:#222;--cds-border:#333}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(--font-anthropic-sans);-webkit-text-size-adjust:100%}
+#app{padding:calc(env(safe-area-inset-top) + 14px) max(14px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 24px) max(14px,env(safe-area-inset-left))}
+.barra{display:flex;justify-content:space-between;align-items:center;gap:10px;max-width:1280px;margin:0 auto 12px;font-size:12px;color:var(--color-fg-muted)}
+.barra button{font:inherit;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);border-radius:999px;padding:6px 12px;cursor:pointer}
+#login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#0B3F25 0%,#11693C 60%,#1B7F49 100%);color:#F4F1E6}
+.caja{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
+.logo{width:84px;height:84px;border-radius:50%;margin:0 auto 4px;display:grid;place-items:center;font-weight:700;font-size:26px;letter-spacing:1px;background:rgba(255,255,255,.08);box-shadow:0 0 0 4px #E9B949 inset}
+.caja h1{font-family:var(--font-anthropic-serif);font-weight:400;text-align:center;margin:0;font-size:30px}
+.caja p{margin:0;text-align:center;color:#CFE3D5;font-size:14px}
+.caja label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#CFE3D5}
+.caja input[type=email],.caja input[type=password]{font:inherit;font-size:16px;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;outline:none}
+.caja input:focus{border-color:#E9B949}
+.caja .rec{flex-direction:row;align-items:center;gap:8px}
+.caja button{font:inherit;font-size:16px;font-weight:600;padding:14px;border-radius:12px;border:0;background:#E9B949;color:#1d1d1b;cursor:pointer}
+.caja button:disabled{opacity:.6}
+.error{background:rgba(239,107,94,.18);border:1px solid rgba(239,107,94,.5);color:#FFD9D4;padding:10px 12px;border-radius:10px;font-size:14px;text-align:center}
+</style>
+<script src="d3.min.js"></script>
+<script src="runtime.js"></script>
+</head>
+<body>
+<section id="login" hidden>
+  <form class="caja" id="form-login" autocomplete="on">
+    <div class="logo" aria-hidden="true">CPN</div>
+    <h1>Rutas CPN</h1>
+    <p>Comercializadora de Piedras Negras</p>
+    <label>Correo<input id="correo" type="email" autocomplete="username" required inputmode="email"></label>
+    <label>Contraseña<input id="clave" type="password" autocomplete="current-password" required></label>
+    <label class="rec"><input id="recordar" type="checkbox" checked> Recordarme en este teléfono</label>
+    <div class="error" id="login-error" hidden></div>
+    <button type="submit" id="btn-entrar">Entrar</button>
+  </form>
+</section>
+<main id="app" hidden>
+  <div class="barra"><span id="actualizado"></span><button type="button" id="btn-salir">Cerrar sesión</button></div>
+  <div id="dash-root">
+<style>
+#dash-root { --dash-gutter: clamp(12px, 3vw, 28px); }
+.cpn { --g: #0E5A33; --g2: #1F7A45; --gold: #C98A0B; --foam: #F3EFE2; --ink: var(--color-fg); --mut: var(--color-fg-muted);
+  --hero-bg: linear-gradient(135deg, #0B3F25 0%, #11693C 60%, #1B7F49 100%); --hero-fg: #F4F1E6; --hero-mut: #CFE3D5;
+  --chip-bg: #E6F0E8; --chip-fg: #0E5A33; --bar-bg: #E3E8E2;
+  font-family: var(--font-anthropic-sans); color: var(--ink); display: flex; flex-direction: column; gap: var(--cds-gap-lg); max-width: 1280px; margin-inline: auto; }
+@media (prefers-color-scheme: dark) { .cpn { --g: #4FBF7F; --g2: #3FA36A; --gold: #E9B949; --chip-bg: #183B28; --chip-fg: #9FE0B8; --bar-bg: #243129; --hero-bg: linear-gradient(135deg, #072617 0%, #0C4127 60%, #135633 100%); } }
+:root[data-theme="dark"] .cpn { --g: #4FBF7F; --g2: #3FA36A; --gold: #E9B949; --chip-bg: #183B28; --chip-fg: #9FE0B8; --bar-bg: #243129; --hero-bg: linear-gradient(135deg, #072617 0%, #0C4127 60%, #135633 100%); }
+:root[data-theme="light"] .cpn { --g: #0E5A33; --g2: #1F7A45; --gold: #C98A0B; --chip-bg: #E6F0E8; --chip-fg: #0E5A33; --bar-bg: #E3E8E2; --hero-bg: linear-gradient(135deg, #0B3F25 0%, #11693C 60%, #1B7F49 100%); }
+.cpn-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-md); }
+.cpn-brand { display: flex; align-items: center; gap: 12px; }
+.cpn-badge { width: 44px; height: 44px; border-radius: 50%; background: var(--hero-bg); display: grid; place-items: center; color: var(--hero-fg); font-weight: 700; font-size: 15px; letter-spacing: .5px; box-shadow: 0 0 0 3px var(--gold) inset; }
+.cpn-brand h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; line-height: 1.1; }
+.cpn-brand p { margin: 2px 0 0; color: var(--mut); font-size: var(--cds-font-size-caption); }
+.cpn-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.cpn-nav button, .cpn-rutas button { font: inherit; font-size: var(--cds-font-size-body); border: 1px solid var(--color-border-line); background: var(--color-panel); color: var(--ink); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.cpn-nav button[aria-pressed="true"], .cpn-rutas button[aria-pressed="true"] { background: var(--g); border-color: var(--g); color: #fff; }
+.cpn-nav button:focus-visible, .cpn-rutas button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.cpn-hero { background: var(--hero-bg); color: var(--hero-fg); border-radius: calc(var(--cds-radius) * 2); padding: clamp(18px, 3vw, 32px); display: flex; flex-direction: column; gap: 18px; position: relative; overflow: hidden; }
+.cpn-hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(233,185,73,.35), rgba(233,185,73,0) 70%); pointer-events: none; }
+.cpn-hero .eyebrow { text-transform: uppercase; letter-spacing: 2px; font-size: var(--cds-font-size-caption); color: #F2C75C; margin: 0; }
+.cpn-hero h2 { font-family: var(--font-anthropic-serif); font-weight: 400; margin: 0; font-size: clamp(30px, 5vw, 52px); line-height: 1.05; }
+.cpn-hero .take { margin: 0; color: var(--hero-mut); max-width: 62ch; font-size: var(--cds-font-size-body); }
+.hero-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); gap: 12px; }
+.ht { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: var(--cds-radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.ht span { font-size: var(--cds-font-size-caption); color: var(--hero-mut); }
+.ht b { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: clamp(22px, 3vw, 30px); font-variant-numeric: tabular-nums; color: #fff; }
+.ht small { color: #F2C75C; font-size: var(--cds-font-size-caption); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--cds-gap-md); }
+.card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card h3 { margin: 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
+.card .note { margin: 0; color: var(--mut); font-size: var(--cds-font-size-caption); }
+.wide { grid-column: 1 / -1; }
+.sec-title { margin: 6px 0 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
+.tblwrap { overflow-x: auto; }
+table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: var(--cds-font-size-body); }
+.cpn-t th { text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--mut); font-size: var(--cds-font-size-caption); padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.cpn-t td { padding: 8px; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.cpn-t td.num, .cpn-t th.num { text-align: right; }
+.pill { display: inline-block; white-space: nowrap; padding: 2px 9px; border-radius: 999px; font-size: var(--cds-font-size-caption); font-weight: 600; }
+.ok { color: var(--color-ok); } .warn { color: var(--color-warn); } .bad { color: var(--color-bad); }
+.pill.ok { background: color-mix(in srgb, var(--color-ok) 14%, transparent); } .pill.warn { background: color-mix(in srgb, var(--color-warn) 16%, transparent); } .pill.bad { background: color-mix(in srgb, var(--color-bad) 14%, transparent); }
+.gauge { height: 16px; border-radius: 999px; background: var(--bar-bg); position: relative; overflow: hidden; }
+.gauge i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--g2), var(--g)); border-radius: 999px; }
+.gauge em { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--gold); }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: 10px; }
+.kv div { display: flex; flex-direction: column; gap: 2px; }
+.kv span { font-size: var(--cds-font-size-caption); color: var(--mut); }
+.kv b { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 24px; font-variant-numeric: tabular-nums; }
+.alerts { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.alerts li { display: flex; gap: 10px; align-items: baseline; padding: 10px 12px; border-radius: var(--cds-radius); background: var(--color-bg); border: 1px solid var(--color-border-line); }
+.brandrow { display: grid; grid-template-columns: 9rem 1fr 4.5rem; gap: 10px; align-items: center; font-size: var(--cds-font-size-body); }
+.brandrow .bar { height: 12px; background: var(--bar-bg); border-radius: 999px; overflow: hidden; }
+.brandrow .bar i { display: block; height: 100%; border-radius: 999px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.chip i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.cpn-rutas { display: flex; flex-wrap: wrap; gap: 6px; }
+.vend { display: flex; align-items: center; gap: 12px; }
+.vend .av { width: 48px; height: 48px; border-radius: 50%; background: var(--chip-bg); color: var(--chip-fg); display: grid; place-items: center; font-weight: 700; }
+.vend h3 { margin: 0; font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); }
+.vend p { margin: 0; color: var(--mut); font-size: var(--cds-font-size-caption); }
+.chart { position: relative; min-height: 190px; }
+.tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: var(--cds-font-size-caption); color: var(--mut); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.foot { color: var(--mut); font-size: var(--cds-font-size-caption); }
+.foot summary { cursor: pointer; }
+.foot dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; }
+.foot dt { font-weight: 600; color: var(--ink); }
+.foot dd { margin: 0; }
+[data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+@media (max-width: 560px) { .brandrow { grid-template-columns: 6.5rem 1fr 3.8rem; } .cpn-t .hide-sm { display: none; } }
+@media (prefers-reduced-motion: no-preference) { .cpn-hero, .card { animation: rise var(--cds-dur-slow) var(--cds-ease-out) both; } @keyframes rise { from { transform: translateY(6px); opacity: .6 } to { transform: none; opacity: 1 } } }
+</style>
+
+<div class="cpn">
+  <header class="cpn-top">
+    <div class="cpn-brand">
+      <div class="cpn-badge" aria-hidden="true">CPN</div>
+      <div>
+        <h1>Tablero de Rutas</h1>
+        <p>Comercializadora de Piedras Negras · datos al <b data-draw="corte" data-source="diario">—</b></p>
+      </div>
+    </div>
+    <nav class="cpn-nav" aria-label="Vistas">
+      <button type="button" data-vista="global" aria-pressed="true">Global</button>
+      <button type="button" data-vista="ruta" aria-pressed="false">Ruta por ruta</button>
+      <button type="button" data-vista="semana" aria-pressed="false">Semana</button>
+      <button type="button" data-vista="mapa" aria-pressed="false">Mapa de visitas</button>
+      <button type="button" data-vista="foco" aria-pressed="false">Productos foco</button>
+      <button type="button" data-vista="flotilla" aria-pressed="false">Flotilla</button>
+    </nav>
+  </header>
+
+  <section id="v-global" data-vista-sec="global">
+    <div class="cpn-hero">
+      <p class="eyebrow">Último día con venta · <span data-draw="diaLargo" data-source="resumenDia">—</span></p>
+      <h2>Vendimos <span data-draw="hVenta" data-source="resumenDia" data-field="venta" data-where="ruta=TOTAL">—</span></h2>
+      <p class="take" data-draw="takeaway" data-source="resumenDia mesRuta">—</p>
+      <div class="hero-tiles">
+        <div class="ht"><span>Hectolitros</span><b data-draw="hHl" data-source="resumenDia" data-field="hl" data-where="ruta=TOTAL">—</b><small>meta del día <span data-draw="hMetaDia" data-source="mesRuta" data-field="metaDia" data-where="ruta=TOTAL">—</span> Hl</small></div>
+        <div class="ht"><span>Cajas</span><b data-draw="hCajas" data-source="resumenDia" data-field="cajas" data-where="ruta=TOTAL">—</b><small>todas las marcas</small></div>
+        <div class="ht"><span>Efectividad</span><b data-draw="hEfec" data-source="resumenDia" data-field="efectividad" data-where="ruta=TOTAL">—</b><small>visitas con pedido</small></div>
+        <div class="ht"><span>Cumplimiento</span><b data-draw="hCump" data-source="resumenDia" data-field="cumplimiento" data-where="ruta=TOTAL">—</b><small>visitas programadas hechas</small></div>
+        <div class="ht"><span>Avance del mes</span><b data-draw="hAvance" data-source="mesRuta" data-field="avance" data-where="ruta=TOTAL">—</b><small>de <span data-draw="hMeta" data-source="mesRuta" data-field="metaHl" data-where="ruta=TOTAL">—</span> Hl de meta</small></div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top: var(--cds-gap-md)">
+      <div class="card wide">
+        <h3>Meta de noviembre</h3>
+        <p class="note">Hectolitros acumulados contra la meta de las 7 rutas. La línea dorada es lo que ya debería llevar según los días hábiles.</p>
+        <div class="gauge" data-draw="gaugeTotal" data-source="mesRuta"></div>
+        <div class="kv">
+          <div><span>Llevamos</span><b data-draw="mHl" data-source="mesRuta" data-field="hlMes" data-where="ruta=TOTAL">—</b></div>
+          <div><span>Proyección al cierre</span><b data-draw="mProy" data-source="mesRuta" data-field="proyeccion" data-where="ruta=TOTAL">—</b></div>
+          <div><span>Hay que vender por día</span><b data-draw="mFalta" data-source="mesRuta" data-field="faltaPorDia" data-where="ruta=TOTAL">—</b></div>
+          <div><span>Noviembre 2025</span><b data-draw="mNov25" data-source="mesRuta" data-field="nov25Hl" data-where="ruta=TOTAL">—</b></div>
+          <div><span>Días hábiles</span><b data-draw="mDias" data-source="mesRuta" data-field="diasTrans" data-where="ruta=TOTAL">—</b></div>
+        </div>
+      </div>
+
+      <div class="card wide">
+        <h3>Semáforo por ruta</h3>
+        <p class="note">Último día con venta. Verde, amarillo o rojo según efectividad y cumplimiento.</p>
+        <div class="tblwrap">
+          <table class="cpn-t" data-source="resumenDia" data-row-key="ruta">
+            <thead><tr><th data-field="ruta">Ruta</th><th data-field="vendedor" class="hide-sm">Vendedor</th><th data-field="venta" class="num">Venta</th><th data-field="hl" class="num">Hl</th><th data-field="efectividad" class="num">Efectividad</th><th data-field="cumplimiento" class="num">Cumplimiento</th><th data-field="dropsize" class="num hide-sm">Ticket</th><th data-field="jornada" class="hide-sm">Jornada</th><th data-field="semaforo">Estado</th></tr></thead>
+            <tbody data-draw="tablaRutas"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Alertas para hoy</h3>
+        <p class="note">Lo que conviene revisar antes de que salgan las rutas.</p>
+        <ul class="alerts" data-draw="alertas" data-source="alertas"></ul>
+      </div>
+
+      <div class="card">
+        <h3>Venta por día</h3>
+        <p class="note">Hectolitros de las 7 rutas cada día del mes.</p>
+        <div class="chart" data-draw="chartDias" data-source="porDia"></div>
+      </div>
+
+      <div class="card">
+        <h3>Mezcla de marcas del mes</h3>
+        <p class="note">Hectolitros por marca, de mayor a menor.</p>
+        <div data-draw="mezcla" data-source="mezcla"></div>
+      </div>
+
+      <div class="card">
+        <h3>Avance por ruta</h3>
+        <p class="note">Hectolitros del mes contra la meta de cada ruta.</p>
+        <div data-draw="avanceRutas" data-source="mesRuta"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-ruta" data-vista-sec="ruta" hidden>
+    <div class="cpn-rutas" role="group" aria-label="Elegir ruta">
+      <button type="button" data-ruta="Ruta 1" aria-pressed="true">Ruta 1</button>
+      <button type="button" data-ruta="Ruta 2" aria-pressed="false">Ruta 2</button>
+      <button type="button" data-ruta="Ruta 3" aria-pressed="false">Ruta 3</button>
+      <button type="button" data-ruta="Ruta 4" aria-pressed="false">Ruta 4</button>
+      <button type="button" data-ruta="Ruta 6" aria-pressed="false">Ruta 6</button>
+      <button type="button" data-ruta="Ruta 7" aria-pressed="false">Ruta 7</button>
+      <button type="button" data-ruta="Ruta 13" aria-pressed="false">Ruta 13</button>
+    </div>
+    <div class="grid" style="margin-top: var(--cds-gap-md)">
+      <div class="card wide">
+        <div class="vend" data-draw="rVend" data-source="metas"></div>
+        <div class="kv" data-draw="rKpis" data-source="resumenDia"></div>
+      </div>
+      <div class="card">
+        <h3>Meta del mes</h3>
+        <p class="note">Hectolitros acumulados, proyección y lo que falta por día.</p>
+        <div data-draw="rMes" data-source="mesRuta"></div>
+      </div>
+      <div class="card">
+        <h3>Día por día</h3>
+        <p class="note">Hectolitros y efectividad de cada día del mes.</p>
+        <div class="chart" data-draw="rDias" data-source="diario"></div>
+      </div>
+      <div class="card">
+        <h3>Por qué no se vendió</h3>
+        <p class="note">Visitas sin pedido del mes, por motivo que registró el vendedor.</p>
+        <div data-draw="rMotivos" data-source="motivos"></div>
+      </div>
+      <div class="card">
+        <h3>Marcas de la ruta</h3>
+        <p class="note">Hectolitros del mes por marca.</p>
+        <div data-draw="rMarcas" data-source="marcas"></div>
+      </div>
+      <div class="card wide">
+        <h3>2026 contra 2025</h3>
+        <p class="note">Hectolitros por mes de la megabase (enero a octubre) y noviembre de Power Sales.</p>
+        <div class="chart" data-draw="rHist" data-source="historia mesRuta"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-semana" data-vista-sec="semana" hidden>
+    <div class="cpn-hero">
+      <p class="eyebrow">Resumen semanal · <span data-draw="semLabel" data-source="semana">—</span></p>
+      <h2><span data-draw="semHl" data-source="semana" data-field="hl" data-where="ruta=TOTAL">—</span> Hl en la semana</h2>
+      <div class="hero-tiles">
+        <div class="ht"><span>Venta</span><b data-draw="semVenta" data-source="semana" data-field="venta" data-where="ruta=TOTAL">—</b><small>pesos</small></div>
+        <div class="ht"><span>Cajas</span><b data-draw="semCajas" data-source="semana" data-field="cajas" data-where="ruta=TOTAL">—</b><small>todas las marcas</small></div>
+        <div class="ht"><span>Meta de la semana</span><b data-draw="semMeta" data-source="semana" data-field="metaSemana" data-where="ruta=TOTAL">—</b><small>Hl proporcionales</small></div>
+        <div class="ht"><span>Efectividad</span><b data-draw="semEfec" data-source="semana" data-field="efectividad" data-where="ruta=TOTAL">—</b><small>visitas con pedido</small></div>
+        <div class="ht"><span>Días con venta</span><b data-draw="semDias" data-source="semana" data-field="dias" data-where="ruta=TOTAL">—</b><small>de 6 hábiles</small></div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top: var(--cds-gap-md)">
+      <div class="card wide">
+        <h3>Ranking de la semana</h3>
+        <p class="note">Ordenado por avance contra la meta semanal de cada ruta.</p>
+        <div class="tblwrap">
+          <table class="cpn-t" data-source="semana" data-row-key="ruta">
+            <thead><tr><th data-field="lugar">#</th><th data-field="ruta">Ruta</th><th data-field="vendedor" class="hide-sm">Vendedor</th><th data-field="hl" class="num">Hl</th><th data-field="metaSemana" class="num hide-sm">Meta</th><th data-field="avance" class="num">Avance</th><th data-field="venta" class="num hide-sm">Venta</th><th data-field="efectividad" class="num">Efectividad</th><th data-field="cumplimiento" class="num hide-sm">Cumplimiento</th></tr></thead>
+            <tbody data-draw="tablaSemana"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-mapa" data-vista-sec="mapa" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Visitas en el mapa</h3>
+        <p class="note">Cada punto es una visita registrada en Power Sales con GPS. Relleno: compró. Hueco: no compró. Los cuadros son las bodegas.</p>
+        <div class="cpn-rutas" role="group" aria-label="Filtrar mapa">
+          <button type="button" data-mapa="todas" aria-pressed="true">Todas</button>
+          <button type="button" data-mapa="Ruta 1" aria-pressed="false">Ruta 1</button>
+          <button type="button" data-mapa="Ruta 2" aria-pressed="false">Ruta 2</button>
+          <button type="button" data-mapa="Ruta 3" aria-pressed="false">Ruta 3</button>
+          <button type="button" data-mapa="Ruta 4" aria-pressed="false">Ruta 4</button>
+          <button type="button" data-mapa="Ruta 6" aria-pressed="false">Ruta 6</button>
+          <button type="button" data-mapa="Ruta 7" aria-pressed="false">Ruta 7</button>
+          <button type="button" data-mapa="Ruta 13" aria-pressed="false">Ruta 13</button>
+        </div>
+        <div class="chart" style="min-height: 420px" data-draw="mapa" data-source="puntos"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-foco" data-vista-sec="foco" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Miller High Life media 4x6 · SKU 144768</h3>
+        <p class="note">Cajas de 24 en el mes. Cada six-pack (clave 47681) cuenta como un cuarto de caja.</p>
+        <div data-draw="focoMiller" data-source="mesRuta"></div>
+      </div>
+      <div class="card">
+        <h3>Amstel Ultra lata 12 oz 4x6 · SKU 144105</h3>
+        <p class="note">Cajas de 24 en el mes. El six (clave 41051) cuenta como un cuarto de caja.</p>
+        <div data-draw="focoAu12" data-source="mesRuta"></div>
+      </div>
+      <div class="card">
+        <h3>Amstel Ultra lata 24 oz · SKU 146575</h3>
+        <p class="note">Cajas de 12 latas en el mes.</p>
+        <div data-draw="focoAu24" data-source="mesRuta"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-flotilla" data-vista-sec="flotilla" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Flotilla · Motum</h3>
+        <p class="note">Semana de <span data-draw="fSem" data-source="flotilla" data-field="semana" data-row="0">—</span>. Unidades con GPS: Rutas 1, 3, 6, 7, 13 y el tráiler. Las rutas 2, 4 y 5 aún no tienen equipo.</p>
+        <div class="kv">
+          <div><span>Kilómetros</span><b data-draw="fKm" data-source="flotilla" data-field="km" data-row="0">—</b></div>
+          <div><span>Horas motor</span><b data-draw="fHoras" data-source="flotilla" data-field="horasMotor" data-row="0">—</b></div>
+          <div><span>Rendimiento</span><b data-draw="fRend" data-source="flotilla" data-field="rendimientoKmL" data-row="0">—</b></div>
+          <div><span>Utilización</span><b data-draw="fUtil" data-source="flotilla" data-field="utilizacion" data-row="0">—</b></div>
+          <div><span>Diésel estimado</span><b data-draw="fDiesel" data-source="flotilla" data-field="costoDiesel" data-row="0">—</b></div>
+          <div><span>Alertas de manejo</span><b data-draw="fAlertas" data-source="flotilla" data-field="alertas" data-row="0">—</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <details class="foot">
+    <summary>Cómo se calcula cada número</summary>
+    <dl>
+      <dt>Efectividad</dt><dd>Visitas con pedido entre visitas hechas.</dd>
+      <dt>Cumplimiento</dt><dd>Visitas programadas que se hicieron entre visitas programadas.</dd>
+      <dt>Ticket</dt><dd>Venta entre visitas con pedido.</dd>
+      <dt>Hectolitros</dt><dd>Cajas de cada clave por los litros de su caja (factor real de Heineken), entre 100.</dd>
+      <dt>Meta del día</dt><dd>Meta del mes entre 25 días hábiles (lunes a sábado).</dd>
+      <dt>Proyección</dt><dd>Hectolitros del mes entre días con venta, por 25.</dd>
+      <dt>Fuentes</dt><dd>Power Sales (Scorecard por Ruta, Tiempo y Movimientos, Ventas por cliente y producto), megabase al 31 de octubre y Motum. Se actualiza cada noche a las 11:20 p.m.</dd>
+      <dt>Fuera de este tablero</dt><dd>La ruta 5 (autoservicios) no se registra en Power Sales.</dd>
+    </dl>
+  </details>
+</div>
+
+<script>
+(function () {
+  const dias = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  window.CPN = window.CPN || { vista: 'global', ruta: 'Ruta 1', mapa: 'todas' };
+  window.CPN.fmt = {
+    money: (v) => '$' + Math.round(v || 0).toLocaleString('es-MX'),
+    int: (v) => Math.round(v || 0).toLocaleString('es-MX'),
+    hl: (v) => (v || 0).toLocaleString('es-MX', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    pct: (v) => ((v || 0) * 100).toLocaleString('es-MX', { maximumFractionDigits: 0 }) + '%',
+    dia: (s) => { const d = new Date(s + 'T12:00:00'); return dias[d.getDay()] + ' ' + d.getDate() + ' ' + meses[d.getMonth()]; },
+    largo: (s) => { const d = new Date(s + 'T12:00:00'); const L = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']; return L[d.getDay()] + ' ' + d.getDate() + ' de ' + ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][d.getMonth()]; },
+  };
+  window.CPN.brandColor = { 'XX Lager': '#C99A06', 'Tecate': '#B3262D', 'Superior': '#2C6FB3', 'Indio': '#7A4E2D', 'Sol': '#E07A1F', 'Miller': '#1E4F91', 'Amstel Ultra': '#7D8C99', 'Strongbow': '#5B8C3A', 'Carta Blanca': '#8A8F2E', 'Heineken': '#1F7A45', 'Otras': '#888' };
+  window.CPN.routeColor = { 'Ruta 1': '#146EF9', 'Ruta 2': '#E5484D', 'Ruta 3': '#16A34A', 'Ruta 4': '#6B7280', 'Ruta 6': '#0EA5B7', 'Ruta 7': '#F08A24', 'Ruta 13': '#7C5CDB' };
+  window.CPN.estado = (r) => { if (!r) return ['—', '']; const e = r.efectividad, c = r.cumplimiento; if (e >= 0.65 && c >= 0.9) return ['Bien', 'ok']; if (e < 0.4 || c < 0.6) return ['Revisar', 'bad']; return ['Atención', 'warn']; };
+})();
+</script>
+
+<script>
+dash.calc('resumenDia', {
+  title: 'Resumen del último día',
+  description: 'Totales por ruta del último día con venta y su suma.',
+  inputs: ['diario'],
+  fn: (diario) => {
+    if (!diario.length) return [];
+    const ult = diario.map((r) => r.fecha).sort().pop();
+    const rows = diario.filter((r) => r.fecha === ult).map((r) => ({
+      fecha: r.fecha, ruta: r.ruta, rutaNum: r.rutaNum, vendedor: r.vendedor, venta: r.venta, cajas: r.cajas, hl: r.hl,
+      visProg: r.visProg, visHechas: r.visHechas, progHechas: r.progHechas, conPedido: r.conPedido,
+      efectividad: r.visHechas ? r.conPedido / r.visHechas : 0, cumplimiento: r.visProg ? r.progHechas / r.visProg : 0,
+      dropsize: r.conPedido ? r.venta / r.conPedido : 0, jornada: (r.inicio || '¿?') + ' – ' + (r.fin || 'sin cierre'),
+      inicio: r.inicio, fin: r.fin, minServicio: r.minServicio, sinVenta: r.sinVenta,
+    }));
+    const s = (k) => rows.reduce((a, r) => a + (r[k] || 0), 0);
+    rows.forEach((r) => { const e = r.efectividad, c = r.cumplimiento; r.semaforo = e >= 0.65 && c >= 0.9 ? 'Bien' : (e < 0.4 || c < 0.6 ? 'Revisar' : 'Atención'); });
+    const t = { fecha: ult, ruta: 'TOTAL', rutaNum: 99, vendedor: '7 rutas', venta: s('venta'), cajas: s('cajas'), hl: s('hl'), visProg: s('visProg'), visHechas: s('visHechas'), progHechas: s('progHechas'), conPedido: s('conPedido'), sinVenta: s('sinVenta'), jornada: '', inicio: '', fin: '', minServicio: 0 };
+    t.efectividad = t.visHechas ? t.conPedido / t.visHechas : 0; t.cumplimiento = t.visProg ? t.progHechas / t.visProg : 0; t.dropsize = t.conPedido ? t.venta / t.conPedido : 0; t.semaforo = '';
+    return rows.sort((a, b) => a.rutaNum - b.rutaNum).concat([t]);
+  },
+});
+
+dash.calc('mesRuta', {
+  title: 'Avance del mes por ruta',
+  description: 'Hectolitros y cajas del mes contra la meta, con proyección a 25 días hábiles.',
+  inputs: ['diario', 'metas'],
+  fn: (diario, metas) => {
+    const habiles = 25;
+    const fechas = [...new Set(diario.map((r) => r.fecha))];
+    const n = fechas.length;
+    const rows = metas.map((m) => {
+      const d = diario.filter((r) => r.ruta === m.ruta);
+      const hlMes = d.reduce((a, r) => a + r.hl, 0);
+      return { ruta: m.ruta, rutaNum: m.rutaNum, vendedor: m.vendedor, metaHl: m.metaHl, hlMes, cajasMes: d.reduce((a, r) => a + r.cajas, 0), ventaMes: d.reduce((a, r) => a + r.venta, 0),
+        avance: m.metaHl ? hlMes / m.metaHl : 0, esperado: n / habiles, diasTrans: n, proyeccion: n ? hlMes / n * habiles : 0,
+        faltaPorDia: Math.max(0, (m.metaHl - hlMes) / Math.max(1, habiles - n)), metaDia: m.metaHl / habiles, nov25Hl: m.nov25Hl,
+        millerCajas: d.reduce((a, r) => a + (r.millerCajas || 0), 0), auLataCajas: d.reduce((a, r) => a + (r.auLataCajas || 0), 0), au24Cajas: d.reduce((a, r) => a + (r.au24Cajas || 0), 0) };
+    });
+    const s = (k) => rows.reduce((a, r) => a + r[k], 0);
+    const t = { ruta: 'TOTAL', rutaNum: 99, vendedor: '7 rutas', metaHl: s('metaHl'), hlMes: s('hlMes'), cajasMes: s('cajasMes'), ventaMes: s('ventaMes'), diasTrans: n, esperado: n / habiles,
+      nov25Hl: s('nov25Hl'), millerCajas: s('millerCajas'), auLataCajas: s('auLataCajas'), au24Cajas: s('au24Cajas') };
+    t.avance = t.metaHl ? t.hlMes / t.metaHl : 0; t.proyeccion = n ? t.hlMes / n * habiles : 0; t.faltaPorDia = Math.max(0, (t.metaHl - t.hlMes) / Math.max(1, habiles - n)); t.metaDia = t.metaHl / habiles;
+    return rows.sort((a, b) => a.rutaNum - b.rutaNum).concat([t]);
+  },
+});
+
+dash.calc('porDia', {
+  title: 'Venta por día',
+  description: 'Suma de las 7 rutas por fecha.',
+  inputs: ['diario'],
+  fn: (diario) => {
+    const by = {};
+    diario.forEach((r) => { const o = by[r.fecha] || (by[r.fecha] = { fecha: r.fecha, hl: 0, venta: 0, cajas: 0, conPedido: 0, visHechas: 0 }); o.hl += r.hl; o.venta += r.venta; o.cajas += r.cajas; o.conPedido += r.conPedido; o.visHechas += r.visHechas; });
+    return Object.values(by).sort((a, b) => a.fecha < b.fecha ? -1 : 1).map((o) => Object.assign(o, { efectividad: o.visHechas ? o.conPedido / o.visHechas : 0 }));
+  },
+});
+
+dash.calc('mezcla', {
+  title: 'Mezcla de marcas del mes',
+  description: 'Hectolitros y cajas por marca en el mes, con su participación.',
+  inputs: ['marcas'],
+  fn: (marcas) => {
+    const by = {};
+    marcas.forEach((r) => { const o = by[r.marca] || (by[r.marca] = { marca: r.marca, hl: 0, cajas: 0 }); o.hl += r.hl; o.cajas += r.cajas; });
+    const tot = Object.values(by).reduce((a, o) => a + o.hl, 0);
+    return Object.values(by).map((o) => Object.assign(o, { share: tot ? o.hl / tot : 0 })).sort((a, b) => b.hl - a.hl);
+  },
+});
+
+dash.calc('semana', {
+  title: 'Resumen de la semana',
+  description: 'Semana de lunes a sábado del último día con venta, por ruta, contra la meta proporcional.',
+  inputs: ['diario', 'metas'],
+  fn: (diario, metas) => {
+    if (!diario.length) return [];
+    const ult = diario.map((r) => r.fecha).sort().pop();
+    const d0 = new Date(ult + 'T12:00:00'); const dow = (d0.getDay() + 6) % 7;
+    const lunes = new Date(d0); lunes.setDate(d0.getDate() - dow);
+    const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const sab = new Date(lunes); sab.setDate(lunes.getDate() + 5);
+    const ini = iso(lunes), fin = iso(sab);
+    const sem = diario.filter((r) => r.fecha >= ini && r.fecha <= fin);
+    const nd = new Set(sem.map((r) => r.fecha)).size;
+    const rows = metas.map((m) => {
+      const d = sem.filter((r) => r.ruta === m.ruta); const s = (k) => d.reduce((a, r) => a + (r[k] || 0), 0);
+      const o = { ruta: m.ruta, rutaNum: m.rutaNum, vendedor: m.vendedor, inicio: ini, fin, dias: nd, hl: s('hl'), venta: s('venta'), cajas: s('cajas'), conPedido: s('conPedido'), visHechas: s('visHechas'), visProg: s('visProg'), progHechas: s('progHechas'), millerCajas: s('millerCajas'), metaSemana: m.metaHl * 6 / 25 };
+      o.avance = o.metaSemana ? o.hl / o.metaSemana : 0; o.efectividad = o.visHechas ? o.conPedido / o.visHechas : 0; o.cumplimiento = o.visProg ? o.progHechas / o.visProg : 0; return o;
+    }).sort((a, b) => b.avance - a.avance);
+    rows.forEach((r, i) => { r.lugar = i + 1; });
+    const s = (k) => rows.reduce((a, r) => a + r[k], 0);
+    const t = { ruta: 'TOTAL', rutaNum: 99, vendedor: '7 rutas', inicio: ini, fin, dias: nd, hl: s('hl'), venta: s('venta'), cajas: s('cajas'), conPedido: s('conPedido'), visHechas: s('visHechas'), visProg: s('visProg'), progHechas: s('progHechas'), millerCajas: s('millerCajas'), metaSemana: s('metaSemana'), lugar: '' };
+    t.avance = t.metaSemana ? t.hl / t.metaSemana : 0; t.efectividad = t.visHechas ? t.conPedido / t.visHechas : 0; t.cumplimiento = t.visProg ? t.progHechas / t.visProg : 0;
+    return rows.concat([t]);
+  },
+});
+
+dash.calc('alertas', {
+  title: 'Alertas del último día',
+  description: 'Reglas: cumplimiento menor a 70%, efectividad menor a 50%, inicio después de las 10:00, día sin cierre.',
+  inputs: ['diario'],
+  fn: (diario) => {
+    if (!diario.length) return [];
+    const ult = diario.map((r) => r.fecha).sort().pop();
+    const out = [];
+    diario.filter((r) => r.fecha === ult).sort((a, b) => a.rutaNum - b.rutaNum).forEach((r) => {
+      const c = r.visProg ? r.progHechas / r.visProg : 1, e = r.visHechas ? r.conPedido / r.visHechas : 1;
+      if (c < 0.7) out.push({ ruta: r.ruta, nivel: 'bad', tipo: 'Cumplimiento', detalle: 'Hizo ' + r.progHechas + ' de ' + r.visProg + ' visitas programadas' });
+      if (e < 0.5) out.push({ ruta: r.ruta, nivel: 'bad', tipo: 'Efectividad', detalle: 'Vendió en ' + r.conPedido + ' de ' + r.visHechas + ' visitas' });
+      if (r.inicio && r.inicio > '10:00') out.push({ ruta: r.ruta, nivel: 'warn', tipo: 'Salida tarde', detalle: 'Inició jornada a las ' + r.inicio });
+      if (!r.fin) out.push({ ruta: r.ruta, nivel: 'warn', tipo: 'Sin cierre', detalle: 'No registró fin de día en Power Sales' });
+    });
+    return out;
+  },
+});
+</script>
+
+<script>
+(function () {
+  const F = window.CPN.fmt;
+  const get = (id) => dash.data(id);
+  const one = (id, ruta) => { const g = get(id); return g.status === 'ok' ? g.data.find((r) => r.ruta === ruta) : null; };
+  const put = (name, fn) => dash.draw(name, (el) => { const v = fn(); el.textContent = v == null ? '—' : v; });
+
+  put('corte', () => { const g = get('diario'); return g.status === 'ok' && g.data.length ? F.dia(g.data.map((r) => r.fecha).sort().pop()) : null; });
+  put('diaLargo', () => { const t = one('resumenDia', 'TOTAL'); return t ? F.largo(t.fecha) : null; });
+  put('hVenta', () => { const t = one('resumenDia', 'TOTAL'); return t ? F.money(t.venta) : null; });
+  put('hHl', () => { const t = one('resumenDia', 'TOTAL'); return t ? F.hl(t.hl) : null; });
+  put('hCajas', () => { const t = one('resumenDia', 'TOTAL'); return t ? F.int(t.cajas) : null; });
+  put('hEfec', () => { const t = one('resumenDia', 'TOTAL'); return t ? F.pct(t.efectividad) : null; });
+  put('hCump', () => { const t = one('resumenDia', 'TOTAL'); return t ? F.pct(t.cumplimiento) : null; });
+  put('hAvance', () => { const t = one('mesRuta', 'TOTAL'); return t ? F.pct(t.avance) : null; });
+  put('hMeta', () => { const t = one('mesRuta', 'TOTAL'); return t ? F.int(t.metaHl) : null; });
+  put('hMetaDia', () => { const t = one('mesRuta', 'TOTAL'); return t ? F.hl(t.metaDia) : null; });
+  put('mHl', () => { const t = one('mesRuta', 'TOTAL'); return t ? F.hl(t.hlMes) + ' Hl' : null; });
+  put('mProy', () => { const t = one('mesRuta', 'TOTAL'); return t ? F.hl(t.proyeccion) + ' Hl' : null; });
+  put('mFalta', () => { const t = one('mesRuta', 'TOTAL'); return t ? F.hl(t.faltaPorDia) + ' Hl' : null; });
+  put('mNov25', () => { const t = one('mesRuta', 'TOTAL'); return t ? F.hl(t.nov25Hl) + ' Hl' : null; });
+  put('mDias', () => { const t = one('mesRuta', 'TOTAL'); return t ? t.diasTrans + ' de 25' : null; });
+
+  dash.draw('takeaway', (el) => {
+    const t = one('resumenDia', 'TOTAL'), m = one('mesRuta', 'TOTAL');
+    if (!t || !m) { el.textContent = '—'; return; }
+    const g = get('resumenDia').data.filter((r) => r.ruta !== 'TOTAL');
+    const mejor = g.slice().sort((a, b) => b.hl - a.hl)[0];
+    const rev = g.filter((r) => r.semaforo === 'Revisar').map((r) => r.ruta.replace('Ruta ', ''));
+    const ritmo = m.proyeccion >= m.metaHl ? 'Al ritmo actual llegamos a la meta del mes' : 'Al ritmo actual cerraríamos en ' + F.pct(m.proyeccion / m.metaHl) + ' de la meta';
+    el.textContent = 'La ruta ' + mejor.ruta.replace('Ruta ', '') + ' fue la que más vendió (' + F.hl(mejor.hl) + ' Hl). ' + ritmo + '.' + (rev.length ? ' Revisar ruta ' + rev.join(', ') + '.' : '');
+  });
+
+  dash.draw('gaugeTotal', (el) => {
+    const t = one('mesRuta', 'TOTAL'); el.replaceChildren();
+    if (!t) return; const i = document.createElement('i'); i.style.width = Math.min(100, t.avance * 100) + '%'; const e = document.createElement('em'); e.style.left = Math.min(100, t.esperado * 100) + '%'; el.append(i, e);
+  });
+
+  dash.draw('tablaRutas', (tb) => {
+    const g = get('resumenDia'); tb.replaceChildren(); if (g.status !== 'ok') return;
+    g.data.filter((r) => r.ruta !== 'TOTAL').forEach((r) => {
+      const tr = document.createElement('tr');
+      const td = (v, cls) => { const c = document.createElement('td'); c.textContent = v; if (cls) c.className = cls; tr.append(c); return c; };
+      const k = td(r.ruta); k.style.fontWeight = '600'; k.style.color = window.CPN.routeColor[r.ruta];
+      td(r.vendedor, 'hide-sm'); td(F.money(r.venta), 'num'); td(F.hl(r.hl), 'num');
+      const e = td(F.pct(r.efectividad), 'num ' + (r.efectividad >= 0.65 ? 'ok' : r.efectividad < 0.4 ? 'bad' : 'warn'));
+      const c = td(F.pct(r.cumplimiento), 'num ' + (r.cumplimiento >= 0.9 ? 'ok' : r.cumplimiento < 0.6 ? 'bad' : 'warn'));
+      td(F.money(r.dropsize), 'num hide-sm'); td(r.jornada, 'hide-sm');
+      const s = td(''); const p = document.createElement('span'); p.className = 'pill ' + (r.semaforo === 'Bien' ? 'ok' : r.semaforo === 'Revisar' ? 'bad' : 'warn'); p.textContent = r.semaforo; s.append(p);
+      tb.append(tr);
+    });
+  });
+
+  dash.draw('alertas', (ul) => {
+    const g = get('alertas'); ul.replaceChildren(); if (g.status !== 'ok') return;
+    if (!g.data.length) { const li = document.createElement('li'); li.textContent = 'Sin alertas: todas las rutas cumplieron.'; ul.append(li); return; }
+    g.data.forEach((a) => { const li = document.createElement('li'); const p = document.createElement('span'); p.className = 'pill ' + a.nivel; p.textContent = a.ruta; const b = document.createElement('b'); b.textContent = a.tipo; const s = document.createElement('span'); s.textContent = ' · ' + a.detalle; s.style.color = 'var(--color-fg-muted)'; const w = document.createElement('span'); w.append(b, s); li.append(p, w); ul.append(li); });
+  });
+
+  window.CPN.bars = (el, rows, xKey, yKey, opts) => {
+    el.replaceChildren(); if (!rows.length) return;
+    const W = Math.max(260, el.clientWidth || 320), H = 190, m = { t: 18, r: 8, b: 26, l: 8 };
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const x = d3.scaleBand(rows.map((r) => r[xKey]), [m.l, W - m.r]).padding(0.28);
+    const y = d3.scaleLinear([0, d3.max(rows, (r) => r[yKey]) * 1.15 || 1], [H - m.b, m.t]);
+    svg.append('g').selectAll('line').data(y.ticks(3)).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y).attr('stroke', 'var(--cds-chart-grid)');
+    if (opts && opts.ref) svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(opts.ref)).attr('y2', y(opts.ref)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 4');
+    const tip = d3.select(el).append('div').attr('class', 'tip').style('opacity', 0);
+    svg.append('g').selectAll('rect').data(rows).join('rect').attr('x', (r) => x(r[xKey])).attr('width', Math.min(32, x.bandwidth())).attr('y', (r) => y(r[yKey])).attr('height', (r) => y(0) - y(r[yKey])).attr('rx', 4).attr('fill', (opts && opts.color) || 'var(--g)')
+      .on('mousemove', (ev, r) => { const [px, py] = d3.pointer(ev, el); tip.style('opacity', 1).style('left', Math.min(px + 10, W - 140) + 'px').style('top', (py - 30) + 'px').text((opts.label ? opts.label(r) : r[xKey]) + ' · ' + opts.fmt(r[yKey])); })
+      .on('mouseleave', () => tip.style('opacity', 0));
+    svg.append('g').selectAll('text.v').data(rows).join('text').attr('x', (r) => x(r[xKey]) + Math.min(32, x.bandwidth()) / 2).attr('y', (r) => y(r[yKey]) - 5).attr('text-anchor', 'middle').attr('fill', 'var(--color-fg)').attr('font-size', 11).text((r) => opts.fmt(r[yKey]));
+    svg.append('g').selectAll('text.x').data(rows).join('text').attr('x', (r) => x(r[xKey]) + Math.min(32, x.bandwidth()) / 2).attr('y', H - 8).attr('text-anchor', 'middle').attr('fill', 'var(--color-fg-muted)').attr('font-size', 11).text((r) => opts.label ? opts.label(r) : r[xKey]);
+  };
+
+  dash.draw('chartDias', (el) => { const g = get('porDia'); if (g.status !== 'ok') { el.replaceChildren(); return; } window.CPN.bars(el, g.data, 'fecha', 'hl', { fmt: F.hl, label: (r) => F.dia(r.fecha).split(' ').slice(0, 2).join(' '), ref: (one('mesRuta', 'TOTAL') || {}).metaDia }); });
+
+  window.CPN.brandList = (el, rows) => {
+    el.replaceChildren(); const max = d3.max(rows, (r) => r.hl) || 1;
+    rows.forEach((r) => { const row = document.createElement('div'); row.className = 'brandrow'; const n = document.createElement('span'); n.className = 'chip'; const sw = document.createElement('i'); sw.style.background = window.CPN.brandColor[r.marca] || '#888'; const t = document.createElement('span'); t.textContent = r.marca; n.append(sw, t);
+      const bar = document.createElement('div'); bar.className = 'bar'; const f = document.createElement('i'); f.style.width = (r.hl / max * 100) + '%'; f.style.background = window.CPN.brandColor[r.marca] || '#888'; bar.append(f);
+      const v = document.createElement('span'); v.style.textAlign = 'right'; v.style.fontVariantNumeric = 'tabular-nums'; v.textContent = F.hl(r.hl); row.append(n, bar, v); el.append(row); });
+  };
+  dash.draw('mezcla', (el) => { const g = get('mezcla'); if (g.status !== 'ok') { el.replaceChildren(); return; } window.CPN.brandList(el, g.data); });
+
+  dash.draw('avanceRutas', (el) => {
+    const g = get('mesRuta'); el.replaceChildren(); if (g.status !== 'ok') return;
+    g.data.filter((r) => r.ruta !== 'TOTAL').forEach((r) => {
+      const row = document.createElement('div'); row.className = 'brandrow';
+      const n = document.createElement('span'); n.className = 'chip'; const sw = document.createElement('i'); sw.style.background = window.CPN.routeColor[r.ruta]; const t = document.createElement('span'); t.textContent = r.ruta; n.append(sw, t);
+      const bar = document.createElement('div'); bar.className = 'gauge'; bar.style.height = '12px'; const f = document.createElement('i'); f.style.width = Math.min(100, r.avance * 100) + '%'; const e = document.createElement('em'); e.style.left = Math.min(100, r.esperado * 100) + '%'; bar.append(f, e);
+      const v = document.createElement('span'); v.style.textAlign = 'right'; v.className = r.avance >= r.esperado ? 'ok' : r.avance >= r.esperado * 0.85 ? 'warn' : 'bad'; v.textContent = F.pct(r.avance); row.append(n, bar, v); el.append(row);
+    });
+  });
+})();
+</script>
+
+<script>
+(function () {
+  const F = window.CPN.fmt;
+  const get = (id) => dash.data(id);
+  const sel = () => window.CPN.ruta;
+  const one = (id, ruta) => { const g = get(id); return g.status === 'ok' ? g.data.find((r) => r.ruta === ruta) : null; };
+
+  dash.draw('rVend', (el) => {
+    const m = one('metas', sel()); el.replaceChildren(); if (!m) { el.textContent = '—'; return; }
+    const av = document.createElement('div'); av.className = 'av'; av.style.background = window.CPN.routeColor[m.ruta]; av.style.color = '#fff'; av.textContent = m.ruta.replace('Ruta ', 'R');
+    const w = document.createElement('div'); const h = document.createElement('h3'); h.textContent = m.vendedor; const p = document.createElement('p'); p.textContent = m.ruta + ' · meta de noviembre ' + F.int(m.metaHl) + ' Hl · noviembre 2025: ' + F.hl(m.nov25Hl) + ' Hl'; w.append(h, p); el.append(av, w);
+  });
+
+  dash.draw('rKpis', (el) => {
+    const r = one('resumenDia', sel()); el.replaceChildren(); if (!r) { el.textContent = '—'; return; }
+    const items = [['Último día', F.dia(r.fecha)], ['Venta', F.money(r.venta)], ['Hectolitros', F.hl(r.hl)], ['Cajas', F.int(r.cajas)], ['Efectividad', F.pct(r.efectividad)], ['Cumplimiento', F.pct(r.cumplimiento)], ['Ticket', F.money(r.dropsize)], ['Visitas', r.visHechas + ' hechas / ' + r.visProg + ' prog.'], ['Jornada', r.jornada], ['Min. por cliente', F.hl(r.minServicio)]];
+    items.forEach(([k, v]) => { const d = document.createElement('div'); const s = document.createElement('span'); s.textContent = k; const b = document.createElement('b'); b.textContent = v; if (k === 'Jornada' || k === 'Visitas' || k === 'Último día') b.style.fontSize = '18px'; d.append(s, b); el.append(d); });
+  });
+
+  dash.draw('rMes', (el) => {
+    const r = one('mesRuta', sel()); el.replaceChildren(); if (!r) { el.textContent = '—'; return; }
+    const g = document.createElement('div'); g.className = 'gauge'; const i = document.createElement('i'); i.style.width = Math.min(100, r.avance * 100) + '%'; const e = document.createElement('em'); e.style.left = Math.min(100, r.esperado * 100) + '%'; g.append(i, e);
+    const kv = document.createElement('div'); kv.className = 'kv';
+    [['Llevamos', F.hl(r.hlMes) + ' Hl'], ['Avance', F.pct(r.avance)], ['Proyección', F.hl(r.proyeccion) + ' Hl'], ['Por día para llegar', F.hl(r.faltaPorDia) + ' Hl']].forEach(([k, v]) => { const d = document.createElement('div'); const s = document.createElement('span'); s.textContent = k; const b = document.createElement('b'); b.textContent = v; d.append(s, b); kv.append(d); });
+    el.append(g, kv);
+  });
+
+  dash.draw('rDias', (el) => { const g = get('diario'); if (g.status !== 'ok') { el.replaceChildren(); return; } const rows = g.data.filter((r) => r.ruta === sel()).sort((a, b) => a.fecha < b.fecha ? -1 : 1); window.CPN.bars(el, rows, 'fecha', 'hl', { fmt: F.hl, color: window.CPN.routeColor[sel()], label: (r) => F.dia(r.fecha).split(' ').slice(0, 2).join(' '), ref: (one('mesRuta', sel()) || {}).metaDia }); });
+
+  dash.draw('rMotivos', (el) => {
+    const g = get('motivos'); el.replaceChildren(); if (g.status !== 'ok') return;
+    const by = {}; g.data.filter((r) => r.ruta === sel()).forEach((r) => { by[r.motivo] = (by[r.motivo] || 0) + r.visitas; });
+    const rows = Object.entries(by).sort((a, b) => b[1] - a[1]);
+    if (!rows.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Sin visitas sin pedido registradas este mes.'; el.append(p); return; }
+    const max = rows[0][1];
+    rows.forEach(([k, v]) => { const row = document.createElement('div'); row.className = 'brandrow'; const n = document.createElement('span'); n.textContent = k; const bar = document.createElement('div'); bar.className = 'bar'; const f = document.createElement('i'); f.style.width = (v / max * 100) + '%'; f.style.background = 'var(--gold)'; bar.append(f); const c = document.createElement('span'); c.style.textAlign = 'right'; c.textContent = String(v); row.append(n, bar, c); el.append(row); });
+  });
+
+  dash.draw('rMarcas', (el) => {
+    const g = get('marcas'); if (g.status !== 'ok') { el.replaceChildren(); return; }
+    const by = {}; g.data.filter((r) => r.ruta === sel()).forEach((r) => { by[r.marca] = (by[r.marca] || 0) + r.hl; });
+    window.CPN.brandList(el, Object.entries(by).map(([marca, hl]) => ({ marca, hl })).sort((a, b) => b.hl - a.hl));
+  });
+
+  dash.draw('rHist', (el) => {
+    const g = get('historia'), m = one('mesRuta', sel()); el.replaceChildren(); if (g.status !== 'ok') return;
+    const h = g.data.filter((r) => r.ruta === sel());
+    const s25 = h.filter((r) => r.anio === 2025).map((r) => ({ mes: r.mes, hl: r.hl }));
+    const s26 = h.filter((r) => r.anio === 2026).map((r) => ({ mes: r.mes, hl: r.hl }));
+    if (m) s26.push({ mes: 11, hl: m.proyeccion, proy: true });
+    const W = Math.max(280, el.clientWidth || 600), H = 220, mg = { t: 16, r: 16, b: 26, l: 40 };
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const x = d3.scaleLinear([1, 12], [mg.l, W - mg.r]); const y = d3.scaleLinear([0, (d3.max(s25.concat(s26), (r) => r.hl) || 1) * 1.1], [H - mg.b, mg.t]);
+    svg.append('g').selectAll('line').data(y.ticks(4)).join('line').attr('x1', mg.l).attr('x2', W - mg.r).attr('y1', y).attr('y2', y).attr('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').selectAll('text').data(y.ticks(4)).join('text').attr('x', mg.l - 6).attr('y', (v) => y(v) + 4).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text((v) => v);
+    const ms = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+    svg.append('g').selectAll('text').data(d3.range(1, 13)).join('text').attr('x', x).attr('y', H - 8).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text((v) => ms[v - 1]);
+    const line = d3.line().x((r) => x(r.mes)).y((r) => y(r.hl));
+    svg.append('path').attr('d', line(s25)).attr('fill', 'none').attr('stroke', 'var(--cds-chart-muted)').attr('stroke-width', 2).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+    svg.append('path').attr('d', line(s26.filter((r) => !r.proy))).attr('fill', 'none').attr('stroke', window.CPN.routeColor[sel()]).attr('stroke-width', 2.5).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+    const last = s26.filter((r) => !r.proy).slice(-1)[0], pr = s26.find((r) => r.proy);
+    if (last && pr) svg.append('path').attr('d', line([last, pr])).attr('fill', 'none').attr('stroke', window.CPN.routeColor[sel()]).attr('stroke-width', 2).attr('stroke-dasharray', '4 4');
+    if (pr) svg.append('circle').attr('cx', x(pr.mes)).attr('cy', y(pr.hl)).attr('r', 4).attr('fill', 'var(--gold)');
+    const lg = d3.select(el).append('div').attr('class', 'legend');
+    [['2025', 'var(--cds-chart-muted)'], ['2026', window.CPN.routeColor[sel()]], ['Noviembre proyectado', 'var(--gold)']].forEach(([t, c]) => { const s = lg.append('span'); s.append('i').style('background', c); s.append('span').text(t); });
+  });
+})();
+</script>
+
+<script>
+(function () {
+  const F = window.CPN.fmt;
+  const get = (id) => dash.data(id);
+  const tot = (id) => { const g = get(id); return g.status === 'ok' ? g.data.find((r) => r.ruta === 'TOTAL') : null; };
+  const put = (name, fn) => dash.draw(name, (el) => { const v = fn(); el.textContent = v == null ? '—' : v; });
+  put('semLabel', () => { const t = tot('semana'); return t ? F.dia(t.inicio) + ' al ' + F.dia(t.fin) : null; });
+  put('semHl', () => { const t = tot('semana'); return t ? F.hl(t.hl) : null; });
+  put('semVenta', () => { const t = tot('semana'); return t ? F.money(t.venta) : null; });
+  put('semCajas', () => { const t = tot('semana'); return t ? F.int(t.cajas) : null; });
+  put('semMeta', () => { const t = tot('semana'); return t ? F.hl(t.metaSemana) : null; });
+  put('semEfec', () => { const t = tot('semana'); return t ? F.pct(t.efectividad) : null; });
+  put('semDias', () => { const t = tot('semana'); return t ? String(t.dias) : null; });
+  dash.draw('tablaSemana', (tb) => {
+    const g = get('semana'); tb.replaceChildren(); if (g.status !== 'ok') return;
+    g.data.filter((r) => r.ruta !== 'TOTAL').forEach((r) => {
+      const tr = document.createElement('tr'); const td = (v, cls) => { const c = document.createElement('td'); c.textContent = v; if (cls) c.className = cls; tr.append(c); return c; };
+      td(String(r.lugar)); const k = td(r.ruta); k.style.fontWeight = '600'; k.style.color = window.CPN.routeColor[r.ruta]; td(r.vendedor, 'hide-sm'); td(F.hl(r.hl), 'num'); td(F.hl(r.metaSemana), 'num hide-sm');
+      const esperado = r.dias / 6; td(F.pct(r.avance), 'num ' + (r.avance >= esperado ? 'ok' : r.avance >= esperado * 0.85 ? 'warn' : 'bad'));
+      td(F.money(r.venta), 'num hide-sm'); td(F.pct(r.efectividad), 'num'); td(F.pct(r.cumplimiento), 'num hide-sm'); tb.append(tr);
+    });
+  });
+
+  dash.draw('mapa', (el) => {
+    const g = get('puntos'); el.replaceChildren(); if (g.status !== 'ok' || !g.data.length) return;
+    const ult = g.data.map((r) => r.fecha).sort().pop(); const filtro = window.CPN.mapa;
+    const pts = g.data.filter((r) => r.fecha === ult && (filtro === 'todas' || r.ruta === filtro));
+    const base = [18.77, -96.17], cos = Math.cos(base[0] * Math.PI / 180);
+    const bod = [{ n: 'Bodega Piedras Negras', dy: (18.770452 - base[0]) * 1e4, dx: (-96.175706 - base[1]) * 1e4 }, { n: 'Bodega Mixtequilla', dy: (18.71955 - base[0]) * 1e4, dx: (-95.98737 - base[1]) * 1e4 }];
+    const all = pts.concat(bod);
+    const W = Math.max(300, el.clientWidth || 600), H = Math.round(Math.min(560, Math.max(380, W * 0.62))), m = 24;
+    const xs = all.map((p) => p.dx * cos), ys = all.map((p) => p.dy);
+    const [x0, x1] = d3.extent(xs), [y0, y1] = d3.extent(ys); const k = Math.min((W - 2 * m) / ((x1 - x0) || 1), (H - 2 * m) / ((y1 - y0) || 1));
+    const X = (p) => m + (p.dx * cos - x0) * k + ((W - 2 * m) - (x1 - x0) * k) / 2, Y = (p) => H - m - (p.dy - y0) * k - ((H - 2 * m) - (y1 - y0) * k) / 2;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).style('background', 'var(--color-bg)').style('border-radius', 'var(--cds-radius)');
+    const tip = d3.select(el).append('div').attr('class', 'tip').style('opacity', 0);
+    svg.append('g').selectAll('rect').data(bod).join('rect').attr('x', (p) => X(p) - 6).attr('y', (p) => Y(p) - 6).attr('width', 12).attr('height', 12).attr('rx', 2).attr('fill', 'var(--gold)');
+    svg.append('g').selectAll('text').data(bod).join('text').attr('x', (p) => X(p) + 9).attr('y', (p) => Y(p) + 4).attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text((p) => p.n);
+    svg.append('g').selectAll('circle').data(pts).join('circle').attr('cx', X).attr('cy', Y).attr('r', 5.5).attr('fill', (p) => p.venta ? window.CPN.routeColor[p.ruta] : 'var(--color-panel)').attr('stroke', (p) => window.CPN.routeColor[p.ruta]).attr('stroke-width', 2).attr('fill-opacity', 0.9)
+      .on('mousemove', (ev, p) => { const [px, py] = d3.pointer(ev, el); tip.style('opacity', 1).style('left', Math.min(px + 10, W - 160) + 'px').style('top', (py - 30) + 'px').text(p.ruta + ' · ' + (p.venta ? 'compró' : 'sin pedido')); })
+      .on('mouseleave', () => tip.style('opacity', 0));
+    const lg = d3.select(el).append('div').attr('class', 'legend').style('margin-top', '8px');
+    lg.append('span').text(F.largo(ult) + ' · ' + pts.length + ' visitas · ' + pts.filter((p) => p.venta).length + ' con compra');
+    Object.entries(window.CPN.routeColor).filter(([r]) => filtro === 'todas' || r === filtro).forEach(([r, c]) => { const s = lg.append('span'); s.append('i').style('background', c); s.append('span').text(r); });
+  });
+
+  const foco = (campo, el) => {
+    const g = get('mesRuta'); el.replaceChildren(); if (g.status !== 'ok') return;
+    const rows = g.data.filter((r) => r.ruta !== 'TOTAL'); const t = g.data.find((r) => r.ruta === 'TOTAL');
+    const kv = document.createElement('div'); kv.className = 'kv'; const d = document.createElement('div'); const s = document.createElement('span'); s.textContent = 'Total del mes, 7 rutas'; const b = document.createElement('b'); b.textContent = F.hl(t[campo]) + ' cajas'; d.append(s, b); kv.append(d); el.append(kv);
+    if (!t[campo]) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Ninguna ruta lo ha vendido este mes.'; el.append(p); return; }
+    const max = d3.max(rows, (r) => r[campo]) || 1;
+    rows.slice().sort((a, b) => b[campo] - a[campo]).forEach((r) => { const row = document.createElement('div'); row.className = 'brandrow'; const n = document.createElement('span'); n.className = 'chip'; const sw = document.createElement('i'); sw.style.background = window.CPN.routeColor[r.ruta]; const tt = document.createElement('span'); tt.textContent = r.ruta; n.append(sw, tt); const bar = document.createElement('div'); bar.className = 'bar'; const f = document.createElement('i'); f.style.width = (r[campo] / max * 100) + '%'; f.style.background = window.CPN.routeColor[r.ruta]; bar.append(f); const v = document.createElement('span'); v.style.textAlign = 'right'; v.textContent = F.hl(r[campo]); row.append(n, bar, v); el.append(row); });
+  };
+  dash.draw('focoMiller', (el) => foco('millerCajas', el));
+  dash.draw('focoAu12', (el) => foco('auLataCajas', el));
+  dash.draw('focoAu24', (el) => foco('au24Cajas', el));
+
+  const fl = (name, fn) => dash.draw(name, (el) => { const g = get('flotilla'); el.textContent = g.status === 'ok' && g.data[0] ? fn(g.data[0]) : '—'; });
+  fl('fSem', (r) => r.semana); fl('fKm', (r) => F.int(r.km) + ' km'); fl('fHoras', (r) => F.hl(r.horasMotor) + ' h'); fl('fRend', (r) => r.rendimientoKmL.toLocaleString('es-MX', { maximumFractionDigits: 2 }) + ' km/l');
+  fl('fUtil', (r) => F.pct(r.utilizacion)); fl('fDiesel', (r) => F.money(r.costoDiesel)); fl('fAlertas', (r) => String(r.alertas));
+})();
+</script>
+
+<script>
+(function () {
+  const show = (v) => {
+    window.CPN.vista = v;
+    document.querySelectorAll('[data-vista-sec]').forEach((s) => { s.hidden = s.getAttribute('data-vista-sec') !== v; });
+    document.querySelectorAll('[data-vista]').forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-vista') === v)));
+  };
+  document.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => { show(b.getAttribute('data-vista')); const s = document.getElementById('v-' + b.getAttribute('data-vista')); if (s) dash.setLink(s.id); }));
+  const routeDraws = ['rVend', 'rKpis', 'rMes', 'rDias', 'rMotivos', 'rMarcas', 'rHist'];
+  document.querySelectorAll('[data-ruta]').forEach((b) => b.addEventListener('click', () => {
+    window.CPN.ruta = b.getAttribute('data-ruta');
+    document.querySelectorAll('[data-ruta]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    routeDraws.forEach((n) => dash.draw(n));
+  }));
+  document.querySelectorAll('[data-mapa]').forEach((b) => b.addEventListener('click', () => {
+    window.CPN.mapa = b.getAttribute('data-mapa');
+    document.querySelectorAll('[data-mapa]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    dash.draw('mapa');
+  }));
+  const h = location.hash.slice(1);
+  if (h && h.startsWith('v-')) show(h.slice(2));
+})();
+</script>
+
+  </div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

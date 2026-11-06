@@ -38,6 +38,39 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .caja button{font:inherit;font-size:16px;font-weight:600;padding:14px;border-radius:12px;border:0;background:#E9B949;color:#1d1d1b;cursor:pointer}
 .caja button:disabled{opacity:.6}
 .error{background:rgba(239,107,94,.18);border:1px solid rgba(239,107,94,.5);color:#FFD9D4;padding:10px 12px;border-radius:10px;font-size:14px;text-align:center}
+
+.cpn-nav{flex-wrap:nowrap!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;max-width:100%}
+.cpn-nav::-webkit-scrollbar{display:none}
+.cpn-nav button{flex:0 0 auto}
+.cpn-top>.cpn-nav{width:100%}
+.acciones{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.acciones li{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--color-bg);border:1px solid var(--color-border-line);font-size:14px;line-height:1.4}
+.acciones li .pill{flex:0 0 auto;margin-top:1px}
+.puntos{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}
+.filtros{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.filtros label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--color-fg-muted)}
+.filtros .buscar{flex:1 1 160px}
+.sel{font:inherit;font-size:16px;padding:9px 10px;border-radius:10px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg)}
+.lista-cli{display:flex;flex-direction:column;gap:8px}
+.cli{border:1px solid var(--color-border-line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--color-bg)}
+.cli-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.cli-top b{display:block;font-size:15px}
+.cli-top small{display:block;color:var(--color-fg-muted);font-size:12px;margin-top:2px}
+.cli-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.cli-nums div{display:flex;flex-direction:column;gap:2px}
+.cli-nums span{font-size:11px;color:var(--color-fg-muted)}
+.cli-nums b{font-size:13px;font-variant-numeric:tabular-nums}
+.cli-of{margin:0;font-size:13px;color:var(--g);font-weight:600}
+.cli-pe{margin:0;font-size:12px;color:var(--color-bad)}
+@media (max-width:420px){.cli-nums{grid-template-columns:repeat(2,1fr)}}
+.canales{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:12px}
+.can{border:1px solid var(--color-border-line);border-radius:12px;padding:12px;background:var(--color-bg)}
+.can h4{margin:0 0 8px;font-size:15px}
+.can .kv b{font-size:18px}
+.pen td{min-width:52px}
+.carrera{display:grid;grid-template-columns:minmax(7rem,10rem) 1fr 4.5rem;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--color-border-line)}
+.car-n b{display:block;font-size:14px}.car-n small{color:var(--color-fg-muted);font-size:11px}
+.car-v{text-align:right}.car-v b{display:block;font-size:16px}.car-v small{font-size:11px}
 </style>
 <link rel="stylesheet" href="leaflet.css">
 <script src="d3.min.js"></script>
@@ -146,16 +179,147 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       </div>
     </div>
     <nav class="cpn-nav" aria-label="Vistas">
-      <button type="button" data-vista="global" aria-pressed="true">Global</button>
+      <button type="button" data-vista="hoy" aria-pressed="true">Hoy</button>
+      <button type="button" data-vista="global" aria-pressed="false">Global</button>
       <button type="button" data-vista="ruta" aria-pressed="false">Ruta por ruta</button>
       <button type="button" data-vista="semana" aria-pressed="false">Semana</button>
-      <button type="button" data-vista="mapa" aria-pressed="false">Mapa de visitas</button>
-      <button type="button" data-vista="foco" aria-pressed="false">Productos foco</button>
+      <button type="button" data-vista="clientes" aria-pressed="false">Clientes</button>
+      <button type="button" data-vista="foco" aria-pressed="false">Productos</button>
+      <button type="button" data-vista="canales" aria-pressed="false">Canales</button>
+      <button type="button" data-vista="utilidad" aria-pressed="false">Margen</button>
+      <button type="button" data-vista="bono" aria-pressed="false">Bono</button>
+      <button type="button" data-vista="temporada" aria-pressed="false">Temporada</button>
+      <button type="button" data-vista="mapa" aria-pressed="false">Mapa</button>
       <button type="button" data-vista="flotilla" aria-pressed="false">Flotilla</button>
     </nav>
   </header>
 
-  <section id="v-global" data-vista-sec="global">
+    <section id="v-hoy" data-vista-sec="hoy">
+    <div class="cpn-hero">
+      <p class="eyebrow">Hoja del día · <span data-draw="hoyFecha">—</span></p>
+      <h2 data-draw="hoyTitulo">—</h2>
+      <p class="take" data-draw="hoyTake">—</p>
+      <div class="hero-tiles" data-draw="hoyTiles"></div>
+    </div>
+    <div class="grid" style="margin-top: var(--cds-gap-md)">
+      <div class="card wide">
+        <h3>Qué hacer hoy</h3>
+        <p class="note">Acciones ordenadas por lo que más dinero mueve. Salen de la venta de ayer, la meta del mes, el bono y los clientes de la megabase.</p>
+        <ol class="acciones" data-draw="hoyAcciones"></ol>
+      </div>
+      <div class="card">
+        <h3>Esta semana</h3>
+        <p class="note">Para revisar el lunes con los vendedores.</p>
+        <ul class="puntos" data-draw="hoySemana"></ul>
+      </div>
+      <div class="card">
+        <h3>Este mes</h3>
+        <p class="note">Para decidir pedidos, precios y en qué enfocar el mes.</p>
+        <ul class="puntos" data-draw="hoyMes"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-clientes" data-vista-sec="clientes" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Clientes</h3>
+        <p class="note" data-draw="cliNota">—</p>
+        <div class="kv" data-draw="cliKpis"></div>
+      </div>
+      <div class="card wide">
+        <div class="filtros">
+          <label>Ruta <select class="sel" id="cli-ruta"><option value="">Todas</option><option>Ruta 1</option><option>Ruta 2</option><option>Ruta 3</option><option>Ruta 4</option><option>Ruta 5</option><option>Ruta 6</option><option>Ruta 7</option><option>Ruta 13</option></select></label>
+          <label>Estado <select class="sel" id="cli-estado"><option value="riesgo">En riesgo y perdidos</option><option value="">Todos</option><option value="En riesgo">En riesgo</option><option value="Perdido">Perdidos</option><option value="Creciendo">Creciendo</option><option value="Nuevo">Nuevos</option><option value="top">Los que más dejan</option></select></label>
+          <label class="buscar">Buscar <input class="sel" id="cli-buscar" type="search" placeholder="Nombre o número"></label>
+        </div>
+        <div class="lista-cli" data-draw="cliLista"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-productos" data-vista-sec="foco" hidden>
+    <div class="grid" style="margin-top: var(--cds-gap-md)">
+      <div class="card wide">
+        <h3>Penetración por ruta</h3>
+        <p class="note">Qué porcentaje de los clientes activos de cada ruta compra cada marca (últimos 6 meses de la megabase). Más oscuro = más clientes la compran. Los huecos claros son oportunidad.</p>
+        <div class="tblwrap" data-draw="penTabla"></div>
+      </div>
+      <div class="card wide">
+        <h3>Oportunidades de producto</h3>
+        <p class="note">Clientes activos que no compran los productos foco. Es la lista para que cada vendedor ofrezca.</p>
+        <div class="tblwrap" data-draw="huecosTabla"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-canales" data-vista-sec="canales" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Canales</h3>
+        <p class="note" data-draw="canNota">—</p>
+        <div class="canales" data-draw="canCards"></div>
+      </div>
+      <div class="card wide">
+        <h3>Por tipo de negocio</h3>
+        <p class="note">Hectolitros al mes, clientes y margen por giro (promedio de los últimos 3 meses de la megabase).</p>
+        <div class="tblwrap" data-draw="girosTabla"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-utilidad" data-vista-sec="utilidad" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Margen del mes en curso</h3>
+        <p class="note">Estimado: hectolitros vendidos en Power Sales por el margen por hectolitro de cada ruta. Margen = precio detalle − precio factura − comisión de $2 por caja. No descuenta sueldos, diésel ni gastos.</p>
+        <div class="kv" data-draw="utKpis"></div>
+      </div>
+      <div class="card">
+        <h3>Margen por ruta</h3>
+        <p class="note">Pesos al mes (promedio de los últimos 3 meses de la megabase) y pesos por hectolitro.</p>
+        <div data-draw="utRutas"></div>
+      </div>
+      <div class="card">
+        <h3>Qué marca deja más</h3>
+        <p class="note">Margen por hectolitro de cada marca, de las 7 rutas. Conviene empujar las de arriba.</p>
+        <div data-draw="utMarcas"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-bono" data-vista-sec="bono" hidden>
+    <div class="cpn-hero">
+      <p class="eyebrow">Bono del mes · <span data-draw="bonoProd">—</span></p>
+      <h2 data-draw="bonoTitulo">—</h2>
+      <p class="take" data-draw="bonoTake">—</p>
+      <div class="hero-tiles" data-draw="bonoTiles"></div>
+    </div>
+    <div class="grid" style="margin-top: var(--cds-gap-md)">
+      <div class="card wide">
+        <h3>Carrera por ruta</h3>
+        <p class="note">Cajas vendidas en el mes contra el mínimo. La línea dorada es el mínimo; el número gris es su venta normal.</p>
+        <div data-draw="bonoCarrera"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-temporada" data-vista-sec="temporada" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Temporada: 2026 contra 2025</h3>
+        <p class="note" data-draw="tempNota">—</p>
+        <div class="chart" data-draw="tempChart"></div>
+      </div>
+      <div class="card wide">
+        <h3>Lo que viene</h3>
+        <p class="note">Cuánto se vendió el año pasado en los próximos meses, para preparar pedidos y viajes.</p>
+        <div class="tblwrap" data-draw="tempTabla"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-global" data-vista-sec="global" hidden>
     <div class="cpn-hero">
       <p class="eyebrow">Último día con venta · <span data-draw="diaLargo" data-source="resumenDia">—</span></p>
       <h2>Vendimos <span data-draw="hVenta" data-source="resumenDia" data-field="venta" data-where="ruta=TOTAL">—</span></h2>
@@ -304,6 +468,11 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
           <button type="button" data-mapa="Ruta 7" aria-pressed="false">Ruta 7</button>
           <button type="button" data-mapa="Ruta 13" aria-pressed="false">Ruta 13</button>
         </div>
+        <div class="cpn-rutas" role="group" aria-label="Periodo del mapa" style="margin-top:8px">
+          <button type="button" data-periodo="dia" aria-pressed="true">Último día</button>
+          <button type="button" data-periodo="mes" aria-pressed="false">Todo el mes</button>
+          <button type="button" data-periodo="sinventa" aria-pressed="false">Solo sin venta (mes)</button>
+        </div>
         <div class="chart" style="min-height: 420px" data-draw="mapa" data-source="puntos"></div>
       </div>
     </div>
@@ -340,6 +509,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
           <div><span>Rendimiento</span><b data-draw="fRend" data-source="flotilla" data-field="rendimientoKmL" data-row="0">—</b></div>
           <div><span>Utilización</span><b data-draw="fUtil" data-source="flotilla" data-field="utilizacion" data-row="0">—</b></div>
           <div><span>Diésel estimado</span><b data-draw="fDiesel" data-source="flotilla" data-field="costoDiesel" data-row="0">—</b></div>
+          <div><span>Diésel por caja (rutas con GPS)</span><b data-draw="fCosto">—</b></div>
           <div><span>Alertas de manejo</span><b data-draw="fAlertas" data-source="flotilla" data-field="alertas" data-row="0">—</b></div>
         </div>
       </div>
@@ -753,6 +923,7 @@ dash.calc('alertas', {
 
   </div>
 </main>
+<script src="modulos.js"></script>
 <script src="mapa-real.js"></script>
 <script src="app.js"></script>
 </body>

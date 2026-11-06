@@ -7,6 +7,11 @@
     { n: 'Bodega Mixtequilla', lat: 18.71955, lng: -95.98737 },
   ];
   const color = (r) => (window.CPN && window.CPN.routeColor[r]) || '#1F7A45';
+  document.querySelectorAll('[data-periodo]').forEach((b) => b.addEventListener('click', () => {
+    window.CPN.mapaPeriodo = b.getAttribute('data-periodo');
+    document.querySelectorAll('[data-periodo]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    dash.draw('mapa');
+  }));
 
   dash.draw('mapa', (el) => {
     const g = dash.data('puntos');
@@ -32,7 +37,9 @@
 
     const ult = g.data.map((r) => r.fecha).sort().pop();
     const filtro = (window.CPN && window.CPN.mapa) || 'todas';
-    const pts = g.data.filter((r) => r.fecha === ult && (filtro === 'todas' || r.ruta === filtro));
+    const periodo = (window.CPN && window.CPN.mapaPeriodo) || 'dia';
+    const mes = ult.slice(0, 7);
+    const pts = g.data.filter((r) => (periodo === 'dia' ? r.fecha === ult : r.fecha.slice(0, 7) === mes) && (periodo !== 'sinventa' || !r.venta) && (filtro === 'todas' || r.ruta === filtro));
     const bounds = [];
 
     BODEGAS.forEach((b) => {
@@ -54,7 +61,7 @@
     setTimeout(() => m.invalidateSize(), 50);
 
     const t = document.createElement('span');
-    t.textContent = window.CPN.fmt.largo(ult) + ' · ' + pts.length + ' visitas · ' + pts.filter((p) => p.venta).length + ' con compra';
+    t.textContent = (periodo === 'dia' ? window.CPN.fmt.largo(ult) : 'Mes en curso') + ' · ' + pts.length + ' visitas · ' + pts.filter((p) => p.venta).length + ' con compra';
     pie.append(t);
     Object.entries(window.CPN.routeColor).filter(([r]) => filtro === 'todas' || r === filtro).forEach(([r, c]) => {
       const s = document.createElement('span');

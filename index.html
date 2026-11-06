@@ -132,6 +132,69 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 }
 #app{padding:0!important}
 </style>
+
+<style>
+.shell{display:flex;min-height:100vh}
+.side{width:248px;flex:0 0 248px;background:#0B3F25;color:#E8F1EA;display:flex;flex-direction:column;gap:6px;padding:18px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side-brand{display:flex;gap:10px;align-items:center;padding:4px 8px 14px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:6px}
+.side-brand b{display:block;font-family:var(--font-anthropic-serif);font-weight:400;font-size:20px;color:#fff}
+.side-brand small{display:block;font-size:11px;color:#A9CDB4}
+.side-g p{margin:12px 10px 4px;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:#E9B949}
+.side button{display:flex;align-items:center;gap:12px;width:100%;font:inherit;font-size:14px;color:#E8F1EA;background:transparent;border:0;border-radius:10px;padding:9px 10px;cursor:pointer;text-align:left}
+.side button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 20px}
+.side button:hover{background:rgba(255,255,255,.07)}
+.side button[aria-pressed="true"]{background:#E9B949;color:#0B3F25;font-weight:600}
+.side-foot{margin-top:auto;padding:12px 8px 4px;border-top:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:8px;font-size:11.5px;color:#A9CDB4}
+.side .salir{justify-content:center;border:1px solid rgba(255,255,255,.25);font-size:13px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top) + 12px) 22px 12px;background:color-mix(in srgb,var(--color-bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border-line)}
+.topbar h1{margin:0;font-family:var(--font-anthropic-serif);font-weight:400;font-size:24px;line-height:1.1}
+.topbar p{margin:2px 0 0;font-size:12px;color:var(--color-fg-muted)}
+.topbar .chipf{margin-left:auto;font-size:12px;color:var(--color-fg-muted);background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:999px;padding:6px 12px;white-space:nowrap}
+.menu-btn{display:none;width:40px;height:40px;border-radius:12px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);align-items:center;justify-content:center;cursor:pointer}
+.menu-btn svg,.tabbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#dash-root{padding:18px 22px 40px}
+.tabbar{display:none}
+#veil{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:12px;padding:4px}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--color-fg);padding:8px 14px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--g);color:#fff;font-weight:600}
+.seg-sm button{font-size:13px;padding:6px 10px}
+.card .seg{margin:2px 0}
+.donut{display:flex;flex-wrap:wrap;align-items:center;gap:16px;position:relative}
+.donut svg{flex:0 0 auto}
+.dlegend{list-style:none;margin:0;padding:0;flex:1 1 150px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.dlegend li{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center}
+.dlegend i{width:12px;height:12px;border-radius:3px}
+.dlegend b{font-variant-numeric:tabular-nums}
+.cumrow{display:grid;grid-template-columns:2.4rem 1fr 3.4rem;gap:10px;align-items:center;font-size:13px;margin:4px 0}
+.cumbar{height:12px;border-radius:999px;background:var(--bar-bg);position:relative;overflow:visible}
+.cumbar i{position:absolute;inset:0 auto 0 0;border-radius:999px}
+.cumbar em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--color-fg)}
+.cumrow b{text-align:right;font-variant-numeric:tabular-nums}
+.heat td{min-width:48px}
+.cpn{gap:var(--cds-gap-md)}
+@media (max-width:899px){
+  .side{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-105%);transition:transform .22s ease;width:84vw;max-width:300px;padding-top:calc(env(safe-area-inset-top) + 18px)}
+  .side.open{transform:none}
+  .menu-btn{display:inline-flex}
+  .topbar{padding:calc(env(safe-area-inset-top) + 10px) 14px 10px}
+  .topbar h1{font-size:21px}
+  .topbar .chipf{display:none}
+  #dash-root{padding:14px 14px calc(env(safe-area-inset-bottom) + 86px)}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--color-panel);border-top:1px solid var(--color-border-line);padding:6px 4px calc(env(safe-area-inset-bottom) + 6px)}
+  .tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;font:inherit;font-size:11px;color:var(--color-fg-muted);background:none;border:0;padding:4px 0;cursor:pointer}
+  .tabbar button[aria-pressed="true"]{color:var(--g);font-weight:700}
+}
+#app{padding:0!important}
+.gv{border-left:4px solid #C98A0B}
+.gvrow{display:grid;grid-template-columns:6.2rem 1fr 5.6rem;gap:10px;align-items:center;padding:5px 0;font-size:13px}
+.gvbars{display:flex;flex-direction:column;gap:3px}
+.gvbars .bar{height:11px;background:var(--bar-bg);border-radius:999px;overflow:hidden;display:flex}
+.gvbars .bar i{display:block;height:100%}
+.gvbars .bar.thin{height:6px}
+.gvv{text-align:right}.gvv b{display:block;font-variant-numeric:tabular-nums}.gvv small{font-size:11px;color:var(--color-fg-muted)}
+</style>
 </head>
 <body>
 <section id="login" hidden>
@@ -419,6 +482,21 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <h3>Margen del mes en curso</h3>
         <p class="note">Estimado: hectolitros vendidos en Power Sales por el margen por hectolitro de cada ruta. Margen = precio detalle − precio factura − comisión de $2 por caja. No descuenta sueldos, diésel ni gastos.</p>
         <div class="kv" data-draw="utKpis"></div>
+      </div>
+      <div class="card wide gv">
+        <h3>Gasto variable del mes en curso</h3>
+        <p class="note">Lo que se dio en descuentos a los clientes: bonificación + promoción. Estimado con el gasto por hectolitro de cada ruta del último cierre de Heineken (<span data-draw="gvCorte">—</span>) por los hectolitros de Power Sales. Heineken lo reembolsa 30 días después del corte.</p>
+        <div class="kv" data-draw="gvKpis"></div>
+      </div>
+      <div class="card">
+        <h3>Gasto variable por ruta</h3>
+        <p class="note">Pesos de bonificación y promoción por cada hectolitro vendido, contra el margen por hectolitro.</p>
+        <div data-draw="gvRutas"></div>
+      </div>
+      <div class="card">
+        <h3>Gasto variable mes con mes</h3>
+        <p class="note">Bonificación y promoción de toda la empresa (RENTABILIDAD GASTO VARIABLE). La línea es el gasto por Hl.</p>
+        <div class="chart" data-draw="gvMeses"></div>
       </div>
       <div class="card">
         <h3>Margen por ruta</h3>

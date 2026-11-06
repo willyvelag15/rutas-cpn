@@ -211,3 +211,50 @@
   const mas = document.getElementById('btn-mas'); if (mas) mas.addEventListener('click', () => { side.classList.add('open'); veil.hidden = false; });
   if (veil) veil.addEventListener('click', cerrar);
 })();
+
+/* Gasto variable: por ruta y mes con mes */
+(function () {
+  const F = window.CPN.fmt;
+  const rows = (id) => (dash.data(id).status === 'ok' ? dash.data(id).data : []);
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const R7 = ['Ruta 1', 'Ruta 2', 'Ruta 3', 'Ruta 4', 'Ruta 6', 'Ruta 7', 'Ruta 13'];
+  const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  dash.draw('gvCorte', (e) => { const g = rows('gastovar')[0]; e.textContent = g ? g.corte.split('-').reverse().join('/') : '—'; });
+  dash.draw('gvRutas', (host) => {
+    host.replaceChildren(); const g = rows('gastovar').filter((r) => R7.concat(['Ruta 5']).includes(r.ruta)); const u = {}; rows('utilruta').forEach((r) => { u[r.ruta] = r.utilHl; }); if (!g.length) return;
+    const max = d3.max(g, (r) => Math.max(r.gastoHl, u[r.ruta] || 0));
+    g.sort((a, b) => b.gastoHl - a.gastoHl).forEach((r) => {
+      const row = el('div', 'gvrow'); const n = el('span', 'chip'); const sw = el('i'); sw.style.background = window.CPN.routeColor[r.ruta] || '#6B7280'; n.append(sw, el('span', null, r.ruta));
+      const bars = el('div', 'gvbars');
+      const b1 = el('div', 'bar'); const f1 = el('i'); f1.style.width = (r.bonifHl / max * 100) + '%'; f1.style.background = '#C98A0B'; const f2 = el('i'); f2.style.width = (r.promoHl / max * 100) + '%'; f2.style.background = '#E2B04A'; b1.append(f1, f2);
+      const b2 = el('div', 'bar thin'); const f3 = el('i'); f3.style.width = ((u[r.ruta] || 0) / max * 100) + '%'; f3.style.background = 'var(--g)'; b2.append(f3);
+      bars.append(b1, b2);
+      const v = el('span', 'gvv'); v.append(el('b', null, F.money(r.gastoHl)), el('small', null, 'margen ' + F.money(u[r.ruta] || 0)));
+      row.append(n, bars, v); host.append(row);
+    });
+    const lg = el('div', 'legend'); [['Bonificación', '#C98A0B'], ['Promoción', '#E2B04A'], ['Margen por Hl', 'var(--g)']].forEach(([t, c]) => { const s = el('span'); const i = el('i'); i.style.background = c; s.append(i, el('span', null, t)); lg.append(s); }); host.append(lg);
+  });
+  dash.draw('gvMeses', (host) => {
+    host.replaceChildren(); const m = rows('gastovar_mes').filter((r) => r.anio === 2026); if (!m.length) return;
+    const p25 = {}; rows('gastovar_mes').filter((r) => r.anio === 2025).forEach((r) => { p25[r.mes] = r; });
+    const W = Math.max(300, host.clientWidth || 560), H = 240, mg = { t: 16, r: 40, b: 26, l: 44 };
+    const svg = d3.select(host).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const x = d3.scaleBand(m.map((r) => r.mes), [mg.l, W - mg.r]).padding(0.25);
+    const y = d3.scaleLinear([0, d3.max(m, (r) => r.gasto) * 1.15], [H - mg.b, mg.t]);
+    const y2 = d3.scaleLinear([0, d3.max(m, (r) => r.gastoHl) * 1.3], [H - mg.b, mg.t]);
+    svg.append('g').selectAll('line').data(y.ticks(4)).join('line').attr('x1', mg.l).attr('x2', W - mg.r).attr('y1', y).attr('y2', y).attr('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').selectAll('text').data(y.ticks(4)).join('text').attr('x', mg.l - 6).attr('y', (v) => y(v) + 4).attr('text-anchor', 'end').attr('font-size', 10).attr('fill', 'var(--color-fg-muted)').text((v) => '$' + F.int(v / 1e6 * 10) / 10 + 'M');
+    const tip = d3.select(host).append('div').attr('class', 'tip').style('opacity', 0);
+    const g = svg.append('g').selectAll('g').data(m).join('g');
+    g.append('rect').attr('x', (r) => x(r.mes)).attr('width', x.bandwidth()).attr('y', (r) => y(r.bonificacion)).attr('height', (r) => y(0) - y(r.bonificacion)).attr('fill', '#C98A0B');
+    g.append('rect').attr('x', (r) => x(r.mes)).attr('width', x.bandwidth()).attr('y', (r) => y(r.gasto)).attr('height', (r) => y(r.bonificacion) - y(r.gasto)).attr('fill', '#E2B04A').attr('rx', 2);
+    g.on('mousemove', (ev, r) => { const [px, py] = d3.pointer(ev, host); tip.style('opacity', 1).style('left', Math.min(px + 10, W - 200) + 'px').style('top', (py - 30) + 'px').text(MES[r.mes - 1] + ': ' + F.money(r.gasto) + ' (' + F.money(r.gastoHl) + '/Hl, ' + F.pct(r.pctIngreso) + ' del ingreso)' + (p25[r.mes] ? ' · 2025: ' + F.money(p25[r.mes].gasto) : '')); }).on('mouseleave', () => tip.style('opacity', 0));
+    const line = d3.line().x((r) => x(r.mes) + x.bandwidth() / 2).y((r) => y2(r.gastoHl));
+    svg.append('path').attr('d', line(m)).attr('fill', 'none').attr('stroke', 'var(--color-bad)').attr('stroke-width', 2);
+    svg.append('g').selectAll('circle').data(m).join('circle').attr('cx', (r) => x(r.mes) + x.bandwidth() / 2).attr('cy', (r) => y2(r.gastoHl)).attr('r', 3).attr('fill', 'var(--color-bad)');
+    svg.append('g').selectAll('text').data(m).join('text').attr('x', (r) => x(r.mes) + x.bandwidth() / 2).attr('y', H - 8).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text((r) => MES[r.mes - 1]);
+    const lg = d3.select(host).append('div').attr('class', 'legend');
+    [['Bonificación', '#C98A0B'], ['Promoción', '#E2B04A'], ['Gasto por Hl', 'var(--color-bad)']].forEach(([t, c]) => { const s = lg.append('span'); s.append('i').style('background', c); s.append('span').text(t); });
+    const ult = m[m.length - 1]; if (ult && ult.hl < 2000) host.append(el('p', 'note', MES[ult.mes - 1].replace(/^./, (c) => c.toUpperCase()) + ' todavía no está completo en el archivo de Heineken.'));
+  });
+})();

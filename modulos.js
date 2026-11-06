@@ -43,13 +43,23 @@
     },
   });
 
+  dash.calc('gvDia', {
+    inputs: ['diario', 'gastovar'],
+    fn: (diario, gastovar) => {
+      const g = {}; gastovar.forEach((r) => { g[r.ruta] = r; });
+      const prom = gastovar.length ? gastovar.reduce((a, r) => a + r.gasto, 0) / gastovar.reduce((a, r) => a + r.hl, 0) : 0;
+      return diario.map((r) => { const x = g[r.ruta]; const b = x ? x.bonifHl : prom / 2, p = x ? x.promoHl : prom / 2; return { fecha: r.fecha, ruta: r.ruta, hl: r.hl, bonificacion: r.hl * b, promocion: r.hl * p, gasto: r.hl * (b + p) }; });
+    },
+  });
+
   /* ---------- HOY ---------- */
   function datosHoy() {
     const t = one('resumenDia', 'TOTAL'), m = one('mesRuta', 'TOTAL');
     if (!t || !m) return null;
     const dia = rows('resumenDia').filter((r) => r.ruta !== 'TOTAL');
     const margenAyer = rows('margenMes').filter((r) => r.fecha === t.fecha).reduce((a, r) => a + r.margen, 0);
-    return { t, m, dia, margenAyer };
+    const gvAyer = rows('gvDia').filter((r) => r.fecha === t.fecha).reduce((a, r) => a + r.gasto, 0);
+    return { t, m, dia, margenAyer, gvAyer };
   }
 
   dash.draw('hoyFecha', (e) => { const x = datosHoy(); e.textContent = x ? 'venta del ' + F.largo(x.t.fecha) : '—'; });
@@ -66,6 +76,7 @@
     const x = datosHoy(); e.replaceChildren(); if (!x) return;
     tile(e, 'Venta de ayer', money(x.t.venta), hl(x.t.hl) + ' Hl');
     tile(e, 'Margen estimado ayer', money(x.margenAyer), 'antes de gastos');
+    tile(e, 'Gasto variable ayer', money(x.gvAyer), 'bonificación + promoción');
     tile(e, 'Avance del mes', pct(x.m.avance), 'debería ir en ' + pct(x.m.esperado));
     tile(e, 'Hay que vender por día', hl(x.m.faltaPorDia) + ' Hl', 'para llegar a ' + F.int(x.m.metaHl) + ' Hl');
   });
@@ -229,6 +240,13 @@
     const tot = mm.reduce((a, r) => a + r.margen, 0); const n = m.diasTrans;
     kv(e, [['Margen del mes a hoy', money(tot)], ['Proyección al cierre', money(n ? tot / n * 25 : 0)], ['Margen por día', money(n ? tot / n : 0)], ['Margen por Hl', money(m.hlMes ? tot / m.hlMes : 0)]]);
   });
+  dash.draw('gvKpis', (e) => {
+    e.replaceChildren(); const g = rows('gvDia'); const m = one('mesRuta', 'TOTAL'); if (!g.length || !m) return;
+    const s = (k) => g.reduce((a, r) => a + r[k], 0); const n = m.diasTrans; const tot = s('gasto');
+    const mg = rows('margenMes').reduce((a, r) => a + r.margen, 0);
+    kv(e, [['Gasto variable a hoy', money(tot), 'warn'], ['Proyección al cierre', money(n ? tot / n * 25 : 0)], ['Bonificación', money(s('bonificacion'))], ['Promoción', money(s('promocion'))], ['Gasto por Hl', money(m.hlMes ? tot / m.hlMes : 0)], ['Gasto entre margen', pct(mg ? tot / mg : 0)]]);
+  });
+
   dash.draw('utRutas', (e) => {
     e.replaceChildren(); const u = rows('utilruta').filter((r) => RUTAS7.includes(r.ruta)).sort((a, b) => b.utilMes - a.utilMes); if (!u.length) return;
     const max = d3.max(u, (r) => r.utilMes);

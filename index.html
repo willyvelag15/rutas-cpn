@@ -39,7 +39,9 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .caja button:disabled{opacity:.6}
 .error{background:rgba(239,107,94,.18);border:1px solid rgba(239,107,94,.5);color:#FFD9D4;padding:10px 12px;border-radius:10px;font-size:14px;text-align:center}
 </style>
+<link rel="stylesheet" href="leaflet.css">
 <script src="d3.min.js"></script>
+<script src="leaflet.js"></script>
 <script src="runtime.js"></script>
 </head>
 <body>
@@ -291,7 +293,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     <div class="grid">
       <div class="card wide">
         <h3>Visitas en el mapa</h3>
-        <p class="note">Cada punto es una visita registrada en Power Sales con GPS. Relleno: compró. Hueco: no compró. Los cuadros son las bodegas.</p>
+        <p class="note">Cada punto es una visita registrada en Power Sales con GPS. Relleno: compró. Blanco: no compró. Los cuadros dorados son las bodegas. Toca un punto para ver el detalle.</p>
         <div class="cpn-rutas" role="group" aria-label="Filtrar mapa">
           <button type="button" data-mapa="todas" aria-pressed="true">Todas</button>
           <button type="button" data-mapa="Ruta 1" aria-pressed="false">Ruta 1</button>
@@ -751,6 +753,7 @@ dash.calc('alertas', {
 
   </div>
 </main>
+<script src="mapa-real.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

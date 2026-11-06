@@ -19,16 +19,19 @@
   dash.calc('bonoRuta', {
     inputs: ['diario', 'bono', 'metas'],
     fn: (diario, bono, metas) => {
-      const b = bono[0]; if (!b) return [];
       const n = new Set(diario.map((r) => r.fecha)).size;
-      const out = RUTAS7.map((ru) => {
-        const cajas = diario.filter((r) => r.ruta === ru).reduce((a, r) => a + (r[b.campo] || 0), 0);
-        const proy = n ? cajas / n * 25 : 0;
-        const m = metas.find((x) => x.ruta === ru) || {};
-        return { ruta: ru, vendedor: m.vendedor || '', cajas, proyeccion: proy, minimo: b.minimo, normal: b.normal[ru] || 0, falta: Math.max(0, b.minimo - cajas), llega: proy >= b.minimo };
-      }).sort((a, b2) => b2.cajas - a.cajas);
-      out.forEach((r, i) => { r.lugar = i + 1; });
-      return out;
+      const all = [];
+      bono.forEach((b) => {
+        const out = RUTAS7.map((ru) => {
+          const cajas = diario.filter((r) => r.ruta === ru).reduce((a, r) => a + (r[b.campo] || 0), 0);
+          const proy = n ? cajas / n * 25 : 0;
+          const m = metas.find((x) => x.ruta === ru) || {};
+          return { id: b.id, ruta: ru, vendedor: m.vendedor || '', cajas, proyeccion: proy, minimo: b.minimo, normal: b.normal[ru] || 0, falta: Math.max(0, b.minimo - cajas), llega: proy >= b.minimo };
+        }).sort((a, b2) => b2.cajas - a.cajas || b2.normal - a.normal);
+        out.forEach((r, i) => { r.lugar = i + 1; });
+        all.push(...out);
+      });
+      return all;
     },
   });
 
@@ -85,13 +88,13 @@
     }
     // 3. Clientes en riesgo que más dinero dejan de dar
     rows('clientes').filter((c) => c.estado === 'En riesgo' && RUTAS7.includes(c.ruta)).sort((a, b) => b.perdidaMes - a.perdidaMes).slice(0, 3).forEach((c) => {
-      acc.push({ p: 70 + Math.min(20, c.perdidaMes / 500), tag: c.ruta, txt: 'Visitar a ' + c.negocio + ': bajó de ' + hl(c.hlMesAntes) + ' a ' + hl(c.hlMes3) + ' Hl al mes. Se dejan de ganar unos ' + money(c.perdidaMes) + ' al mes.' });
+      acc.push({ p: 70 + Math.min(20, c.perdidaMes / 500), tag: c.ruta, txt: 'Visitar a ' + c.negocio + ': bajó de ' + hl(c.hlMesAntes) + ' a ' + hl(c.hlMes3) + ' Hl al mes: se dejan de vender ' + money(c.ventaPerdidaMes || 0) + ' al mes (' + money(c.perdidaMes) + ' de margen).' });
     });
     // 4. Bono
-    const bono = rows('bonoRuta'); const bcfg = rows('bono')[0];
-    if (bono.length && bcfg) {
+    const bcfg0 = rows('bono')[0]; const bono = bcfg0 ? rows('bonoRuta').filter((r) => r.id === bcfg0.id) : [];
+    if (bono.length && bcfg0) {
       const lider = bono[0]; const lejos = bono.filter((r) => !r.llega).sort((a, b) => a.proyeccion - b.proyeccion)[0];
-      acc.push({ p: 55, tag: 'Bono', txt: 'Bono ' + bcfg.producto + ': va ganando ' + lider.ruta + ' (' + lider.vendedor + ') con ' + F.hl(lider.cajas) + ' cajas.' + (lejos ? ' ' + lejos.ruta + ' no llegaría al mínimo de ' + bcfg.minimo + ' cajas a este ritmo.' : '') });
+      acc.push({ p: 55, tag: 'Bono', txt: 'Bono ' + bcfg0.producto + ': va ganando ' + lider.ruta + ' (' + lider.vendedor + ') con ' + F.hl(lider.cajas) + ' cajas.' + (lejos ? ' ' + lejos.ruta + ' no llegaría al mínimo de ' + bcfg0.minimo + ' cajas a este ritmo.' : '') });
     }
     // 5. Hueco de producto más grande
     const act = rows('clientes').filter((c) => !['Inactivo', 'Perdido'].includes(c.estado) && RUTAS7.includes(c.ruta));
@@ -167,7 +170,7 @@
       card.append(top, nums);
       const ofrecer = [...new Set([...(c.huecosFoco || []), ...(c.huecos || [])])].filter((h) => !(h === 'Miller' && (c.huecosFoco || []).includes('Miller 4x6')) && !(h === 'Amstel Ultra' && (c.huecosFoco || []).some((x) => x.startsWith('Amstel'))));
       if (ofrecer.length && c.estado !== 'Inactivo') card.append(el('p', 'cli-of', 'Ofrecer: ' + ofrecer.join(', ')));
-      if (c.perdidaMes > 0 && ['En riesgo', 'Perdido'].includes(c.estado)) card.append(el('p', 'cli-pe', 'Se dejan de ganar unos ' + money(c.perdidaMes) + ' al mes'));
+      if (c.perdidaMes > 0 && ['En riesgo', 'Perdido'].includes(c.estado)) card.append(el('p', 'cli-pe', 'Se dejan de vender unos ' + money(c.ventaPerdidaMes || 0) + ' al mes · margen que se pierde: ' + money(c.perdidaMes)));
       e.append(card);
     });
   });
@@ -241,22 +244,24 @@
   });
 
   /* ---------- BONO ---------- */
-  const bcfg = () => rows('bono')[0];
-  dash.draw('bonoProd', (e) => { const b = bcfg(); e.textContent = b ? b.producto + ' · mínimo ' + b.minimo + ' cajas por ruta' : '—'; });
-  dash.draw('bonoTitulo', (e) => { const r = rows('bonoRuta'); e.textContent = r.length ? 'Va ganando ' + r[0].ruta + ': ' + r[0].vendedor : '—'; });
+  window.CPN.bonoSel = window.CPN.bonoSel || 'miller';
+  const bcfg = () => rows('bono').find((b) => b.id === window.CPN.bonoSel) || rows('bono')[0];
+  const bonoRows = () => { const b = bcfg(); return b ? rows('bonoRuta').filter((r) => r.id === b.id) : []; };
+  dash.draw('bonoProd', (e) => { const b = bcfg(); e.textContent = b ? b.producto + ' · mínimo ' + b.minimo + ' cajas por ruta' + (b.minimoFuente === 'sugerido' ? ' (sugerido)' : '') : '—'; });
+  dash.draw('bonoTitulo', (e) => { const r = bonoRows(); e.textContent = !r.length ? '—' : r[0].cajas > 0 ? 'Va ganando ' + r[0].ruta + ': ' + r[0].vendedor : 'Nadie lo ha vendido este mes'; });
   dash.draw('bonoTake', (e) => {
-    const r = rows('bonoRuta'), b = bcfg(); if (!r.length || !b) { e.textContent = '—'; return; }
+    const r = bonoRows(), b = bcfg(); if (!r.length || !b) { e.textContent = '—'; return; }
     const tot = r.reduce((a, x) => a + x.proyeccion, 0), normal = r.reduce((a, x) => a + x.normal, 0);
     const bolsa = Math.max(0, tot - normal) * b.utilCaja * b.pctBolsa;
     e.textContent = 'Si siguen a este ritmo, las 7 rutas venderían ' + F.hl(tot) + ' cajas contra ' + F.hl(normal) + ' de venta normal. La bolsa del 1er lugar sería de unos ' + money(bolsa) + ' (' + pct(b.pctBolsa) + ' del margen extra). ' + r.filter((x) => x.llega).length + ' de 7 rutas llegarían al mínimo.';
   });
   dash.draw('bonoTiles', (e) => {
-    e.replaceChildren(); const r = rows('bonoRuta'), b = bcfg(); if (!r.length || !b) return;
+    e.replaceChildren(); const r = bonoRows(), b = bcfg(); if (!r.length || !b) return;
     const tot = r.reduce((a, x) => a + x.cajas, 0);
     tile(e, 'Cajas vendidas', F.hl(tot), 'las 7 rutas en el mes'); tile(e, 'Líder', F.hl(r[0].cajas) + ' cajas', r[0].ruta); tile(e, 'Ya pasaron el mínimo', r.filter((x) => x.cajas >= b.minimo).length + ' de 7', b.minimo + ' cajas'); tile(e, 'Margen por caja', money(b.utilCaja), 'lo que deja cada caja');
   });
   dash.draw('bonoCarrera', (e) => {
-    e.replaceChildren(); const r = rows('bonoRuta'), b = bcfg(); if (!r.length || !b) return;
+    e.replaceChildren(); const r = bonoRows(), b = bcfg(); if (!r.length || !b) return;
     const max = Math.max(b.minimo * 1.5, d3.max(r, (x) => x.cajas) * 1.1);
     r.forEach((x) => {
       const row = el('div', 'carrera');

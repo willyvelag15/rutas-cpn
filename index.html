@@ -76,6 +76,62 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 <script src="d3.min.js"></script>
 <script src="leaflet.js"></script>
 <script src="runtime.js"></script>
+
+<style>
+.shell{display:flex;min-height:100vh}
+.side{width:248px;flex:0 0 248px;background:#0B3F25;color:#E8F1EA;display:flex;flex-direction:column;gap:6px;padding:18px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side-brand{display:flex;gap:10px;align-items:center;padding:4px 8px 14px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:6px}
+.side-brand b{display:block;font-family:var(--font-anthropic-serif);font-weight:400;font-size:20px;color:#fff}
+.side-brand small{display:block;font-size:11px;color:#A9CDB4}
+.side-g p{margin:12px 10px 4px;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:#E9B949}
+.side button{display:flex;align-items:center;gap:12px;width:100%;font:inherit;font-size:14px;color:#E8F1EA;background:transparent;border:0;border-radius:10px;padding:9px 10px;cursor:pointer;text-align:left}
+.side button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 20px}
+.side button:hover{background:rgba(255,255,255,.07)}
+.side button[aria-pressed="true"]{background:#E9B949;color:#0B3F25;font-weight:600}
+.side-foot{margin-top:auto;padding:12px 8px 4px;border-top:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:8px;font-size:11.5px;color:#A9CDB4}
+.side .salir{justify-content:center;border:1px solid rgba(255,255,255,.25);font-size:13px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top) + 12px) 22px 12px;background:color-mix(in srgb,var(--color-bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border-line)}
+.topbar h1{margin:0;font-family:var(--font-anthropic-serif);font-weight:400;font-size:24px;line-height:1.1}
+.topbar p{margin:2px 0 0;font-size:12px;color:var(--color-fg-muted)}
+.topbar .chipf{margin-left:auto;font-size:12px;color:var(--color-fg-muted);background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:999px;padding:6px 12px;white-space:nowrap}
+.menu-btn{display:none;width:40px;height:40px;border-radius:12px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);align-items:center;justify-content:center;cursor:pointer}
+.menu-btn svg,.tabbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#dash-root{padding:18px 22px 40px}
+.tabbar{display:none}
+#veil{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:12px;padding:4px}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--color-fg);padding:8px 14px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--g);color:#fff;font-weight:600}
+.seg-sm button{font-size:13px;padding:6px 10px}
+.card .seg{margin:2px 0}
+.donut{display:flex;flex-wrap:wrap;align-items:center;gap:16px;position:relative}
+.donut svg{flex:0 0 auto}
+.dlegend{list-style:none;margin:0;padding:0;flex:1 1 150px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.dlegend li{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center}
+.dlegend i{width:12px;height:12px;border-radius:3px}
+.dlegend b{font-variant-numeric:tabular-nums}
+.cumrow{display:grid;grid-template-columns:2.4rem 1fr 3.4rem;gap:10px;align-items:center;font-size:13px;margin:4px 0}
+.cumbar{height:12px;border-radius:999px;background:var(--bar-bg);position:relative;overflow:visible}
+.cumbar i{position:absolute;inset:0 auto 0 0;border-radius:999px}
+.cumbar em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--color-fg)}
+.cumrow b{text-align:right;font-variant-numeric:tabular-nums}
+.heat td{min-width:48px}
+.cpn{gap:var(--cds-gap-md)}
+@media (max-width:899px){
+  .side{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-105%);transition:transform .22s ease;width:84vw;max-width:300px;padding-top:calc(env(safe-area-inset-top) + 18px)}
+  .side.open{transform:none}
+  .menu-btn{display:inline-flex}
+  .topbar{padding:calc(env(safe-area-inset-top) + 10px) 14px 10px}
+  .topbar h1{font-size:21px}
+  .topbar .chipf{display:none}
+  #dash-root{padding:14px 14px calc(env(safe-area-inset-bottom) + 86px)}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--color-panel);border-top:1px solid var(--color-border-line);padding:6px 4px calc(env(safe-area-inset-bottom) + 6px)}
+  .tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;font:inherit;font-size:11px;color:var(--color-fg-muted);background:none;border:0;padding:4px 0;cursor:pointer}
+  .tabbar button[aria-pressed="true"]{color:var(--g);font-weight:700}
+}
+#app{padding:0!important}
+</style>
 </head>
 <body>
 <section id="login" hidden>
@@ -91,8 +147,36 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
   </form>
 </section>
 <main id="app" hidden>
-  <div class="barra"><span id="actualizado"></span><button type="button" id="btn-salir">Cerrar sesión</button></div>
-  <div id="dash-root">
+<div class="shell">
+<aside class="side" id="side" aria-label="Módulos">
+<div class="side-brand"><div class="cpn-badge" aria-hidden="true">CPN</div><div><b>Rutas CPN</b><small>Comercializadora de Piedras Negras</small></div></div>
+<div class="side-g"><p>Resumen</p>
+<button type="button" data-vista="hoy" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Hoy</span></button>
+<button type="button" data-vista="empresa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M8 8h3M8 12h3M8 16h3M3 21h18"/></svg><span>Empresa</span></button>
+<button type="button" data-vista="global" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>Rutas</span></button>
+</div>
+<div class="side-g"><p>Ventas</p>
+<button type="button" data-vista="ruta" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Ruta por ruta</span></button>
+<button type="button" data-vista="semana" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Semana</span></button>
+<button type="button" data-vista="temporada" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 4 8-9"/><path d="M14 6h6v6"/></svg><span>Temporada</span></button>
+</div>
+<div class="side-g"><p>Mercado</p>
+<button type="button" data-vista="clientes" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg><span>Clientes</span></button>
+<button type="button" data-vista="foco" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span>Productos</span></button>
+<button type="button" data-vista="canales" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1.5-5h-13zM5 10v10h14V10M9 20v-5h6v5"/></svg><span>Canales</span></button>
+</div>
+<div class="side-g"><p>Dinero</p>
+<button type="button" data-vista="utilidad" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1.2-1.7-2-3-2-1.7 0-3 1-3 2.3 0 3 6 1.7 6 4.7 0 1.3-1.3 2.3-3 2.3-1.4 0-2.6-.8-3-2M12 6v1.5M12 16.5V18"/></svg><span>Margen</span></button>
+<button type="button" data-vista="bono" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8 21h8M9 17h6"/></svg><span>Bono</span></button>
+</div>
+<div class="side-g"><p>Operación</p>
+<button type="button" data-vista="mapa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Mapa de visitas</span></button>
+<button type="button" data-vista="flotilla" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 16V6h11v10M13 9h4.5l3.5 4v3h-8"/><circle cx="6" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg><span>Flotilla</span></button>
+</div>
+<div class="side-foot"><span id="actualizado"></span><button type="button" id="btn-salir" class="salir">Cerrar sesión</button></div></aside>
+<div class="main">
+<header class="topbar"><button type="button" class="menu-btn" id="btn-menu" aria-label="Abrir menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><h1 id="top-tit">Hoy</h1><p id="top-sub">Hoja del día</p></div><span class="chipf" id="chip-fecha">Comercializadora de Piedras Negras</span></header>
+<div id="dash-root">
 <style>
 #dash-root { --dash-gutter: clamp(12px, 3vw, 28px); }
 .cpn { --g: #0E5A33; --g2: #1F7A45; --gold: #C98A0B; --foam: #F3EFE2; --ink: var(--color-fg); --mut: var(--color-fg-muted);
@@ -170,31 +254,43 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 </style>
 
 <div class="cpn">
-  <header class="cpn-top">
-    <div class="cpn-brand">
-      <div class="cpn-badge" aria-hidden="true">CPN</div>
-      <div>
-        <h1>Tablero de Rutas</h1>
-        <p>Comercializadora de Piedras Negras · datos al <b data-draw="corte" data-source="diario">—</b></p>
+
+    <section id="v-empresa" data-vista-sec="empresa" hidden>
+    <div class="seg" role="group" aria-label="Tipo de venta">
+      <button type="button" data-emp="Real" aria-pressed="true">Venta real</button>
+      <button type="button" data-emp="Híbrida" aria-pressed="false">Venta híbrida</button>
+    </div>
+    <div class="cpn-hero" style="margin-top: var(--cds-gap-md)">
+      <p class="eyebrow">Comercializadora de Piedras Negras · 2026</p>
+      <h2 data-draw="empTitulo">—</h2>
+      <p class="take" data-draw="empTake">—</p>
+      <div class="hero-tiles" data-draw="empTiles"></div>
+    </div>
+    <div class="grid" style="margin-top: var(--cds-gap-md)">
+      <div class="card wide">
+        <h3>Mes con mes contra la meta</h3>
+        <p class="note">Hectolitros de toda la empresa. Barras: 2026. Línea dorada: meta. Línea gris: 2025. Sale de METAS REALES ANUALES 2026.</p>
+        <div class="chart" data-draw="empChart"></div>
+      </div>
+      <div class="card">
+        <h3>Cumplimiento por mes</h3>
+        <p class="note">Qué porcentaje de la meta se logró cada mes.</p>
+        <div data-draw="empCump"></div>
+      </div>
+      <div class="card">
+        <h3>Tabla del año</h3>
+        <p class="note">Hectolitros por mes y comparación con años anteriores.</p>
+        <div class="tblwrap" data-draw="empTabla"></div>
+      </div>
+      <div class="card wide">
+        <h3>Cumplimiento de cada ruta (venta real)</h3>
+        <p class="note">Verde: pasó su meta del mes. Rojo: se quedó abajo. Incluye la ruta 5 (autoservicios).</p>
+        <div class="tblwrap" data-draw="empRutas"></div>
       </div>
     </div>
-    <nav class="cpn-nav" aria-label="Vistas">
-      <button type="button" data-vista="hoy" aria-pressed="true">Hoy</button>
-      <button type="button" data-vista="global" aria-pressed="false">Global</button>
-      <button type="button" data-vista="ruta" aria-pressed="false">Ruta por ruta</button>
-      <button type="button" data-vista="semana" aria-pressed="false">Semana</button>
-      <button type="button" data-vista="clientes" aria-pressed="false">Clientes</button>
-      <button type="button" data-vista="foco" aria-pressed="false">Productos</button>
-      <button type="button" data-vista="canales" aria-pressed="false">Canales</button>
-      <button type="button" data-vista="utilidad" aria-pressed="false">Margen</button>
-      <button type="button" data-vista="bono" aria-pressed="false">Bono</button>
-      <button type="button" data-vista="temporada" aria-pressed="false">Temporada</button>
-      <button type="button" data-vista="mapa" aria-pressed="false">Mapa</button>
-      <button type="button" data-vista="flotilla" aria-pressed="false">Flotilla</button>
-    </nav>
-  </header>
+  </section>
 
-    <section id="v-hoy" data-vista-sec="hoy">
+  <section id="v-hoy" data-vista-sec="hoy">
     <div class="cpn-hero">
       <p class="eyebrow">Hoja del día · <span data-draw="hoyFecha">—</span></p>
       <h2 data-draw="hoyTitulo">—</h2>
@@ -206,6 +302,16 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <h3>Qué hacer hoy</h3>
         <p class="note">Acciones ordenadas por lo que más dinero mueve. Salen de la venta de ayer, la meta del mes, el bono y los clientes de la megabase.</p>
         <ol class="acciones" data-draw="hoyAcciones"></ol>
+      </div>
+      <div class="card">
+        <h3>Hectolitros por día</h3>
+        <p class="note">Las 7 rutas. La línea punteada es lo que hay que vender por día para la meta.</p>
+        <div class="chart" data-draw="hoyDias"></div>
+      </div>
+      <div class="card">
+        <h3>Quién vendió ayer</h3>
+        <p class="note">Cómo se repartió el 100% de los hectolitros entre las rutas.</p>
+        <div data-draw="hoyRutasPie"></div>
       </div>
       <div class="card">
         <h3>Esta semana</h3>
@@ -227,6 +333,16 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <p class="note" data-draw="cliNota">—</p>
         <div class="kv" data-draw="cliKpis"></div>
       </div>
+      <div class="card">
+        <h3>Cómo están los clientes</h3>
+        <p class="note">Reparto de los clientes que compraron este año, por estado.</p>
+        <div data-draw="cliPie"></div>
+      </div>
+      <div class="card">
+        <h3>Venta que se está perdiendo por ruta</h3>
+        <p class="note">Pesos al mes que dejaron de comprar los clientes en riesgo y perdidos.</p>
+        <div class="chart" data-draw="cliRiesgoRuta"></div>
+      </div>
       <div class="card wide">
         <div class="filtros">
           <label>Ruta <select class="sel" id="cli-ruta"><option value="">Todas</option><option>Ruta 1</option><option>Ruta 2</option><option>Ruta 3</option><option>Ruta 4</option><option>Ruta 5</option><option>Ruta 6</option><option>Ruta 7</option><option>Ruta 13</option></select></label>
@@ -239,7 +355,26 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   </section>
 
   <section id="v-productos" data-vista-sec="foco" hidden>
-    <div class="grid" style="margin-top: var(--cds-gap-md)">
+    <div class="grid">
+      <div class="card wide">
+        <h3>Cartera de productos</h3>
+        <p class="note">Cómo se reparte el 100% de los hectolitros de cada ruta entre las marcas.</p>
+        <div class="seg" role="group" aria-label="Periodo">
+          <button type="button" data-cfuente="mes" aria-pressed="true">Mes en curso (Power Sales)</button>
+          <button type="button" data-cfuente="mega" aria-pressed="false">Promedio 3 meses (megabase)</button>
+        </div>
+        <div class="seg seg-sm" role="group" aria-label="Ruta">
+          <button type="button" data-cartera="" aria-pressed="true">Todas</button>
+          <button type="button" data-cartera="Ruta 1" aria-pressed="false">R1</button>
+          <button type="button" data-cartera="Ruta 2" aria-pressed="false">R2</button>
+          <button type="button" data-cartera="Ruta 3" aria-pressed="false">R3</button>
+          <button type="button" data-cartera="Ruta 4" aria-pressed="false">R4</button>
+          <button type="button" data-cartera="Ruta 6" aria-pressed="false">R6</button>
+          <button type="button" data-cartera="Ruta 7" aria-pressed="false">R7</button>
+          <button type="button" data-cartera="Ruta 13" aria-pressed="false">R13</button>
+        </div>
+        <div data-draw="carteraPie"></div>
+      </div>
       <div class="card wide">
         <h3>Penetración por ruta</h3>
         <p class="note">Qué porcentaje de los clientes activos de cada ruta compra cada marca (últimos 6 meses de la megabase). Más oscuro = más clientes la compran. Los huecos claros son oportunidad.</p>
@@ -259,6 +394,16 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <h3>Canales</h3>
         <p class="note" data-draw="canNota">—</p>
         <div class="canales" data-draw="canCards"></div>
+      </div>
+      <div class="card">
+        <h3>Volumen por canal</h3>
+        <p class="note">Reparto del 100% de los hectolitros.</p>
+        <div data-draw="canPie"></div>
+      </div>
+      <div class="card">
+        <h3>Margen por canal</h3>
+        <p class="note">Reparto del 100% del margen.</p>
+        <div data-draw="canMargenPie"></div>
       </div>
       <div class="card wide">
         <h3>Por tipo de negocio</h3>
@@ -289,7 +434,12 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   </section>
 
   <section id="v-bono" data-vista-sec="bono" hidden>
-    <div class="cpn-hero">
+    <div class="seg" role="group" aria-label="Producto del bono">
+      <button type="button" data-bono="miller" aria-pressed="true">Miller</button>
+      <button type="button" data-bono="au12" aria-pressed="false">Lata 12 oz</button>
+      <button type="button" data-bono="au24" aria-pressed="false">Lata 24 oz</button>
+    </div>
+    <div class="cpn-hero" style="margin-top: var(--cds-gap-md)">
       <p class="eyebrow">Bono del mes · <span data-draw="bonoProd">—</span></p>
       <h2 data-draw="bonoTitulo">—</h2>
       <p class="take" data-draw="bonoTake">—</p>
@@ -385,7 +535,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   </section>
 
   <section id="v-ruta" data-vista-sec="ruta" hidden>
-    <div class="cpn-rutas" role="group" aria-label="Elegir ruta">
+    <div class="seg seg-sm" role="group" aria-label="Elegir ruta">
       <button type="button" data-ruta="Ruta 1" aria-pressed="true">Ruta 1</button>
       <button type="button" data-ruta="Ruta 2" aria-pressed="false">Ruta 2</button>
       <button type="button" data-ruta="Ruta 3" aria-pressed="false">Ruta 3</button>
@@ -458,7 +608,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       <div class="card wide">
         <h3>Visitas en el mapa</h3>
         <p class="note">Cada punto es una visita registrada en Power Sales con GPS. Relleno: compró. Blanco: no compró. Los cuadros dorados son las bodegas. Toca un punto para ver el detalle.</p>
-        <div class="cpn-rutas" role="group" aria-label="Filtrar mapa">
+        <div class="seg seg-sm" role="group" aria-label="Filtrar mapa">
           <button type="button" data-mapa="todas" aria-pressed="true">Todas</button>
           <button type="button" data-mapa="Ruta 1" aria-pressed="false">Ruta 1</button>
           <button type="button" data-mapa="Ruta 2" aria-pressed="false">Ruta 2</button>
@@ -468,7 +618,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
           <button type="button" data-mapa="Ruta 7" aria-pressed="false">Ruta 7</button>
           <button type="button" data-mapa="Ruta 13" aria-pressed="false">Ruta 13</button>
         </div>
-        <div class="cpn-rutas" role="group" aria-label="Periodo del mapa" style="margin-top:8px">
+        <div class="seg seg-sm" role="group" aria-label="Periodo del mapa" style="margin-top:8px">
           <button type="button" data-periodo="dia" aria-pressed="true">Último día</button>
           <button type="button" data-periodo="mes" aria-pressed="false">Todo el mes</button>
           <button type="button" data-periodo="sinventa" aria-pressed="false">Solo sin venta (mes)</button>
@@ -921,9 +1071,19 @@ dash.calc('alertas', {
 })();
 </script>
 
-  </div>
+</div>
+</div>
+</div>
+<nav class="tabbar" aria-label="Accesos rápidos">
+<button type="button" data-vista="hoy" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Hoy</span></button>
+<button type="button" data-vista="empresa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M8 8h3M8 12h3M8 16h3M3 21h18"/></svg><span>Empresa</span></button>
+<button type="button" data-vista="global" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>Rutas</span></button>
+<button type="button" data-vista="clientes" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg><span>Clientes</span></button>
+<button type="button" id="btn-mas"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Más</span></button></nav>
+<div id="veil" hidden></div>
 </main>
 <script src="modulos.js"></script>
+<script src="modulos2.js"></script>
 <script src="mapa-real.js"></script>
 <script src="app.js"></script>
 </body>

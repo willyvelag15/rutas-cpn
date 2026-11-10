@@ -21,16 +21,19 @@
     const porLiq = R.reduce((a, r) => a + Math.max(0, r.porLiquidar || 0), 0);
     const tiles = el('div', 'hal-tiles');
     const t = (k, v, s, cls) => { const d = el('div', 'hal-tile' + (cls ? ' ' + cls : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); tiles.append(d); };
+    const sim = H.filter((h) => h.tipo === 'Posible venta simulada');
+    const vsim = R.reduce((a, r) => a + (r.ventaSospechosa || 0), 0);
+    t('Ventas que pueden ser simuladas', F.money(vsim), sim.length + ' clientes por confirmar', vsim > 0 ? 'bad' : '');
     t('Urgentes', F.int(altas), 'de ' + F.int(H.length) + ' hallazgos del mes', altas ? 'bad' : '');
     t('Venta sin liquidar', F.money(porLiq), 'según liquidaciones de Power Sales', porLiq > 0 ? 'bad' : '');
-    const peor = R.slice().sort((a, b) => b.puntaje - a.puntaje)[0];
-    if (peor) t('Ruta a revisar primero', peor.ruta, peor.vendedor + ' · ' + peor.altas + ' urgentes', '');
+    const peor = R.slice().sort((a, b) => (b.pctSospechosa || 0) - (a.pctSospechosa || 0) || b.puntaje - a.puntaje)[0];
+    if (peor) t('Ruta a revisar primero', peor.ruta, peor.vendedor + ' · ' + F.pct(peor.pctSospechosa || 0) + ' de su venta es dudosa', '');
     e.append(tiles);
     const tabla = el('div', 'hal-rutas');
-    R.slice().sort((a, b) => b.puntaje - a.puntaje).forEach((r) => {
+    R.slice().sort((a, b) => (b.ventaSospechosa || 0) - (a.ventaSospechosa || 0) || b.puntaje - a.puntaje).forEach((r) => {
       const b = el('button', 'hal-ruta'); b.type = 'button'; b.setAttribute('aria-pressed', String(st.ruta === r.ruta));
       const n = el('b', null, r.ruta); n.style.color = color(r.ruta);
-      b.append(n, el('span', null, r.altas + ' urgentes · ' + r.medias + ' revisar' + (r.porLiquidar > 50 ? ' · ' + F.money(r.porLiquidar) + ' sin liquidar' : '')));
+      b.append(n, el('span', null, (r.ventaSospechosa ? F.money(r.ventaSospechosa) + ' dudosas (' + F.pct(r.pctSospechosa || 0) + ' de su venta)' : 'sin ventas dudosas') + (r.porLiquidar > 50 ? ' · ' + F.money(r.porLiquidar) + ' sin liquidar' : '')));
       b.addEventListener('click', () => { st.ruta = st.ruta === r.ruta ? 'todas' : r.ruta; st.todos = false; dash.draw('hallazgosResumen'); dash.draw('hallazgosLista'); });
       tabla.append(b);
     });

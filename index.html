@@ -62,6 +62,12 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .hal-mas,.hal-quitar{font:inherit;font-size:13px;margin-top:8px;border:1px solid var(--color-border-line);background:transparent;color:var(--color-fg);border-radius:10px;padding:8px 12px;cursor:pointer;align-self:flex-start}
 .hal-quitar{display:block}
 @media (max-width:600px){.hal-lista li{flex-direction:column;gap:6px}.hal-izq{flex-direction:row;align-items:center;gap:8px;min-width:0}}
+.tabla-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cpn-t td.neg{color:var(--color-bad);font-weight:600}
+.hoy-dir{margin-top:8px}.hoy-dir:empty{display:none}
+.pro-tit{margin:0;font-size:22px}
+.ven-score{display:flex;flex-direction:column;align-items:center;min-width:52px}.ven-score b{font-size:26px;line-height:1}.ven-score small{color:var(--color-fg-muted);font-size:12px}
+.ven-barra{display:flex;gap:3px;margin:4px 0 2px}.ven-barra i{display:block;height:8px;border-radius:4px;background:var(--color-border-line);overflow:hidden;flex-basis:0}.ven-barra em{display:block;height:100%}
 .puntos{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}
 .filtros{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
 .filtros label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--color-fg-muted)}
@@ -233,20 +239,24 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 <button type="button" data-vista="hoy" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Hoy</span></button>
 <button type="button" data-vista="empresa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M8 8h3M8 12h3M8 16h3M3 21h18"/></svg><span>Empresa</span></button>
 <button type="button" data-vista="global" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>Rutas</span></button>
+<button type="button" data-vista="pronostico" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 16l4-5 4 3 6-8"/><circle cx="19" cy="6" r="1.6"/></svg><span>Pronóstico</span></button>
 </div>
 <div class="side-g"><p>Ventas</p>
 <button type="button" data-vista="ruta" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Ruta por ruta</span></button>
 <button type="button" data-vista="semana" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Semana</span></button>
 <button type="button" data-vista="temporada" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 4 8-9"/><path d="M14 6h6v6"/></svg><span>Temporada</span></button>
+<button type="button" data-vista="vendedores" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0M16 4l1.5 1.5L20 3"/></svg><span>Vendedores</span></button>
 </div>
 <div class="side-g"><p>Mercado</p>
 <button type="button" data-vista="clientes" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg><span>Clientes</span></button>
 <button type="button" data-vista="foco" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span>Productos</span></button>
 <button type="button" data-vista="canales" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1.5-5h-13zM5 10v10h14V10M9 20v-5h6v5"/></svg><span>Canales</span></button>
+<button type="button" data-vista="oportunidades" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg><span>Oportunidades</span></button>
 </div>
 <div class="side-g"><p>Dinero</p>
 <button type="button" data-vista="utilidad" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1.2-1.7-2-3-2-1.7 0-3 1-3 2.3 0 3 6 1.7 6 4.7 0 1.3-1.3 2.3-3 2.3-1.4 0-2.6-.8-3-2M12 6v1.5M12 16.5V18"/></svg><span>Margen</span></button>
 <button type="button" data-vista="bono" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8 21h8M9 17h6"/></svg><span>Bono</span></button>
+<button type="button" data-vista="bonificacion" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12v8H4v-8M2 7h20v5H2zM12 22V7M12 7H8a2.5 2.5 0 1 1 0-5c3 0 4 5 4 5zM12 7h4a2.5 2.5 0 1 0 0-5c-3 0-4 5-4 5z"/></svg><span>Bonificación</span></button>
 </div>
 <div class="side-g"><p>Operación</p>
 <button type="button" data-vista="mapa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Mapa de visitas</span></button>
@@ -381,6 +391,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <h3>Qué hacer hoy</h3>
         <p class="note">Acciones ordenadas por lo que más dinero mueve. Salen de la venta de ayer, la meta del mes, el bono y los clientes de la megabase.</p>
         <ol class="acciones" data-draw="hoyAcciones"></ol>
+        <ol class="acciones hoy-dir" data-draw="hoyAlertasDir"></ol>
       </div>
       <div class="card wide hal-card">
         <h3>Hallazgos · análisis de la IA</h3>
@@ -407,6 +418,75 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <h3>Este mes</h3>
         <p class="note">Para decidir pedidos, precios y en qué enfocar el mes.</p>
         <ul class="puntos" data-draw="hoyMes"></ul>
+      </div>
+    </div>
+  </section>
+
+
+  <section id="v-pronostico" data-vista-sec="pronostico" hidden>
+    <div class="grid">
+      <div class="card wide"><div data-draw="proResumen"></div></div>
+      <div class="card wide">
+        <h3>Cierre por ruta</h3>
+        <p class="note">Pronóstico = lo vendido + el ritmo (mitad del mes, mitad de la última semana) por los días hábiles que faltan. La probabilidad sale de qué tanto varía la venta día con día.</p>
+        <div data-draw="proRutas"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-vendedores" data-vista-sec="vendedores" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Calificación de vendedores</h3>
+        <p class="note">Una sola calificación con todo lo que importa del mes. La barra muestra en qué está fuerte y en qué flojo.</p>
+        <div data-draw="venRanking"></div>
+      </div>
+      <div class="card wide">
+        <h3>¿Atienden igual a chicos que a grandes?</h3>
+        <p class="note">Para ver si el vendedor se enfoca solo en los clientes grandes y deja a los chicos.</p>
+        <div data-draw="venAtencion"></div>
+      </div>
+      <div class="card wide">
+        <h3>Clientes sin visita esta semana</h3>
+        <div data-draw="venSinVisita"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-oportunidades" data-vista-sec="oportunidades" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Clientes que se están alejando</h3>
+        <p class="note">Tardan mucho más de lo normal en volver a comprar. Es el aviso antes de que se vuelvan "perdidos". Ordenados por el margen que dejan. No incluye cadenas (OXXO, 3B).</p>
+        <div data-draw="opoAlejando"></div>
+      </div>
+      <div class="card wide">
+        <h3>Clientes con potencial</h3>
+        <p class="note">Compran menos de la mitad que un negocio normal de su mismo giro y sí compran seguido: hay espacio para crecer.</p>
+        <div data-draw="opoPotencial"></div>
+      </div>
+      <div class="card wide">
+        <h3>Dónde crecer</h3>
+        <p class="note">Por población: cuánto se vende, contra 2025 y qué tanto entran los productos foco (Miller, Amstel Ultra).</p>
+        <div data-draw="opoPoblacion"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-bonificacion" data-vista-sec="bonificacion" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Bonificación y promoción por cliente</h3>
+        <div data-draw="bonResumen"></div>
+      </div>
+      <div class="card wide">
+        <h3>Qué clientes revisar</h3>
+        <p class="note">Margen neto = margen del cliente menos lo que cuesta visitarlo (diésel por visita de Motum).</p>
+        <div data-draw="bonLista"></div>
+      </div>
+      <div class="card">
+        <h3>Por ruta</h3>
+        <div data-draw="bonRutas"></div>
       </div>
     </div>
   </section>
@@ -762,6 +842,15 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
           <div><span>Diésel por caja (rutas con GPS)</span><b data-draw="fCosto">—</b></div>
           <div><span>Alertas de manejo</span><b data-draw="fAlertas" data-source="flotilla" data-field="alertas" data-row="0">—</b></div>
         </div>
+      </div>
+      <div class="card wide">
+        <h3>Kilómetros por ruta</h3>
+        <div data-draw="kmRutas"></div>
+      </div>
+      <div class="card wide">
+        <h3>Clientes en la zona de otra ruta</h3>
+        <p class="note">Quedan lejos de los demás clientes de su ruta y junto a los de otra. Moverlos ahorra kilómetros.</p>
+        <div data-draw="kmFuera"></div>
       </div>
     </div>
   </section>
@@ -1185,6 +1274,7 @@ dash.calc('alertas', {
 <script src="modulos.js"></script>
 <script src="modulos2.js"></script>
 <script src="hallazgos.js"></script>
+<script src="direccion.js"></script>
 <script src="mapa-real.js"></script>
 <script src="app.js"></script>
 </body>

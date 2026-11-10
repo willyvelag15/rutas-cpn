@@ -46,6 +46,22 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .acciones{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
 .acciones li{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--color-bg);border:1px solid var(--color-border-line);font-size:14px;line-height:1.4}
 .acciones li .pill{flex:0 0 auto;margin-top:1px}
+.hal-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.hal-tile{border:1px solid var(--color-border-line);border-radius:12px;padding:10px 12px;background:var(--color-bg);display:flex;flex-direction:column;gap:2px}
+.hal-tile span{font-size:12px;color:var(--color-fg-muted)}.hal-tile b{font-size:20px}.hal-tile small{font-size:12px;color:var(--color-fg-muted)}
+.hal-tile.bad b{color:var(--color-bad)}
+.hal-rutas{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hal-ruta{font:inherit;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);border-radius:10px;padding:7px 10px;cursor:pointer;font-size:12px}
+.hal-ruta b{font-size:14px}.hal-ruta[aria-pressed="true"]{outline:2px solid var(--g,#1f8a4c)}
+.hal-lista{margin-top:10px}
+.hal-lista li{align-items:flex-start}
+.hal-izq{display:flex;flex-direction:column;gap:4px;align-items:flex-start;flex:0 0 auto;min-width:76px}
+.hal-r{font-size:12px;font-weight:700}
+.hal-cuerpo{display:flex;flex-direction:column;gap:3px;min-width:0}
+.hal-cuerpo small{color:var(--color-fg-muted);font-size:12px}.hal-cuerpo em{font-style:normal;font-size:13px;color:var(--color-fg-muted)}
+.hal-mas,.hal-quitar{font:inherit;font-size:13px;margin-top:8px;border:1px solid var(--color-border-line);background:transparent;color:var(--color-fg);border-radius:10px;padding:8px 12px;cursor:pointer;align-self:flex-start}
+.hal-quitar{display:block}
+@media (max-width:600px){.hal-lista li{flex-direction:column;gap:6px}.hal-izq{flex-direction:row;align-items:center;gap:8px;min-width:0}}
 .puntos{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}
 .filtros{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
 .filtros label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--color-fg-muted)}
@@ -365,6 +381,12 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <h3>Qué hacer hoy</h3>
         <p class="note">Acciones ordenadas por lo que más dinero mueve. Salen de la venta de ayer, la meta del mes, el bono y los clientes de la megabase.</p>
         <ol class="acciones" data-draw="hoyAcciones"></ol>
+      </div>
+      <div class="card wide hal-card">
+        <h3>Hallazgos · análisis de la IA</h3>
+        <p class="note">Cosas raras en la venta del mes: ventas sin liquidar, pedidos duplicados, ventas capturadas lejos del cliente o en la bodega, sin GPS, descuentos y pedidos fuera de lo normal. Toca una ruta para ver solo la suya.</p>
+        <div data-draw="hallazgosResumen"></div>
+        <div data-draw="hallazgosLista"></div>
       </div>
       <div class="card">
         <h3>Hectolitros por día</h3>
@@ -1162,6 +1184,7 @@ dash.calc('alertas', {
 </main>
 <script src="modulos.js"></script>
 <script src="modulos2.js"></script>
+<script src="hallazgos.js"></script>
 <script src="mapa-real.js"></script>
 <script src="app.js"></script>
 </body>

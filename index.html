@@ -61,6 +61,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .hal-cuerpo small{color:var(--color-fg-muted);font-size:12px}.hal-cuerpo em{font-style:normal;font-size:13px;color:var(--color-fg-muted)}
 .hal-mas,.hal-quitar{font:inherit;font-size:13px;margin-top:8px;border:1px solid var(--color-border-line);background:transparent;color:var(--color-fg);border-radius:10px;padding:8px 12px;cursor:pointer;align-self:flex-start}
 .hal-quitar{display:block}
+.hal-sub{margin:16px 0 2px;font-size:15px}.hal-gps{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.hal-gps .hal-ruta{cursor:default}
 @media (max-width:600px){.hal-lista li{flex-direction:column;gap:6px}.hal-izq{flex-direction:row;align-items:center;gap:8px;min-width:0}}
 .tabla-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .cpn-t td.neg{color:var(--color-bad);font-weight:600}
@@ -395,9 +396,12 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       </div>
       <div class="card wide hal-card">
         <h3>Hallazgos · análisis de la IA</h3>
-        <p class="note">Busca ventas que el vendedor pudo simular: ticket a nombre de un cliente pero capturado lejos de su negocio o en la bodega, dos tickets el mismo día, clientes que ya no compraban o que de pronto compran mucho más. También ventas sin liquidar o con faltante. Son focos para confirmar con el cliente, no pruebas. Toca una ruta para ver solo la suya.</p>
+        <p class="note">Busca ventas que el vendedor pudo simular: ticket a nombre de un cliente pero capturado lejos de su negocio o en la bodega, dos tickets el mismo día, clientes que ya no compraban o que de pronto compran mucho más. También ventas sin liquidar o con faltante. Son focos para confirmar con el cliente, no pruebas. Solo se muestran los de los últimos 7 días. Toca una ruta para ver solo la suya.</p>
         <div data-draw="hallazgosResumen"></div>
         <div data-draw="hallazgosLista"></div>
+        <h4 class="hal-sub">Camión (Motum) contra Power Sales</h4>
+        <p class="note">Para cada venta se busca dónde estaba el camión con GPS de Motum mientras duró la visita y se compara con donde está el negocio del cliente. Confirmada = el camión estuvo a menos de 250 m. Las rutas 2 y 4 no tienen GPS.</p>
+        <div data-draw="hallazgosGps"></div>
       </div>
       <div class="card">
         <h3>Hectolitros por día</h3>
@@ -1097,7 +1101,9 @@ dash.calc('alertas', {
       const row = document.createElement('div'); row.className = 'brandrow';
       const n = document.createElement('span'); n.className = 'chip'; const sw = document.createElement('i'); sw.style.background = window.CPN.routeColor[r.ruta]; const t = document.createElement('span'); t.textContent = r.ruta; n.append(sw, t);
       const bar = document.createElement('div'); bar.className = 'gauge'; bar.style.height = '12px'; const f = document.createElement('i'); f.style.width = Math.min(100, r.avance * 100) + '%'; const e = document.createElement('em'); e.style.left = Math.min(100, r.esperado * 100) + '%'; bar.append(f, e);
-      const v = document.createElement('span'); v.style.textAlign = 'right'; v.className = r.avance >= r.esperado ? 'ok' : r.avance >= r.esperado * 0.85 ? 'warn' : 'bad'; v.textContent = F.pct(r.avance); row.append(n, bar, v); el.append(row);
+      row.style.gridTemplateColumns = '6.5rem 1fr auto';
+      const v = document.createElement('span'); v.style.textAlign = 'right'; v.style.fontVariantNumeric = 'tabular-nums'; v.style.whiteSpace = 'nowrap'; v.className = r.avance >= r.esperado ? 'ok' : r.avance >= r.esperado * 0.85 ? 'warn' : 'bad';
+      const hv = document.createElement('b'); hv.textContent = F.hl(r.hlMes) + ' Hl'; const pv = document.createElement('small'); pv.textContent = ' de ' + F.int(r.metaHl) + ' · ' + F.pct(r.avance); v.append(hv, pv); row.append(n, bar, v); el.append(row);
     });
   });
 })();

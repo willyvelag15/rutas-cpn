@@ -28,15 +28,15 @@
     const E = rows('envase'); if (!E.length) return;
     const t = el('table', 'cpn-t');
     const hr = el('tr');
-    [['Ruta', ''], ['Envase', ''], ['Vendido', 'num'], ['Devuelto', 'num'], ['Debe', 'num'], ['Por devolver', 'num'], ['Última dev.', ''], ['Estado', '']].forEach(([h, c]) => hr.append(el('th', c, h)));
+    [['Ruta', ''], ['Envase', ''], ['Estado', ''], ['Vendido', 'num'], ['Devuelto', 'num'], ['Diferencia', 'num'], ['Por devolver', 'num'], ['Última dev.', '']].forEach(([h, c]) => hr.append(el('th', c, h)));
     t.append(el('thead')); t.tHead.append(hr);
     const tb = el('tbody');
     E.slice().sort((a, b) => a.rutaNum - b.rutaNum).forEach((x, i, arr) => {
       const tr = el('tr'); tr.style.cursor = 'pointer';
-      const n = el('td', null, i && arr[i - 1].ruta === x.ruta ? '' : x.ruta); n.style.fontWeight = '600'; n.style.color = color(x.ruta);
-      const d = el('td', 'num ' + (x.adeudo > 2 ? 'bad' : x.adeudo < -2 ? 'warn' : ''), cj(x.adeudo));
+      const n = el('td', null, x.ruta); n.style.fontWeight = '600'; n.style.color = color(x.ruta);
+      const d = el('td', 'num ' + (x.adeudo > 2 ? 'bad' : x.adeudo < -2 ? 'warn' : ''), x.adeudo > 0.5 ? 'debe ' + cj(x.adeudo) : x.adeudo < -0.5 ? cj(-x.adeudo) + ' de más' : '0');
       const s = el('td'); s.append(el('span', 'pill ' + (EST[x.estado] || ''), x.estado));
-      tr.append(n, el('td', null, x.tipo), el('td', 'num', cj(x.vendido)), el('td', 'num', cj(x.devuelto)), d, el('td', 'num', cj(x.pendiente)), el('td', null, x.ultimaDev ? F.dia(x.ultimaDev) : '—'), s);
+      tr.append(n, el('td', null, x.tipo), s, el('td', 'num', cj(x.vendido)), el('td', 'num', cj(x.devuelto)), d, el('td', 'num', cj(x.pendiente)), el('td', null, x.ultimaDev ? F.dia(x.ultimaDev) : '—'));
       tr.addEventListener('click', () => { st.ruta = x.ruta; dash.draw('envRutas'); dash.draw('envMov'); const m = document.getElementById('env-mov'); if (m) m.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
       tb.append(tr);
     });
@@ -56,6 +56,18 @@
   dash.draw('envMov', (e) => {
     e.replaceChildren();
     const M = rows('envase_mov').filter((x) => x.ruta === st.ruta); if (!M.length) return;
+    const E = rows('envase').filter((x) => x.ruta === st.ruta);
+    const ul = el('ul', 'env-res');
+    E.forEach((x) => {
+      const li = el('li'); li.append(el('span', 'pill ' + (EST[x.estado] || ''), x.estado));
+      let txt = ' ' + x.tipo + ': vendió ' + cj(x.vendidoHastaDev) + ' hasta el ' + (x.ultimaDev ? F.dia(x.ultimaDev) : '—') + ' y devolvió ' + cj(x.devuelto);
+      txt += x.adeudo > 2 ? ' → debe ' + cj(x.adeudo) + ' cajas.' : x.adeudo < -2 ? ' → devolvió ' + cj(-x.adeudo) + ' de más.' : '.';
+      if (x.pendiente) txt += ' Vendió ' + cj(x.pendiente) + ' después; esas aún no tocaba devolverlas.';
+      li.append(el('span', null, txt)); ul.append(li);
+    });
+    e.append(ul);
+    e.append(el('p', 'note', 'El saldo sube mientras la ruta junta el envase y baja el día que lo entrega. Solo es adeudo lo que queda después de su última devolución.'));
+    const debeTipo = {}; E.forEach((x) => { debeTipo[x.tipo] = x.adeudo > 2; });
     const t = el('table', 'cpn-t');
     const hr = el('tr');
     [['Fecha', ''], ['Envase', ''], ['Vendido', 'num'], ['Devuelto', 'num'], ['Saldo', 'num'], ['Documento de devolución', '']].forEach(([h, c]) => hr.append(el('th', c, h)));
@@ -63,7 +75,7 @@
     const tb = el('tbody');
     M.slice().sort((a, b) => (a.tipo > b.tipo ? 1 : a.tipo < b.tipo ? -1 : a.fecha > b.fecha ? 1 : -1)).forEach((x) => {
       const tr = el('tr');
-      tr.append(el('td', null, F.dia(x.fecha)), el('td', null, x.tipo), el('td', 'num', cj(x.vendido)), el('td', 'num' + (x.devuelto ? ' ok' : ''), x.devuelto ? cj(x.devuelto) : '—'), el('td', 'num ' + (x.saldo > 2 ? 'bad' : ''), cj(x.saldo)), el('td', null, x.docs || ''));
+      tr.append(el('td', null, F.dia(x.fecha)), el('td', null, x.tipo), el('td', 'num', cj(x.vendido)), el('td', 'num' + (x.devuelto ? ' ok' : ''), x.devuelto ? cj(x.devuelto) : '—'), el('td', 'num ' + (x.saldo > 2 && debeTipo[x.tipo] ? 'bad' : x.saldo < -2 ? 'warn' : ''), cj(x.saldo)), el('td', null, x.docs || ''));
       tb.append(tr);
     });
     t.append(tb); e.append(t);

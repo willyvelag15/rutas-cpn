@@ -61,6 +61,8 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .hal-cuerpo small{color:var(--color-fg-muted);font-size:12px}.hal-cuerpo em{font-style:normal;font-size:13px;color:var(--color-fg-muted)}
 .hal-mas,.hal-quitar{font:inherit;font-size:13px;margin-top:8px;border:1px solid var(--color-border-line);background:transparent;color:var(--color-fg);border-radius:10px;padding:8px 12px;cursor:pointer;align-self:flex-start}
 .hal-quitar{display:block}
+.cpn-t td.wrap{white-space:normal;min-width:8rem;font-size:13px}
+.mot-fotos{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.mot-fotos img{width:calc(50% - 3px);max-width:260px;border-radius:8px;cursor:zoom-in;border:1px solid var(--color-border-line)}.mot-map{font-size:13px;color:var(--g2,#1F7A45)}
 .env-res{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .hal-sub{margin:16px 0 2px;font-size:15px}.hal-gps{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.hal-gps .hal-ruta{cursor:default}
 @media (max-width:600px){.hal-lista li{flex-direction:column;gap:6px}.hal-izq{flex-direction:row;align-items:center;gap:8px;min-width:0}}
@@ -264,6 +266,8 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 <div class="side-g"><p>Operación</p>
 <button type="button" data-vista="mapa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Mapa de visitas</span></button>
 <button type="button" data-vista="flotilla" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 16V6h11v10M13 9h4.5l3.5 4v3h-8"/><circle cx="6" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg><span>Flotilla</span></button>
+<button type="button" data-vista="motum" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg><span>Reportes Motum</span></button>
+<button type="button" data-vista="inventario" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg><span>Inventario</span></button>
 </div>
 <div class="side-foot"><span id="actualizado"></span><button type="button" id="btn-salir" class="salir">Cerrar sesión</button></div></aside>
 <div class="main">
@@ -390,6 +394,11 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       <div class="hero-tiles" data-draw="hoyTiles"></div>
     </div>
     <div class="grid" style="margin-top: var(--cds-gap-md)">
+      <div class="card wide">
+        <h3>Decisiones de hoy</h3>
+        <p class="note">Lo más importante de todos los análisis, en orden: dinero, cámaras, ventas dudosas, envase, conteo y meta.</p>
+        <div data-draw="hoyDecisiones"></div>
+      </div>
       <div class="card wide">
         <h3>Qué hacer hoy</h3>
         <p class="note">Acciones ordenadas por lo que más dinero mueve. Salen de la venta de ayer, la meta del mes, el bono y los clientes de la megabase.</p>
@@ -851,6 +860,41 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     </div>
   </section>
 
+  <section id="v-motum" data-vista-sec="motum" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Alertas de Motum</h3>
+        <p class="note">Alertas de la cámara (celular, distracción, fatiga, cinturón) y del camión (vueltas bruscas, velocidad, pánico, desconexión del GPS). Cada alerta trae las fotos que tomó la cámara en ese momento: toca una foto para verla grande.</p>
+        <div data-draw="motResumen"></div>
+        <div data-draw="motLista"></div>
+      </div>
+      <div class="card wide">
+        <h3>Ventas registradas después de regresar</h3>
+        <p class="note">Ventas que Power Sales registró cuando Motum ya tenía el camión de vuelta en la bodega. Es la señal más clara de un ticket que no se entregó en ese momento.</p>
+        <div data-draw="motRegreso"></div>
+      </div>
+      <div class="card wide">
+        <h3>Paradas sin cliente</h3>
+        <p class="note">Paradas de 10 minutos o más donde no hay ningún cliente cerca (a más de 150 m) ni visita registrada. Pueden ser comida o tráfico, pero también venta por fuera.</p>
+        <div data-draw="motParadas"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-inventario" data-vista-sec="inventario" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Conteo sorpresa</h3>
+        <p class="note">Lo que cada camión debe traer según Power Sales: último arqueo + cargas − ventas − devoluciones. Cuéntalo antes de que salga; si falta producto, es faltante. Ojo: todos los arqueos del mes cuadran exacto (0 diferencias), lo que indica que el conteo no se está haciendo físicamente.</p>
+        <div class="tblwrap" data-draw="invResumen"></div>
+      </div>
+      <div class="card wide">
+        <h3>Producto por producto</h3>
+        <div data-draw="invDetalle"></div>
+      </div>
+    </div>
+  </section>
+
   <section id="v-flotilla" data-vista-sec="flotilla" hidden>
     <div class="grid">
       <div class="card wide">
@@ -1300,6 +1344,7 @@ dash.calc('alertas', {
 <script src="modulos2.js"></script>
 <script src="hallazgos.js"></script>
 <script src="envase.js"></script>
+<script src="motum.js"></script>
 <script src="direccion.js"></script>
 <script src="mapa-real.js"></script>
 <script src="app.js"></script>

@@ -53,6 +53,10 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .hal-rutas{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .hal-ruta{font:inherit;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);border-radius:10px;padding:7px 10px;cursor:pointer;font-size:12px}
 .hal-ruta b{font-size:14px}.hal-ruta[aria-pressed="true"]{outline:2px solid var(--g,#1f8a4c)}
+.dec-link{cursor:pointer;position:relative;transition:border-color .15s,background .15s}.dec-link:hover,.dec-link:focus-visible{border-color:var(--color-fg-muted);outline:none}
+.dec-ver{margin-left:auto;flex:0 0 auto;align-self:center;font-size:13px;font-weight:600;color:var(--color-fg-muted);white-space:nowrap}
+@media (max-width:600px){.dec-ver{display:none}}
+.reg-dias .reg-dia td{border-bottom:none;padding-bottom:2px}.reg-dias .reg-cli td{white-space:normal;font-size:12px;color:var(--color-fg-muted);padding-top:0;line-height:1.35}
 .hal-lista{margin-top:10px}
 .hal-lista li{align-items:flex-start}
 .hal-izq{display:flex;flex-direction:column;gap:4px;align-items:flex-start;flex:0 0 auto;min-width:76px}
@@ -397,7 +401,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     <div class="grid" style="margin-top: var(--cds-gap-md)">
       <div class="card wide">
         <h3>Decisiones de hoy</h3>
-        <p class="note">Lo más importante de todos los análisis, en orden: dinero, cámaras, ventas dudosas, envase, conteo y meta.</p>
+        <p class="note">Lo más importante de todos los análisis, en orden: dinero, cámaras, ventas dudosas, envase, conteo y meta. Abajo de cada una dice de qué días es; tócala para ver el detalle de esa ruta.</p>
         <div data-draw="hoyDecisiones"></div>
       </div>
       <div class="card wide">
@@ -871,7 +875,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       </div>
       <div class="card wide">
         <h3>Ventas registradas después de regresar</h3>
-        <p class="note">Ventas que Power Sales registró cuando Motum ya tenía el camión de vuelta en la bodega. Es la señal más clara de un ticket que no se entregó en ese momento.</p>
+        <p class="note">Ventas que Power Sales registró cuando Motum ya tenía el camión de vuelta en la bodega. Es la señal más clara de un ticket que no se entregó en ese momento. Escoge la ruta para ver el acumulado del mes, el desglose por día con sus clientes y venta por venta.</p>
         <div data-draw="motRegreso"></div>
       </div>
       <div class="card wide">

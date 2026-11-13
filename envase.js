@@ -7,6 +7,7 @@
   const cj = (v) => (Math.round((v || 0) * 100) / 100).toLocaleString('es-MX', { maximumFractionDigits: 2 });
   const EST = { 'Cuadra': 'ok', 'Debe envase': 'bad', 'Devolvió de más': 'warn', 'Sin devolución en el mes': 'warn' };
   const st = { ruta: null };
+  window.addEventListener('cpn-ir', (ev) => { const r = ev.detail.ruta; if (!r || ev.detail.vista !== 'envase') return; st.ruta = r; dash.draw('envRutas'); dash.draw('envMov'); });
 
   dash.draw('envResumen', (e) => {
     e.replaceChildren();

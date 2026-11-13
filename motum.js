@@ -5,7 +5,30 @@
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const color = (r) => (window.CPN.routeColor && window.CPN.routeColor[r]) || '#6B7280';
   const CLS = { alta: 'bad', media: 'warn', baja: 'ok' };
-  const st = { ruta: 'todas', grupo: 'todas', todas: false, par: false, reg: false };
+  const st = { ruta: 'todas', grupo: 'todas', todas: false, par: false, reg: false, regRuta: 'todas', parRuta: 'todas' };
+  const sti = { ruta: null };
+
+  /* Ir a otra pantalla ya filtrada por ruta (desde Decisiones de hoy). Cada módulo escucha 'cpn-ir'. */
+  window.CPN.ir = (vista, ruta, ancla) => {
+    window.dispatchEvent(new CustomEvent('cpn-ir', { detail: { vista, ruta } }));
+    const b = document.querySelector('[data-vista="' + vista + '"]'); if (b && window.CPN.vista !== vista) b.click();
+    setTimeout(() => {
+      const t = ancla && document.querySelector('[data-draw="' + ancla + '"]');
+      const c = t ? (t.closest('.card') || t) : document.getElementById('v-' + vista);
+      if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); else window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 80);
+  };
+  window.addEventListener('cpn-ir', (ev) => {
+    const r = ev.detail.ruta; if (!r) return;
+    st.ruta = r; st.todas = false; st.regRuta = r; st.reg = false; st.parRuta = r; st.par = false; sti.ruta = r;
+    ['motLista', 'motRegreso', 'motParadas', 'invDetalle'].forEach((n) => dash.draw(n));
+  });
+  const segRutas = (rutas, actual, fn) => {
+    const seg = el('div', 'seg seg-sm');
+    ['todas', ...rutas].forEach((r) => { const b = el('button', null, r === 'todas' ? 'Todas' : r); b.type = 'button'; b.setAttribute('aria-pressed', String(actual === r)); b.addEventListener('click', () => fn(r)); seg.append(b); });
+    return seg;
+  };
+  const ordRuta = (a, b) => (parseInt(a.slice(5)) || 99) - (parseInt(b.slice(5)) || 99);
   const mapa = (lat, lng) => { const a = el('a', 'mot-map', 'Ver en mapa'); a.href = 'https://www.google.com/maps?q=' + lat + ',' + lng; a.target = '_blank'; a.rel = 'noopener'; return a; };
 
   /* ---------- Decisiones de hoy (pantalla Hoy) ---------- */
@@ -16,7 +39,15 @@
     Dd.slice(0, 6).forEach((d) => {
       const li = el('li'); const p = el('span', 'pill ' + (d.p >= 85 ? 'bad' : d.p >= 70 ? 'warn' : 'ok'), d.tag); if (d.tag.startsWith('Ruta')) p.style.color = color(d.tag);
       const c = el('div', 'hal-cuerpo'); c.append(el('span', null, d.txt)); if (d.accion) c.append(el('em', null, '→ ' + d.accion));
-      li.append(p, c); ol.append(li);
+      if (d.periodo) c.append(el('small', null, d.periodo));
+      li.append(p, c);
+      if (d.ver) {
+        li.classList.add('dec-link'); li.tabIndex = 0; li.setAttribute('role', 'button');
+        li.append(el('span', 'dec-ver', 'Ver detalle ›'));
+        const go = () => window.CPN.ir(d.ver, d.ruta, d.ancla);
+        li.addEventListener('click', go); li.addEventListener('keydown', (k) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); go(); } });
+      }
+      ol.append(li);
     });
     e.append(ol);
   });
@@ -76,7 +107,27 @@
 
   dash.draw('motRegreso', (e) => {
     e.replaceChildren();
-    const T = rows('tras_regreso').slice().sort((a, b) => (b.fecha + b.hora > a.fecha + a.hora ? 1 : -1)); if (!T.length) { e.append(el('p', 'note', 'Ninguna venta registrada después de que el camión regresó.')); return; }
+    const T0 = rows('tras_regreso'); if (!T0.length) { e.append(el('p', 'note', 'Ninguna venta registrada después de que el camión regresó.')); return; }
+    const rutas = [...new Set(T0.map((x) => x.ruta))].sort(ordRuta);
+    if (st.regRuta !== 'todas' && !rutas.includes(st.regRuta)) { e.append(segRutas(rutas, st.regRuta, (r) => { st.regRuta = r; st.reg = false; dash.draw('motRegreso'); })); e.append(el('p', 'note', st.regRuta + ' no tiene ventas después de regresar este mes.')); return; }
+    e.append(segRutas(rutas, st.regRuta, (r) => { st.regRuta = r; st.reg = false; dash.draw('motRegreso'); }));
+    const T = T0.filter((x) => st.regRuta === 'todas' || x.ruta === st.regRuta).sort((a, b) => (b.fecha + b.hora > a.fecha + a.hora ? 1 : -1));
+    // resumen del mes y desglose por día
+    const tot = T.reduce((a, x) => a + x.venta, 0); const cli = new Set(T.map((x) => x.clienteId));
+    const tiles = el('div', 'hal-tiles');
+    const t = (k, v, sm) => { const d = el('div', 'hal-tile'); d.append(el('span', null, k), el('b', null, v)); if (sm) d.append(el('small', null, sm)); tiles.append(d); };
+    const dset = [...new Set(T.map((x) => x.fecha))].sort();
+    t('Ventas en el mes', F.int(T.length), st.regRuta === 'todas' ? 'todas las rutas' : st.regRuta); t('Monto', F.money(tot)); t('Clientes distintos', F.int(cli.size)); t('Días con casos', F.int(dset.length));
+    e.append(tiles);
+    const g = new Map(); T.forEach((x) => { const k = x.fecha + '|' + x.ruta; if (!g.has(k)) g.set(k, { fecha: x.fecha, ruta: x.ruta, n: 0, venta: 0, cli: [] }); const o = g.get(k); o.n++; o.venta += x.venta; if (!o.cli.includes(x.cliente)) o.cli.push(x.cliente); });
+    const tb = el('table', 'cpn-t reg-dias'); const hr = el('tr'); [['Día', ''], ['Ruta', ''], ['Ventas', 'num'], ['Monto', 'num']].forEach(([h, c]) => hr.append(el('th', c, h))); tb.append(el('thead')); tb.tHead.append(hr);
+    const body = el('tbody');
+    [...g.values()].sort((a, b) => (b.fecha > a.fecha ? 1 : b.fecha < a.fecha ? -1 : ordRuta(a.ruta, b.ruta))).forEach((o) => { const tr = el('tr', 'reg-dia'); const r = el('td', null, o.ruta); r.style.color = color(o.ruta); r.style.fontWeight = '600';
+      tr.append(el('td', null, F.dia(o.fecha)), r, el('td', 'num', F.int(o.n)), el('td', 'num', F.money(o.venta)));
+      const tr2 = el('tr', 'reg-cli'); const c2 = el('td', null, 'Clientes: ' + o.cli.join(', ')); c2.colSpan = 4; tr2.append(c2); body.append(tr, tr2); });
+    tb.append(body); const w = el('div', 'tblwrap'); w.append(tb); e.append(w);
+    // lista venta por venta
+    e.append(el('p', 'note', 'Venta por venta, de la más reciente a la más vieja:'));
     const ul = el('ol', 'acciones hal-lista'); const n = st.reg ? T.length : Math.min(8, T.length);
     T.slice(0, n).forEach((x) => { const li = el('li'); const izq = el('div', 'hal-izq'); const r = el('span', 'hal-r', x.ruta); r.style.color = color(x.ruta); izq.append(el('span', 'pill bad', 'Tras regresar'), r);
       const c = el('div', 'hal-cuerpo'); c.append(el('b', null, x.cliente + ' (' + x.clienteId + ') · ' + F.money(x.venta)));
@@ -88,7 +139,11 @@
 
   dash.draw('motParadas', (e) => {
     e.replaceChildren();
-    const P = rows('paradas'); if (!P.length) { e.append(el('p', 'note', 'Sin paradas largas fuera de clientes.')); return; }
+    const P0 = rows('paradas'); if (!P0.length) { e.append(el('p', 'note', 'Sin paradas largas fuera de clientes.')); return; }
+    const rutasP = [...new Set(P0.map((x) => x.ruta))].sort(ordRuta);
+    e.append(segRutas(rutasP, st.parRuta, (r) => { st.parRuta = r; st.par = false; dash.draw('motParadas'); }));
+    const P = P0.filter((x) => st.parRuta === 'todas' || x.ruta === st.parRuta);
+    if (!P.length) { e.append(el('p', 'note', st.parRuta + ' no tiene paradas largas sin cliente.')); return; }
     const ul = el('ol', 'acciones hal-lista'); const n = st.par ? P.length : Math.min(8, P.length);
     P.slice(0, n).forEach((p) => { const li = el('li'); const izq = el('div', 'hal-izq'); const r = el('span', 'hal-r', p.ruta); r.style.color = color(p.ruta); izq.append(el('span', 'pill ' + (p.minutos >= 30 ? 'bad' : 'warn'), p.minutos + ' min'), r);
       const c = el('div', 'hal-cuerpo'); c.append(el('b', null, F.dia(p.fecha) + ' · de ' + p.inicio + ' a ' + p.fin));
@@ -99,7 +154,6 @@
   });
 
   /* ---------- Inventario: conteo sorpresa ---------- */
-  const sti = { ruta: null };
   dash.draw('invResumen', (e) => {
     e.replaceChildren();
     const R = rows('inventario_ruta'); if (!R.length) return;
@@ -116,8 +170,10 @@
     e.replaceChildren();
     const I = rows('inventario'); if (!I.length) return;
     const rutas = [...new Set(I.map((x) => x.ruta))];
-    if (!sti.ruta || !rutas.includes(sti.ruta)) sti.ruta = rutas[0];
+    const sinArq = sti.ruta && !rutas.includes(sti.ruta) ? sti.ruta : null;
+    if (!sti.ruta || (!rutas.includes(sti.ruta) && !sinArq)) sti.ruta = rutas[0];
     const seg = el('div', 'seg seg-sm'); rutas.forEach((r) => { const b = el('button', null, r); b.type = 'button'; b.setAttribute('aria-pressed', String(sti.ruta === r)); b.addEventListener('click', () => { sti.ruta = r; dash.draw('invDetalle'); }); seg.append(b); }); e.append(seg);
+    if (sinArq) { e.append(el('p', 'note', sinArq + ' no tiene ningún arqueo este mes, así que no hay lista de lo que debe traer. Hay que contar el camión completo y capturar el arqueo en Power Sales; a partir de ahí aparece aquí.')); return; }
     const L = I.filter((x) => x.ruta === sti.ruta && Math.abs(x.teorico) > 0.01).sort((a, b) => b.teorico - a.teorico);
     const t = el('table', 'cpn-t'); const hr = el('tr');
     [['Producto', ''], ['Debe traer', 'num'], ['Arqueo', 'num'], ['+ Cargas', 'num'], ['− Ventas', 'num'], ['− Devol.', 'num']].forEach(([h, c]) => hr.append(el('th', c, h)));

@@ -8,6 +8,7 @@
   const NOM = { alta: 'Urgente', media: 'Revisar', baja: 'Para saber' };
   const CLS = { alta: 'bad', media: 'warn', baja: 'ok' };
   const st = { grav: 'importantes', ruta: 'todas', todos: false };
+  window.addEventListener('cpn-ir', (ev) => { const r = ev.detail.ruta; if (!r || ev.detail.vista !== 'hoy') return; st.ruta = r; st.todos = false; st.gpsTodos = false; st.grav = 'importantes'; ['hallazgosResumen', 'hallazgosLista', 'hallazgosGps'].forEach((n) => dash.draw(n)); });
 
   function lista() {
     return rows('hallazgos').slice().sort((a, b) => ORD[a.gravedad] - ORD[b.gravedad] || (b.fecha > a.fecha ? 1 : b.fecha < a.fecha ? -1 : 0) || b.monto - a.monto);

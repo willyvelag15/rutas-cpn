@@ -57,6 +57,38 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .dec-ver{margin-left:auto;flex:0 0 auto;align-self:center;font-size:13px;font-weight:600;color:var(--color-fg-muted);white-space:nowrap}
 @media (max-width:600px){.dec-ver{display:none}}
 .reg-dias .reg-dia td{border-bottom:none;padding-bottom:2px}.reg-dias .reg-cli td{white-space:normal;font-size:12px;color:var(--color-fg-muted);padding-top:0;line-height:1.35}
+#persona .pp{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 14px calc(env(safe-area-inset-bottom) + 40px);display:flex;flex-direction:column;gap:14px}
+.pp-caja{max-width:none;background:linear-gradient(135deg,#0B3F25 0%,#11693C 60%,#1B7F49 100%);color:#F4F1E6;border-radius:18px;padding:24px 20px}
+.pp-top{display:flex;align-items:center;gap:12px}.pp-top b{display:block;font-size:20px}.pp-top small{color:var(--color-fg-muted);font-size:13px}
+#pp-cuerpo{display:flex;flex-direction:column;gap:12px}
+.pp-pronto{margin:0;padding:10px 12px;border-radius:12px;background:var(--color-panel);border:1px dashed var(--color-border-line);font-size:13px;color:var(--color-fg-muted)}
+.pp-res{margin:0;font-size:15px;font-weight:600}
+.pp-t h3,.pp-l h3{margin:0;font-size:16px}
+.pp-cab{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pp-lim{font-size:12px;color:var(--color-fg-muted)}.pp-lim.bad{color:var(--color-bad);font-weight:600}
+.pp-det{margin:0;font-size:14px;line-height:1.45}
+.pp-datos{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0;font-size:13px}.pp-datos dt{color:var(--color-fg-muted)}.pp-datos dd{margin:0}
+.pp-coment{margin:0;padding:8px 10px;border-radius:10px;background:var(--bar-bg,#eee);font-size:13px}
+.pp-mia{margin:0;font-size:13px;color:var(--color-fg-muted)}
+.pp-resp,.eq-form{display:flex;flex-direction:column;gap:8px}
+.pp-resp label,.eq-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--color-fg-muted)}
+.pp-resp textarea,.pp-resp input,.eq-form input,.eq-form textarea,.eq-form select,.eq-sel,.eq-acc input{font:inherit;font-size:16px;color:var(--color-fg);background:var(--color-bg);border:1px solid var(--color-border-line);border-radius:10px;padding:10px 12px;width:100%;box-sizing:border-box}
+.pp-btn{font:inherit;font-size:15px;font-weight:600;border:0;border-radius:12px;padding:12px 16px;background:var(--g,#0E5A33);color:#fff;cursor:pointer}
+.pp-btn:disabled{opacity:.5;cursor:default}
+.pp-err{margin:0;color:var(--color-bad);font-size:13px}
+.pp-q{margin:4px 0 0;font-size:14px;font-weight:600}
+.pp-opc{align-self:stretch}.pp-opc button{flex:1 1 auto}
+.pp-extra{display:flex;flex-direction:column;gap:8px}
+.pp-tel{display:inline-flex;align-self:flex-start;align-items:center;gap:6px;font-weight:600;text-decoration:none;color:#fff;background:var(--g,#0E5A33);border-radius:999px;padding:8px 14px}
+.pp-sintel{margin:0;font-size:13px;color:var(--color-fg-muted)}
+.pp-l.hecha{opacity:.75}
+.pp-sub{margin:8px 0 0;font-size:15px}
+.pp-guion summary{cursor:pointer;font-weight:600}.pp-guion p{margin:6px 0 0;font-size:13px;line-height:1.45}
+.pp-pie{display:flex;justify-content:space-between;gap:8px;margin-top:8px}.pp-pie button{font:inherit;font-size:13px;border:1px solid var(--color-border-line);background:transparent;color:var(--color-fg-muted);border-radius:10px;padding:8px 12px;cursor:pointer}
+.eq-fila{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.eq-sel{margin-top:6px;max-width:22rem}
+.eq-acc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}.eq-acc input{flex:1 1 14rem;font-size:14px;padding:7px 10px}.eq-acc .hal-mas{margin-top:0}
+.hal-mas.eq-ok{background:var(--g,#0E5A33);color:#fff;border-color:transparent}
 .hal-lista{margin-top:10px}
 .hal-lista li{align-items:flex-start}
 .hal-izq{display:flex;flex-direction:column;gap:4px;align-items:flex-start;flex:0 0 auto;min-width:76px}
@@ -239,6 +271,25 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
     <button type="submit" id="btn-entrar">Entrar</button>
   </form>
 </section>
+<section id="persona" hidden>
+<div class="cpn pp">
+  <header class="pp-top"><div class="cpn-badge" aria-hidden="true">CPN</div><div><b id="pp-nombre">Rutas CPN</b><small id="pp-area">Comercializadora de Piedras Negras</small></div></header>
+  <form class="caja pp-caja" id="pp-form" hidden autocomplete="off">
+    <h1>Código de acceso</h1>
+    <p>Escribe el código que te dio Willy.</p>
+    <label>Código<input id="pp-codigo" type="password" autocomplete="off" required></label>
+    <label class="rec"><input id="pp-recordar" type="checkbox" checked> Recordar en este teléfono</label>
+    <div class="error" id="pp-error" hidden></div>
+    <button type="submit" id="pp-entrar">Entrar</button>
+  </form>
+  <div id="pp-cuerpo" hidden>
+    <p class="pp-pronto" id="pp-pronto" hidden></p>
+    <div class="seg" id="pp-tabs" role="group" aria-label="Secciones"></div>
+    <div id="pp-vista" aria-live="polite"></div>
+  </div>
+  <footer class="pp-pie"><button type="button" id="pp-actualizar">Actualizar</button><button type="button" id="pp-salir">Salir de esta página</button></footer>
+</div>
+</section>
 <main id="app" hidden>
 <div class="shell">
 <aside class="side" id="side" aria-label="Módulos">
@@ -248,6 +299,10 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 <button type="button" data-vista="empresa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M8 8h3M8 12h3M8 16h3M3 21h18"/></svg><span>Empresa</span></button>
 <button type="button" data-vista="global" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>Rutas</span></button>
 <button type="button" data-vista="pronostico" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 16l4-5 4 3 6-8"/><circle cx="19" cy="6" r="1.6"/></svg><span>Pronóstico</span></button>
+</div>
+<div class="side-g"><p>Equipo</p>
+<button type="button" data-vista="tareas" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span>Tareas</span></button>
+<button type="button" data-vista="verificacion" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><span>Verificación</span></button>
 </div>
 <div class="side-g"><p>Ventas</p>
 <button type="button" data-vista="ruta" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Ruta por ruta</span></button>
@@ -865,6 +920,46 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     </div>
   </section>
 
+  <section id="v-tareas" data-vista-sec="tareas" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Cumplimiento por persona</h3>
+        <p class="note">Tareas de cada quien. Toca una persona para ver sus tareas abajo.</p>
+        <div data-draw="eqResumen"></div>
+      </div>
+      <div class="card wide">
+        <h3>Tareas</h3>
+        <p class="note">Primero las que ya respondieron y esperan tu revisión. Aprueba para cerrarla o devuélvela con un comentario.</p>
+        <div data-draw="eqLista"></div>
+      </div>
+      <div class="card">
+        <h3>Nueva tarea</h3>
+        <p class="note">Le aparece a la persona en su página, con la fecha límite.</p>
+        <div data-draw="eqNueva"></div>
+      </div>
+      <div class="card">
+        <h3>Código de acceso de las páginas</h3>
+        <p class="note">Es el mismo para todas las personas y se pide junto con su enlace. Solo tú lo pones: en la base solo se guarda su huella, nadie puede leerlo.</p>
+        <div data-draw="eqCodigo"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-verificacion" data-vista-sec="verificacion" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Ventas confirmadas con el cliente</h3>
+        <p class="note">Dalia llama a 5 clientes al azar y a los de ventas dudosas. Si el cliente dice que no recibió, o menos cajas, se abre una tarea para ti.</p>
+        <div data-draw="verResumen"></div>
+      </div>
+      <div class="card wide">
+        <h3>Llamadas de los últimos 30 días</h3>
+        <p class="note">El motivo y el monto solo los ves tú; Dalia no los ve para que no influyan en la llamada.</p>
+        <div data-draw="verLista"></div>
+      </div>
+    </div>
+  </section>
+
   <section id="v-motum" data-vista-sec="motum" hidden>
     <div class="grid">
       <div class="card wide">
@@ -1369,7 +1464,9 @@ dash.calc('alertas', {
 <script src="motum.js"></script>
 <script src="abasto.js"></script>
 <script src="direccion.js"></script>
+<script src="equipo.js"></script>
 <script src="mapa-real.js"></script>
+<script src="persona.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

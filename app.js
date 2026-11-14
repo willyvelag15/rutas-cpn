@@ -32,6 +32,8 @@
     const g = new Date(paquete.generado);
     $('#actualizado').textContent = 'Actualizado ' + g.toLocaleString('es-MX', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     window.dash.cargar(paquete);
+    window.CPN = window.CPN || {}; window.CPN.sbAdmin = paquete.supabaseAdmin || null;
+    window.dispatchEvent(new Event('cpn-admin-listo'));
   }
 
   // "Recordarme": el archivo de datos cambia cada noche, así que el teléfono guarda el acceso
@@ -81,7 +83,11 @@
   });
 
   async function arranque() {
+    // Página por persona: enlace secreto (?p=...) o enlace guardado en este teléfono (si no hay sesión de Willy).
+    const P = window.CPN_PERSONA;
+    if (P && P.deUrl) { P.iniciar(); return; }
     const s = await leerSesion();
+    if (!s && P && P.activo) { P.iniciar(); return; }
     if (!s) { $('#login').hidden = false; return; }
     try { await entrar(s.correo, s.clave, false); }
     catch (e) { store.del(); $('#login').hidden = false; }

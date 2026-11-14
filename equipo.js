@@ -158,10 +158,10 @@
     const d = dash.data('equipo_sync'); const R = d && d.status === 'ok' ? d.data : [];
     if (!clave() || !R.length) return;
     const quita = (x) => { const o = Object.assign({}, x); delete o.tipo; return o; };
-    const llam = R.filter((x) => x.tipo === 'llamada').map(quita), tar = R.filter((x) => x.tipo === 'tarea').map(quita);
+    const llam = R.filter((x) => x.tipo === 'llamada').map(quita), hal = R.filter((x) => x.tipo === 'hallazgo').map(quita);
     try {
       if (llam.length) await rpc('admin_cargar_llamadas', { p_llamadas: llam });
-      if (tar.length) await rpc('admin_guardar_tareas', { p_tareas: tar });
+      if (hal.length) await rpc('admin_cargar_hallazgos', { p_hallazgos: hal });
     } catch (e) { console.warn('[equipo] no se pudo sincronizar', e.message); }
   }
   window.addEventListener('cpn-admin-listo', async () => {

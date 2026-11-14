@@ -1,5 +1,5 @@
 /* Service worker: la app abre rápido y sin señal; los datos siempre se piden nuevos. */
-const CACHE = 'cpn-rutas-v15';
+const CACHE = 'cpn-rutas-v16';
 const SHELL = ['./', 'index.html', 'app.js', 'runtime.js', 'd3.min.js', 'leaflet.js', 'leaflet.css', 'mapa-real.js', 'modulos.js', 'modulos2.js', 'hallazgos.js', 'envase.js', 'motum.js', 'abasto.js', 'direccion.js', 'equipo.js', 'persona.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {

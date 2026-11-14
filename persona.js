@@ -20,13 +20,13 @@
   const tok = deUrl || ls.get(LT);
 
   const AREA = { almacen_pn: 'Almacén Piedras Negras', almacen_mix: 'Almacén Mixtequilla', recepcion: 'Recepción', sistemas: 'SIAD y Power Sales', encargada_mix: 'Encargada Mixtequilla', admin: 'Administrador' };
-  const PRONTO = { almacen_pn: 'Tu página de almacén y la calculadora de pronóstico llegan en las próximas semanas. Por ahora aquí ves tus tareas.', almacen_mix: 'Tu página de almacén llega en las próximas semanas. Por ahora aquí ves tus tareas.', sistemas: 'Tus recomendaciones de SIAD y Power Sales llegan en las próximas semanas. Por ahora aquí ves tus tareas.', encargada_mix: 'El resumen de Mixtequilla llega en las próximas semanas. Por ahora aquí ves tus tareas.' };
+  const PRONTO = { almacen_pn: 'Tu página de almacén y la calculadora de pronóstico llegan en las próximas semanas.', almacen_mix: 'Tu página de almacén llega en las próximas semanas.', sistemas: 'Tu página de SIAD y Power Sales llega en las próximas semanas.', encargada_mix: 'El resumen completo de Mixtequilla llega en las próximas semanas.' };
   const $ = (s) => document.querySelector(s);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const hoy = () => new Date(Date.now() - 6 * 3600e3).toISOString().slice(0, 10);
   const dia = (s) => { if (!s) return ''; const d = new Date(String(s).slice(0, 10) + 'T12:00:00'); return d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }); };
   const hora = (s) => (s ? new Date(s).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
-  const st = { pin: null, yo: null, vista: null };
+  const st = { pin: null, yo: null, vista: null, todos: false };
   const clave = () => tok + ':' + (st.pin || '');
 
   function mostrarForm(msg) {
@@ -42,7 +42,7 @@
     $('#pp-form').hidden = true; $('#pp-cuerpo').hidden = false;
     $('#pp-nombre').textContent = 'Hola, ' + st.yo.nombre.split(' ')[0];
     $('#pp-area').textContent = AREA[st.yo.rol] || '';
-    const vistas = st.yo.rol === 'recepcion' ? [['llamadas', 'Llamadas'], ['tareas', 'Mis tareas']] : [['tareas', 'Mis tareas']];
+    const vistas = st.yo.rol === 'recepcion' ? [['llamadas', 'Llamadas'], ['tareas', 'Mis tareas']] : [['hallazgos', 'Hallazgos'], ['tareas', 'Mis tareas']];
     if (!st.vista || !vistas.some((v) => v[0] === st.vista)) st.vista = vistas[0][0];
     const nav = $('#pp-tabs'); nav.replaceChildren(); nav.hidden = vistas.length < 2;
     vistas.forEach(([k, t]) => { const b = el('button', null, t); b.type = 'button'; b.setAttribute('aria-pressed', String(st.vista === k)); b.addEventListener('click', () => { st.vista = k; [...nav.children].forEach((x) => x.setAttribute('aria-pressed', String(x === b))); pintar(); }); nav.append(b); });
@@ -52,11 +52,28 @@
 
   async function pintar() {
     const v = $('#pp-vista'); v.setAttribute('aria-busy', 'true');
-    try { if (st.vista === 'llamadas') await pintarLlamadas(v); else await pintarTareas(v); }
+    try { if (st.vista === 'llamadas') await pintarLlamadas(v); else if (st.vista === 'hallazgos') await pintarHallazgos(v); else await pintarTareas(v); }
     catch (e) {
       if (/código|Enlace/i.test(e.message)) { ls.del(LP); mostrarForm(e.message); return; }
       v.replaceChildren(el('p', 'pp-err', e.message));
     } finally { v.removeAttribute('aria-busy'); }
+  }
+
+  /* ---------- Hallazgos (solo lo que se encontró; sin recomendaciones) ---------- */
+  const GRAV = { alta: ['Importante', 'bad'], media: ['Revisar', 'warn'], baja: ['Para saber', 'ok'] };
+  async function pintarHallazgos(v) {
+    const H = await rpc('mis_hallazgos', { p_clave: clave() });
+    v.replaceChildren();
+    v.append(el('p', 'pp-res', H.length ? H.length + (H.length === 1 ? ' hallazgo' : ' hallazgos') + ' de los últimos 7 días.' : 'Sin hallazgos en los últimos 7 días.'));
+    if (H.length) v.append(el('p', 'pp-mia', 'Es lo que encontró el análisis de la noche en tu área, para que lo revises y decidas.'));
+    const n = st.todos ? H.length : Math.min(15, H.length); let dia0 = null;
+    H.slice(0, n).forEach((h) => {
+      if (h.fecha !== dia0) { dia0 = h.fecha; v.append(el('h3', 'pp-sub', h.fecha ? dia(h.fecha) : 'Sin fecha')); }
+      const c = el('article', 'card pp-t'); const cab = el('div', 'pp-cab'); const [g, cls] = GRAV[h.gravedad] || ['', ''];
+      if (g) cab.append(el('span', 'pill ' + cls, g)); if (h.ruta) cab.append(el('span', 'pill', h.ruta)); cab.append(el('span', 'pp-lim', h.tipo));
+      c.append(cab, el('h3', null, h.titulo)); if (h.detalle) c.append(el('p', 'pp-det', h.detalle)); v.append(c);
+    });
+    if (H.length > n) { const b = el('button', 'hal-mas', 'Ver los ' + H.length); b.type = 'button'; b.addEventListener('click', () => { st.todos = true; pintar(); }); v.append(b); }
   }
 
   /* ---------- Tareas ---------- */

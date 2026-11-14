@@ -164,5 +164,9 @@
       if (tar.length) await rpc('admin_guardar_tareas', { p_tareas: tar });
     } catch (e) { console.warn('[equipo] no se pudo sincronizar', e.message); }
   }
-  window.addEventListener('cpn-admin-listo', async () => { await sincronizar(); cargar(); });
+  window.addEventListener('cpn-admin-listo', async () => {
+    const v = (location.hash.match(/^#v-(tareas|verificacion)$/) || [])[1]; const t = v && TIT[v];
+    if (t) { const a = document.getElementById('top-tit'), s = document.getElementById('top-sub'); if (a) a.textContent = t[0]; if (s) s.textContent = t[1]; }
+    await sincronizar(); cargar();
+  });
 })();

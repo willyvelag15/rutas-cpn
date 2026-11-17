@@ -26,7 +26,7 @@
   const hoy = () => new Date(Date.now() - 6 * 3600e3).toISOString().slice(0, 10);
   const dia = (s) => { if (!s) return ''; const d = new Date(String(s).slice(0, 10) + 'T12:00:00'); return d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }); };
   const hora = (s) => (s ? new Date(s).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
-  const st = { pin: null, yo: null, vista: null, todos: false, ruta: null, pzPer: null };
+  const st = { pin: null, yo: null, vista: null, todos: false, ruta: null, pzPer: null, sec: null };
   const clave = () => tok + ':' + (st.pin || '');
 
   function mostrarForm(msg) {
@@ -62,58 +62,187 @@
   }
 
 
-  /* ---------- Mi resumen: lo del admin que eligió Willy para cada puesto (17-nov-2026) ---------- */
+  /* ---------- Mi resumen: tablero por puesto (17-nov-2026, rediseño: inicio con indicadores + menú de íconos) ---------- */
+  const IC = {
+    inicio: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+    cierre: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+    abasto: 'M3 20h18M5 20V10h6v10M13 20V6h6v14',
+    programa: 'M2 16V6h11v10M13 9h4.5l3.5 4v3h-8M6 18.5a2 2 0 1 0 0-.01M17 18.5a2 2 0 1 0 0-.01',
+    inventario: 'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10',
+    carga: 'M3 17h4l3-8h7l4 8M7 17v2M17 17v2M9 13h8',
+    envase: 'M9 3h6M10 3v4l-3 4v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-9l-3-4V3M7 13h10',
+    productos: 'M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9',
+    avance: 'M12 3a9 9 0 1 0 9 9M12 7a5 5 0 1 0 5 5M12 11a1 1 0 1 0 1 1M21 3l-9 9',
+    ventas: 'M4 19V9M10 19V5M16 19v-7M22 19H2',
+    liquidaciones: 'M3 7h18v10H3zM12 12m-2.5 0a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0M6 10v4M18 10v4',
+    trasRegreso: 'M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+    sinCompra: 'M9 8a3.5 3.5 0 1 0 0-.01M2.5 20a6.5 6.5 0 0 1 13 0M17 9l4 4M21 9l-4 4',
+    scorecard: 'M9 5h10M9 12h10M9 19h10M4 5l1 1 2-2M4 12l1 1 2-2M4 19l1 1 2-2',
+    paradas: 'M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 9.5m-2.5 0a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0',
+    bonos: 'M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8 21h8M9 17h6',
+    bonificacion: 'M20 12v8H4v-8M2 7h20v5H2zM12 22V7M12 7H8a2.5 2.5 0 1 1 0-5c3 0 4 5 4 5zM12 7h4a2.5 2.5 0 1 0 0-5c-3 0-4 5-4 5z',
+    gastovar: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3',
+    margen: 'M19 5L5 19M7 7m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0M17 17m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0',
+    slides: 'M3 4h18v12H3zM12 16v4M8 20h8M7 12l3-3 2 2 4-4',
+    inv: 'M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3'
+  };
+  const icono = (k) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', IC[k] || IC.ventas); s.append(p); return s; };
+  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario' };
+
+  function tilesDe(s) { const t = el('div', 'hal-tiles'); (s.tiles || []).forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); return t; }
+  function tablaDe(cols, filas, ok) {
+    const iR = cols.findIndex((x) => x[0] === 'Ruta');
+    const F = filas.filter((f) => iR < 0 || ok(f[iR]));
+    if (!F.length) return el('p', 'pp-mia', 'Nada que mostrar.');
+    const w = el('div', 'tblwrap'); const t = el('table', 'cpn-t'); const h = el('tr'); cols.forEach(([n, cl]) => h.append(el('th', cl || null, n)));
+    t.append(el('thead')); t.tHead.append(h); const b = el('tbody');
+    F.forEach((f) => { const tr = el('tr'); f.forEach((x, i) => tr.append(el('td', (cols[i] && cols[i][1]) || null, x))); b.append(tr); });
+    t.append(b); w.append(t); return w;
+  }
+
   async function pintarPanel(v) {
     const r = await rpc('mi_panel', { p_clave: clave() });
     const P = r && r.datos;
     v.replaceChildren();
     if (!P) { v.append(el('p', 'pp-res', 'Tu resumen se carga con la actualización de la noche.')); return; }
-    v.append(el('p', 'pp-mia', 'Datos al ' + dia(P.corte) + '. Se actualiza cada noche.'));
-    const rutas = P.rutas || [];
-    if (rutas.length > 1) {
-      const f = el('div', 'pp-rutas'); ['Todas'].concat(rutas).forEach((x) => { const b = el('button', null, x); b.type = 'button'; b.setAttribute('aria-pressed', String((st.ruta || 'Todas') === x)); b.addEventListener('click', () => { st.ruta = x === 'Todas' ? null : x; pintarPanel(v); }); f.append(b); });
-      v.append(f);
-    }
+    const esVend = st.yo.rol === 'vendedor';
     const ok = (txt) => !st.ruta || !txt || !/^Ruta \d+$/.test(txt) || txt === st.ruta;
-    const nav = el('div', 'pp-ir'); v.append(nav);
-    if (st.yo.rol === 'almacen_pn') v.append(await cajaInventario());
-    const PZ = window.CPN_PZ;
-    if ((P.slides || []).length && PZ) {
-      const c = el('section', 'card pp-panel'); c.id = 'pp-s-slides'; c.append(el('h3', null, st.yo.rol === 'vendedor' ? 'Tu semana' : 'Presentación por ruta'));
+    const S = P.secciones || [];
+    const items = [];
+    if (st.yo.rol === 'almacen_pn') items.push({ id: 'inv' });
+    if ((P.slides || []).length && window.CPN_PZ && !esVend) items.push({ id: 'slides' });
+    S.forEach((s) => items.push({ id: s.id, s }));
+    if (esVend && (P.slides || []).length && window.CPN_PZ) items.push({ id: 'slides' });
+    if (st.sec && !items.some((x) => x.id === st.sec)) st.sec = null;
+
+    const dash = el('div', 'pp-dash');
+    // menú lateral (computadora) / barra de íconos
+    const menu = el('nav', 'pp-menu'); menu.setAttribute('aria-label', 'Secciones');
+    const boton = (id, t) => { const b = el('button'); b.type = 'button'; b.setAttribute('aria-pressed', String((st.sec || 'inicio') === id)); b.append(icono(id), el('span', null, t)); b.addEventListener('click', () => { st.sec = id === 'inicio' ? null : id; pintarPanel(v); window.scrollTo({ top: 0, behavior: 'smooth' }); }); return b; };
+    menu.append(boton('inicio', 'Inicio'));
+    items.forEach((x) => menu.append(boton(x.id, CORTO[x.id] || (x.s && x.s.titulo) || x.id)));
+    const main = el('div', 'pp-main');
+    dash.append(menu, main); v.append(dash);
+
+    const cab = el('div', 'pp-cabeza');
+    cab.append(el('span', 'pp-mia', 'Datos al ' + dia(P.corte) + ' · se actualiza cada noche'));
+    const rutas = P.rutas || [];
+    if (rutas.length > 1 && st.sec !== 'inv') {
+      const f = el('div', 'pp-rutas'); ['Todas'].concat(rutas).forEach((x) => { const b = el('button', null, x === 'Todas' ? x : x.replace('Ruta ', 'R')); b.type = 'button'; b.setAttribute('aria-pressed', String((st.ruta || 'Todas') === x)); b.addEventListener('click', () => { st.ruta = x === 'Todas' ? null : x; pintarPanel(v); }); f.append(b); });
+      cab.append(f);
+    }
+    main.append(cab);
+
+    if (!st.sec) {
+      if (esVend) main.append(inicioVendedor(P));
+      else {
+        // indicadores clave: el primer cuadro de cada sección
+        const k = el('div', 'pp-kpis');
+        S.forEach((s) => { const x = (s.tiles || [])[0]; if (!x || k.children.length >= 6) return; const d = el('button', 'pp-kpi' + (x.tono ? ' ' + x.tono : '')); d.type = 'button'; d.append(icono(s.id), el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); d.addEventListener('click', () => { st.sec = s.id; pintarPanel(v); }); k.append(d); });
+        main.append(k);
+      }
+      const g = el('div', 'pp-grid');
+      items.forEach((x) => {
+        const c = el('button', 'pp-cuadro'); c.type = 'button';
+        const t = x.s && (x.s.tiles || [])[0];
+        c.append(icono(x.id), el('b', null, CORTO[x.id] || (x.s && x.s.titulo)));
+        c.append(el('small', null, x.id === 'inv' ? 'Piedras Negras y Mixtequilla' : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : t ? t.k + ': ' + t.v : 'Ver detalle'));
+        c.addEventListener('click', () => { st.sec = x.id; pintarPanel(v); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        g.append(c);
+      });
+      main.append(g);
+      return;
+    }
+
+    const it = items.find((x) => x.id === st.sec);
+    const c = el('section', 'card pp-panel');
+    const h = el('div', 'pp-sec-cab'); const vb = el('button', 'pp-volver'); vb.type = 'button'; vb.setAttribute('aria-label', 'Volver al inicio'); vb.textContent = '‹'; vb.addEventListener('click', () => { st.sec = null; pintarPanel(v); });
+    h.append(vb, icono(it.id), el('h3', null, it.s ? it.s.titulo : CORTO[it.id]));
+    c.append(h);
+    if (it.id === 'inv') { c.append(await cajaInventario(true)); main.append(c); return; }
+    if (it.id === 'slides') {
+      const PZ = window.CPN_PZ;
       const per = []; P.slides.forEach((x) => { if (!per.some((p) => p.id === x.periodo.id)) per.push(x.periodo); });
-      const sel = el('select', 'eq-sel'); per.forEach((p) => { const o = el('option', null, p.etiqueta + (p.tipo === 'mes' ? ' (al ' + dia(p.hasta) + ')' : p.completa ? '' : ' (en curso)')); o.value = p.id; sel.append(o); });
+      const sel = el('select', 'pp-sel'); per.forEach((p) => { const o = el('option', null, p.etiqueta + (p.tipo === 'mes' ? ' (al ' + dia(p.hasta) + ')' : p.completa ? '' : ' (en curso)')); o.value = p.id; sel.append(o); });
       if (st.pzPer && per.some((p) => p.id === st.pzPer)) sel.value = st.pzPer;
       const caja = el('div', 'pz-list');
       const dibuja = () => { st.pzPer = sel.value; caja.replaceChildren(); const pp = per.find((p) => p.id === sel.value);
         P.slides.filter((x) => x.periodo.id === sel.value && ok(x.slide.ruta)).forEach((x) => { const w = el('div', 'pz-wrap'); w.style.alignItems = 'flex-start'; const n = PZ.slide(x.slide, pp, P.corte); w.append(n); caja.append(w); const z = Math.min(1, (caja.clientWidth || 540) / 540); if (z < 1) n.style.zoom = z; }); };
-      sel.addEventListener('change', dibuja); c.append(sel, caja); v.append(c); dibuja();
-      const a = el('a', 'pill', c.querySelector('h3').textContent); a.href = '#pp-s-slides'; nav.append(a);
+      sel.addEventListener('change', dibuja); c.append(sel, caja); main.append(c); dibuja(); return;
     }
-    (P.secciones || []).forEach((s) => {
-      const c = el('section', 'card pp-panel'); c.id = 'pp-s-' + s.id;
-      c.append(el('h3', null, s.titulo)); if (s.nota) c.append(el('p', 'pp-mia', s.nota));
-      if (s.tiles && s.tiles.length) { const t = el('div', 'hal-tiles'); s.tiles.forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); c.append(t); }
-      const tabla = (cols, filas) => {
-        const iR = cols.findIndex((x) => x[0] === 'Ruta');
-        const F = filas.filter((f) => iR < 0 || ok(f[iR]));
-        if (!F.length) return el('p', 'pp-mia', 'Nada que mostrar.');
-        const w = el('div', 'tblwrap'); const t = el('table', 'cpn-t'); const h = el('tr'); cols.forEach(([n, cl]) => h.append(el('th', cl || null, n)));
-        t.append(el('thead')); t.tHead.append(h); const b = el('tbody');
-        F.forEach((f) => { const tr = el('tr'); f.forEach((x, i) => tr.append(el('td', (cols[i] && cols[i][1]) || null, x))); b.append(tr); });
-        t.append(b); w.append(t); return w;
-      };
-      if (s.cols && s.cols.length) c.append(tabla(s.cols, s.filas));
-      if (s.detalle) { const d = el('details'); d.append(el('summary', null, s.detalle.titulo), tabla(s.detalle.cols, s.detalle.filas)); c.append(d); }
-      v.append(c);
-      const a = el('a', 'pill', s.titulo); a.href = '#pp-s-' + s.id; nav.append(a);
-    });
+    const s = it.s;
+    if (s.nota) c.append(el('p', 'pp-mia', s.nota));
+    if (s.tiles && s.tiles.length) c.append(tilesDe(s));
+    if (s.cols && s.cols.length) c.append(tablaDe(s.cols, s.filas, ok));
+    if (s.detalle) { const d = el('details'); d.append(el('summary', null, s.detalle.titulo), tablaDe(s.detalle.cols, s.detalle.filas, ok)); c.append(d); }
+    main.append(c);
   }
 
+  /* ---------- Inicio del vendedor, hecho para el celular ---------- */
+  function inicioVendedor(P) {
+    const w = el('div', 'pp-vend');
+    const sl = (P.slides || []).map((x) => x.slide);
+    const per = (P.slides || []).map((x) => x.periodo);
+    const iAct = per.findIndex((p) => p.tipo === 'semana');
+    const s = iAct >= 0 ? sl[iAct] : sl[0];
+    if (!s) { w.append(el('p', 'pp-mia', 'Tu avance se carga con la actualización de la noche.')); return w; }
+    const K = s.kpi, M = s.mes, Sc = s.score;
+    const pc = (x) => (x == null ? '—' : Math.round(x * 100) + '%');
+    const n1 = (x) => (x == null ? '—' : (Math.round(x * 10) / 10).toLocaleString('es-MX'));
+    const n0 = (x) => (x == null ? '—' : Math.round(x).toLocaleString('es-MX'));
+    const barra = (val, max, cls) => { const b = el('div', 'pp-barra'); const i = el('i', cls || ''); i.style.width = Math.min(100, (val / (max || 1)) * 100) + '%'; b.append(i); return b; };
+    // héroe: la semana
+    const hero = el('section', 'pp-hero');
+    hero.append(el('small', null, per[iAct >= 0 ? iAct : 0].etiqueta));
+    const fila = el('div', 'pp-hero-fila'); fila.append(el('b', null, n1(K.hl) + ' Hl'), el('span', null, 'de ' + n1(K.metaPeriodo) + ' de meta'));
+    hero.append(fila, barra(K.hl, K.metaPeriodo, K.avance >= 1 ? 'ok' : ''));
+    const t = K.tendencia === 'creciendo' ? '▲ Vas creciendo' : K.tendencia === 'cayendo' ? '▼ Vas abajo' : 'Vas parejo';
+    const cmp = (K.comparaciones || [])[0];
+    hero.append(el('p', 'pp-hero-t ' + (K.tendencia || ''), t + (cmp && cmp.cambio != null ? ' ' + (cmp.cambio > 0 ? '+' : '') + pc(cmp.cambio) + ' contra la semana pasada' : '')));
+    w.append(hero);
+    // mes
+    const mes = el('section', 'card pp-mes');
+    mes.append(el('small', null, 'Tu mes'));
+    const f2 = el('div', 'pp-hero-fila'); f2.append(el('b', null, n1(M.hlMes) + ' Hl'), el('span', null, 'de ' + n0(M.metaHl) + ' · ' + pc(M.avance)));
+    mes.append(f2, barra(M.hlMes, M.metaHl));
+    if (M.necesitaDia) mes.append(el('p', 'pp-mia', 'Para llegar a la meta ocupas ' + n1(M.necesitaDia) + ' Hl diarios en los ' + M.diasRestan + ' días que quedan.'));
+    w.append(mes);
+    // cuadritos
+    const k = el('div', 'pp-mini');
+    const mini = (ic, a, b, cls) => { const d = el('div', 'pp-mini-c' + (cls ? ' ' + cls : '')); d.append(icono(ic), el('b', null, a), el('span', null, b)); k.append(d); };
+    mini('ventas', n0(K.cajas), 'cajas esta semana');
+    mini('scorecard', pc(Sc.efectividad), 'te compran de cada visita', Sc.efectividad < 0.6 ? 'bad' : 'ok');
+    mini('paradas', pc(Sc.cumplimiento), 'de tus clientes visitados', Sc.cumplimiento < 0.85 ? 'bad' : 'ok');
+    mini('cierre', Sc.salida || '—', 'hora de salida', Sc.salida > '10:00' ? 'bad' : '');
+    w.append(k);
+    // bonos
+    const bo = el('section', 'card pp-bonos'); bo.append(el('h3', null, 'Tus bonos del mes'));
+    (s.bonos || []).forEach((b) => { const r = el('div', 'pp-bono'); const top = el('div', 'pp-hero-fila'); top.append(el('span', null, b.nombre.replace(/^Lata/, 'Amstel Ultra lata')), el('b', null, b.falta > 0 ? 'te faltan ' + n1(b.falta) : '¡Ya entraste!')); r.append(top, barra(b.cajasMes, b.minimo, b.falta > 0 ? 'oro' : 'ok'), el('small', null, n1(b.cajasMes) + ' de ' + b.minimo + ' cajas')); bo.append(r); });
+    w.append(bo);
+    // clientes por visitar
+    const L = (s.perdida && s.perdida.lista) || [];
+    if (L.length) {
+      const cl = el('section', 'card'); cl.append(el('h3', null, 'Clientes que no te han comprado'));
+      const ul = el('ul', 'pp-clientes');
+      L.slice(0, 8).forEach((x) => { const li = el('li'); li.append(el('b', null, x.cliente), el('span', null, (x.dias != null ? x.dias + ' días sin comprar' : 'sin compra') + ' · ' + n1(x.cajas) + ' cajas')); ul.append(li); });
+      cl.append(ul); w.append(cl);
+    }
+    // alertas
+    if ((s.alertas || []).length) {
+      const al = el('section', 'card'); al.append(el('h3', null, 'Pendientes'));
+      s.alertas.slice(0, 5).forEach((a) => { const d = el('p', 'pp-alerta ' + (a.nivel === 'alta' ? 'bad' : 'warn')); d.append(el('b', null, a.tipo + ': '), document.createTextNode(a.txt)); al.append(d); });
+      w.append(al);
+    }
+    if ((s.oportunidades || []).length) {
+      const op = el('section', 'card pp-op'); op.append(el('h3', null, 'Para esta semana'));
+      const ul = el('ul'); s.oportunidades.slice(0, 4).forEach((x) => ul.append(el('li', null, x))); op.append(ul); w.append(op);
+    }
+    return w;
+  }
 
   /* ---------- Rubí sube el inventario de almacén (Piedras Negras y Mixtequilla), 17-nov-2026 ---------- */
-  async function cajaInventario() {
-    const c = el('section', 'card pp-panel'); c.id = 'pp-s-inv';
-    c.append(el('h3', null, 'Subir inventario'));
+  async function cajaInventario(dentro) {
+    const c = el('div', 'pp-invbox'); c.id = 'pp-s-inv';
     c.append(el('p', 'pp-mia', 'Tal como te llega: Excel, PDF o foto. Uno por almacén.'));
     const f = el('form', 'pp-inv');
     const sel = el('select'); sel.setAttribute('aria-label', 'Almacén'); ['Piedras Negras', 'Mixtequilla'].forEach((x) => { const o = el('option', null, x); o.value = x; sel.append(o); });

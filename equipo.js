@@ -162,6 +162,8 @@
     try {
       if (llam.length) await rpc('admin_cargar_llamadas', { p_llamadas: llam });
       if (hal.length) await rpc('admin_cargar_hallazgos', { p_hallazgos: hal });
+      const pn = dash.data('paneles'); const PN = pn && pn.status === 'ok' ? pn.data : [];
+      if (PN.length) await rpc('admin_cargar_paneles', { p_paneles: PN.map((x) => ({ clave: x.clave, datos: x.datos })) });
     } catch (e) { console.warn('[equipo] no se pudo sincronizar', e.message); }
   }
   window.addEventListener('cpn-admin-listo', async () => {

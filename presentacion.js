@@ -111,7 +111,8 @@
     const K = s.kpi;
     const tiles = el('div', 'pz-tiles');
     tiles.append(tile('Hectolitros', n1(K.hl), 'meta ' + n1(K.metaPeriodo)));
-    tiles.append(tile('Venta', mx(K.venta), n0(K.cajas) + ' cajas'));
+    const sd = !!s.sinDinero;
+    tiles.append(sd ? tile('Cajas', n0(K.cajas), 'vendidas') : tile('Venta', mx(K.venta), n0(K.cajas) + ' cajas'));
     tiles.append(tile('Avance meta', pc(K.avance), P.tipo === 'mes' ? 'debería ir en ' + pc(P.dias / 25) : 'de la meta semanal', K.avance != null && K.avance >= (P.tipo === 'mes' ? P.dias / 25 : 1) ? 'up' : 'down'));
     const cmp = K.comparaciones && K.comparaciones[0];
     const flecha = K.tendencia === 'creciendo' ? '▲ ' : K.tendencia === 'cayendo' ? '▼ ' : '';
@@ -136,7 +137,7 @@
     const it = (k, v, cls) => { const d = el('div', cls || ''); d.append(el('span', null, k), el('b', null, v)); grid.append(d); };
     it('Visitas programadas', n0(S.visProg)); it('Programadas hechas', n0(S.progHechas)); it('Cumplimiento', pc(S.cumplimiento), S.cumplimiento < 0.85 ? 'bad' : 'ok');
     it('Visitas hechas', n0(S.visHechas)); it('Con pedido', n0(S.conPedido)); it('Efectividad', pc(S.efectividad), S.efectividad < 0.6 ? 'bad' : 'ok');
-    it('Sin venta', n0(S.sinVenta)); it('Ticket promedio', mx(S.dropsize)); it('Precio por Hl', mx(K.precioHl));
+    it('Sin venta', n0(S.sinVenta)); if (sd) { it('Clientes que compraron', n0(S.clientesCompra)); it('Días de venta', n0(S.dias)); } else { it('Ticket promedio', mx(S.dropsize)); it('Precio por Hl', mx(K.precioHl)); }
     it('Salida (mediana)', S.salida || '—', S.salida > '10:00' ? 'bad' : ''); it('Días que salió tarde', S.diasTarde + ' de ' + S.dias, S.diasTarde ? 'bad' : 'ok'); it('Min por visita', n1(S.minServicio));
     sc.append(grid);
     if (S.motivos && S.motivos.length) { const p = el('div', null); p.style.cssText = 'font-size:11px;margin-top:5px;color:#3d4741'; p.textContent = 'Por qué no compraron: ' + S.motivos.map((m) => m.motivo.toLowerCase() + ' (' + m.visitas + ')').join(', '); sc.append(p); }
@@ -160,11 +161,11 @@
     const L = s.perdida; const lo = el('div', 'pz-lost');
     lo.append(el('h4', null, 'Venta que se dejó de hacer · clientes sin compra'));
     const lt = el('div', 'pz-tiles');
-    lt.append(tile('Clientes sin compra', L.clientes + ' de ' + L.cartera), tile('Hectolitros', n1(L.hl)), tile('Cajas', n0(L.cajas)), tile('Pesos', mx(L.pesos)));
+    lt.append(tile('Clientes sin compra', L.clientes + ' de ' + L.cartera), tile('Hectolitros', n1(L.hl)), tile('Cajas', n0(L.cajas))); if (!sd) lt.append(tile('Pesos', mx(L.pesos))); else lt.style.gridTemplateColumns = 'repeat(3,1fr)';
     lo.append(lt);
     if (L.lista.length) {
-      const tt = el('table'); tt.style.marginTop = '6px'; const h = el('tr'); [['Cliente', ''], ['Última compra', ''], ['Cajas', 'n'], ['Pesos', 'n']].forEach(([x, cl]) => h.append(el('th', cl, x))); tt.append(h);
-      L.lista.slice(0, 8).forEach((x) => { const tr = el('tr'); tr.append(el('td', null, x.cliente), el('td', null, x.ultimaCompra ? fd(x.ultimaCompra) + (x.dias != null ? ' (' + x.dias + ' días)' : '') : 'sin compra'), el('td', 'n', n1(x.cajas)), el('td', 'n', mx(x.pesos))); tt.append(tr); });
+      const tt = el('table'); tt.style.marginTop = '6px'; const h = el('tr'); [['Cliente', ''], ['Última compra', ''], ['Cajas', 'n']].concat(sd ? [] : [['Pesos', 'n']]).forEach(([x, cl]) => h.append(el('th', cl, x))); tt.append(h);
+      L.lista.slice(0, 8).forEach((x) => { const tr = el('tr'); tr.append(el('td', null, x.cliente), el('td', null, x.ultimaCompra ? fd(x.ultimaCompra) + (x.dias != null ? ' (' + x.dias + ' días)' : '') : 'sin compra'), el('td', 'n', n1(x.cajas))); if (!sd) tr.append(el('td', 'n', mx(x.pesos))); tt.append(tr); });
       lo.append(tt);
     }
     bd.append(lo);
@@ -237,6 +238,7 @@
     e.append(list);
   });
 
+  window.CPN_PZ = { slide };
   window.addEventListener('cpn-ir', (ev) => { if (ev.detail.vista !== 'presentacion') return; if (ev.detail.ruta) st.ruta = ev.detail.ruta; dash.draw('pzCtl'); dash.draw('pzSlides'); });
   const TIT = { presentacion: ['Presentación', 'Rendimiento por ruta para mandar por WhatsApp'] };
   document.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => {

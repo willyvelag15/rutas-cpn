@@ -19,14 +19,14 @@
   if (deUrl) ls.set(LT, deUrl);
   const tok = deUrl || ls.get(LT);
 
-  const AREA = { almacen_pn: 'Almacén Piedras Negras', almacen_mix: 'Almacén Mixtequilla', recepcion: 'Recepción', sistemas: 'SIAD y Power Sales', encargada_mix: 'Encargada Mixtequilla', admin: 'Administrador' };
-  const PRONTO = { almacen_pn: 'Tu página de almacén y la calculadora de pronóstico llegan en las próximas semanas.', almacen_mix: 'Tu página de almacén llega en las próximas semanas.', sistemas: 'Tu página de SIAD y Power Sales llega en las próximas semanas.', encargada_mix: 'El resumen completo de Mixtequilla llega en las próximas semanas.' };
+  const AREA = { almacen_pn: 'Almacén Piedras Negras', almacen_mix: 'Almacén Mixtequilla', recepcion: 'Recepción', sistemas: 'SIAD y Power Sales', encargada_mix: 'Encargada Mixtequilla', vendedor: 'Vendedor', admin: 'Administrador' };
+  const PRONTO = { almacen_pn: 'Pronto: subir inventarios y la calculadora de programación.' };
   const $ = (s) => document.querySelector(s);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const hoy = () => new Date(Date.now() - 6 * 3600e3).toISOString().slice(0, 10);
   const dia = (s) => { if (!s) return ''; const d = new Date(String(s).slice(0, 10) + 'T12:00:00'); return d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }); };
   const hora = (s) => (s ? new Date(s).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
-  const st = { pin: null, yo: null, vista: null, todos: false };
+  const st = { pin: null, yo: null, vista: null, todos: false, ruta: null, pzPer: null };
   const clave = () => tok + ':' + (st.pin || '');
 
   function mostrarForm(msg) {
@@ -41,8 +41,10 @@
     if (recordar) ls.set(LP, pin); else ls.del(LP);
     $('#pp-form').hidden = true; $('#pp-cuerpo').hidden = false;
     $('#pp-nombre').textContent = 'Hola, ' + st.yo.nombre.split(' ')[0];
-    $('#pp-area').textContent = AREA[st.yo.rol] || '';
-    const vistas = st.yo.rol === 'recepcion' ? [['llamadas', 'Llamadas'], ['tareas', 'Mis tareas']] : [['hallazgos', 'Hallazgos'], ['tareas', 'Mis tareas']];
+    $('#pp-area').textContent = (AREA[st.yo.rol] || '') + (st.yo.ruta ? ' · ' + st.yo.ruta : '');
+    const vistas = st.yo.rol === 'recepcion' ? [['panel', 'Mi resumen'], ['llamadas', 'Llamadas'], ['tareas', 'Mis tareas']]
+      : st.yo.rol === 'vendedor' ? [['panel', 'Mi avance'], ['tareas', 'Mis tareas']]
+      : [['panel', 'Mi resumen'], ['hallazgos', 'Hallazgos'], ['tareas', 'Mis tareas']];
     if (!st.vista || !vistas.some((v) => v[0] === st.vista)) st.vista = vistas[0][0];
     const nav = $('#pp-tabs'); nav.replaceChildren(); nav.hidden = vistas.length < 2;
     vistas.forEach(([k, t]) => { const b = el('button', null, t); b.type = 'button'; b.setAttribute('aria-pressed', String(st.vista === k)); b.addEventListener('click', () => { st.vista = k; [...nav.children].forEach((x) => x.setAttribute('aria-pressed', String(x === b))); pintar(); }); nav.append(b); });
@@ -52,11 +54,58 @@
 
   async function pintar() {
     const v = $('#pp-vista'); v.setAttribute('aria-busy', 'true');
-    try { if (st.vista === 'llamadas') await pintarLlamadas(v); else if (st.vista === 'hallazgos') await pintarHallazgos(v); else await pintarTareas(v); }
+    try { if (st.vista === 'panel') await pintarPanel(v); else if (st.vista === 'llamadas') await pintarLlamadas(v); else if (st.vista === 'hallazgos') await pintarHallazgos(v); else await pintarTareas(v); }
     catch (e) {
       if (/código|Enlace/i.test(e.message)) { ls.del(LP); mostrarForm(e.message); return; }
       v.replaceChildren(el('p', 'pp-err', e.message));
     } finally { v.removeAttribute('aria-busy'); }
+  }
+
+
+  /* ---------- Mi resumen: lo del admin que eligió Willy para cada puesto (17-nov-2026) ---------- */
+  async function pintarPanel(v) {
+    const r = await rpc('mi_panel', { p_clave: clave() });
+    const P = r && r.datos;
+    v.replaceChildren();
+    if (!P) { v.append(el('p', 'pp-res', 'Tu resumen se carga con la actualización de la noche.')); return; }
+    v.append(el('p', 'pp-mia', 'Datos al ' + dia(P.corte) + '. Se actualiza cada noche.'));
+    const rutas = P.rutas || [];
+    if (rutas.length > 1) {
+      const f = el('div', 'seg pp-opc'); ['Todas'].concat(rutas).forEach((x) => { const b = el('button', null, x); b.type = 'button'; b.setAttribute('aria-pressed', String((st.ruta || 'Todas') === x)); b.addEventListener('click', () => { st.ruta = x === 'Todas' ? null : x; pintarPanel(v); }); f.append(b); });
+      v.append(f);
+    }
+    const ok = (txt) => !st.ruta || !txt || !/^Ruta \d+$/.test(txt) || txt === st.ruta;
+    const nav = el('div', 'pp-ir'); v.append(nav);
+    const PZ = window.CPN_PZ;
+    if ((P.slides || []).length && PZ) {
+      const c = el('section', 'card pp-panel'); c.id = 'pp-s-slides'; c.append(el('h3', null, st.yo.rol === 'vendedor' ? 'Tu semana' : 'Presentación por ruta'));
+      const per = []; P.slides.forEach((x) => { if (!per.some((p) => p.id === x.periodo.id)) per.push(x.periodo); });
+      const sel = el('select', 'eq-sel'); per.forEach((p) => { const o = el('option', null, p.etiqueta + (p.tipo === 'mes' ? ' (al ' + dia(p.hasta) + ')' : p.completa ? '' : ' (en curso)')); o.value = p.id; sel.append(o); });
+      if (st.pzPer && per.some((p) => p.id === st.pzPer)) sel.value = st.pzPer;
+      const caja = el('div', 'pz-list');
+      const dibuja = () => { st.pzPer = sel.value; caja.replaceChildren(); const pp = per.find((p) => p.id === sel.value);
+        P.slides.filter((x) => x.periodo.id === sel.value && ok(x.slide.ruta)).forEach((x) => { const w = el('div', 'pz-wrap'); w.style.alignItems = 'flex-start'; const n = PZ.slide(x.slide, pp, P.corte); w.append(n); caja.append(w); const z = Math.min(1, (caja.clientWidth || 540) / 540); if (z < 1) n.style.zoom = z; }); };
+      sel.addEventListener('change', dibuja); c.append(sel, caja); v.append(c); dibuja();
+      const a = el('a', 'pill', c.querySelector('h3').textContent); a.href = '#pp-s-slides'; nav.append(a);
+    }
+    (P.secciones || []).forEach((s) => {
+      const c = el('section', 'card pp-panel'); c.id = 'pp-s-' + s.id;
+      c.append(el('h3', null, s.titulo)); if (s.nota) c.append(el('p', 'pp-mia', s.nota));
+      if (s.tiles && s.tiles.length) { const t = el('div', 'hal-tiles'); s.tiles.forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); c.append(t); }
+      const tabla = (cols, filas) => {
+        const iR = cols.findIndex((x) => x[0] === 'Ruta');
+        const F = filas.filter((f) => iR < 0 || ok(f[iR]));
+        if (!F.length) return el('p', 'pp-mia', 'Nada que mostrar.');
+        const w = el('div', 'tblwrap'); const t = el('table', 'cpn-t'); const h = el('tr'); cols.forEach(([n, cl]) => h.append(el('th', cl || null, n)));
+        t.append(el('thead')); t.tHead.append(h); const b = el('tbody');
+        F.forEach((f) => { const tr = el('tr'); f.forEach((x, i) => tr.append(el('td', (cols[i] && cols[i][1]) || null, x))); b.append(tr); });
+        t.append(b); w.append(t); return w;
+      };
+      if (s.cols && s.cols.length) c.append(tabla(s.cols, s.filas));
+      if (s.detalle) { const d = el('details'); d.append(el('summary', null, s.detalle.titulo), tabla(s.detalle.cols, s.detalle.filas)); c.append(d); }
+      v.append(c);
+      const a = el('a', 'pill', s.titulo); a.href = '#pp-s-' + s.id; nav.append(a);
+    });
   }
 
   /* ---------- Hallazgos (solo lo que se encontró; sin recomendaciones) ---------- */

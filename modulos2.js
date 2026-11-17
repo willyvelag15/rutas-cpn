@@ -38,7 +38,7 @@
   const novEnCurso = () => { const m = one('mesRuta', 'TOTAL'); return m ? m.proyeccion : null; };
   function resumenEmp() {
     const e = emp(); if (!e.length) return null;
-    const con = e.filter((r) => r.real != null && r.meta);
+    const con = e.filter((r) => r.real != null && r.meta && !r.parcial);
     const real = con.reduce((a, r) => a + r.real, 0), meta = con.reduce((a, r) => a + r.meta, 0);
     const c25 = e.filter((r) => r.real != null && r.y2025);
     const r25 = c25.reduce((a, r) => a + r.y2025, 0), rr = c25.reduce((a, r) => a + r.real, 0);

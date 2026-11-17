@@ -67,6 +67,8 @@
   .pz-rg{background:#FDECEA;border-radius:12px;padding:9px 12px}
   .pz-rg h4{color:#9b2a22}
   .pz-ft{display:flex;justify-content:space-between;font-size:10px;color:#7a847d;padding:8px 18px 12px;border-top:1px solid #EEF1EE}
+  .pz-msg{width:540px;max-width:100%;background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:14px;padding:10px 12px;font-size:13.5px;line-height:1.45;white-space:pre-wrap}
+  .pz-msg b{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#0E5A33;margin-bottom:4px}
   .pz-bn{display:flex;flex-direction:column;gap:6px}
   .pz-bn .pz-row{margin:0 0 2px}
   `;
@@ -222,7 +224,14 @@
       const bt = el('div', 'pz-ctl');
       const b1 = el('button', 'pz-btn', 'Compartir'); b1.type = 'button'; b1.onclick = async () => { b1.disabled = true; try { await bajar(node, s, P, true); } catch (err) { alert('No se pudo crear la imagen: ' + err.message); } b1.disabled = false; };
       const b2 = el('button', 'pz-btn sec', 'Guardar imagen'); b2.type = 'button'; b2.onclick = async () => { b2.disabled = true; try { await bajar(node, s, P, false); } catch (err) { console.log(err); } b2.disabled = false; };
-      bt.append(b1, b2); w.append(node, bt); list.append(w);
+      bt.append(b1, b2);
+      if (s.mensaje) {
+        const mg = el('div', 'pz-msg'); mg.append(el('b', null, 'Mensaje para ' + s.vendedor.split(' ')[0] + ' (cópialo y pégalo en WhatsApp)'), document.createTextNode(s.mensaje));
+        const b3 = el('button', 'pz-btn sec', 'Copiar mensaje'); b3.type = 'button';
+        b3.onclick = async () => { try { await navigator.clipboard.writeText(s.mensaje); b3.textContent = 'Copiado'; } catch (e) { const r = document.createRange(); r.selectNodeContents(mg.lastChild.parentNode); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b3.textContent = 'Selecciónalo y copia'; } setTimeout(() => { b3.textContent = 'Copiar mensaje'; }, 2000); };
+        bt.append(b3); w.append(node, bt, mg);
+      } else w.append(node, bt);
+      list.append(w);
     });
     if (!S.length) list.append(el('p', 'note', 'No hay datos de esa ruta en el periodo.'));
     e.append(list);

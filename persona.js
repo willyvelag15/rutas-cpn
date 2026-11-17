@@ -71,7 +71,7 @@
     v.append(el('p', 'pp-mia', 'Datos al ' + dia(P.corte) + '. Se actualiza cada noche.'));
     const rutas = P.rutas || [];
     if (rutas.length > 1) {
-      const f = el('div', 'seg pp-opc'); ['Todas'].concat(rutas).forEach((x) => { const b = el('button', null, x); b.type = 'button'; b.setAttribute('aria-pressed', String((st.ruta || 'Todas') === x)); b.addEventListener('click', () => { st.ruta = x === 'Todas' ? null : x; pintarPanel(v); }); f.append(b); });
+      const f = el('div', 'pp-rutas'); ['Todas'].concat(rutas).forEach((x) => { const b = el('button', null, x); b.type = 'button'; b.setAttribute('aria-pressed', String((st.ruta || 'Todas') === x)); b.addEventListener('click', () => { st.ruta = x === 'Todas' ? null : x; pintarPanel(v); }); f.append(b); });
       v.append(f);
     }
     const ok = (txt) => !st.ruta || !txt || !/^Ruta \d+$/.test(txt) || txt === st.ruta;
@@ -113,20 +113,22 @@
   /* ---------- Rubí sube el inventario de almacén (Piedras Negras y Mixtequilla), 17-nov-2026 ---------- */
   async function cajaInventario() {
     const c = el('section', 'card pp-panel'); c.id = 'pp-s-inv';
-    c.append(el('h3', null, 'Subir inventario de almacén'));
-    c.append(el('p', 'pp-mia', 'Sube el archivo tal como te llega (Excel o foto/PDF). Uno por almacén. Con eso se arman los días de inventario y el pedido.'));
-    const f = el('form', 'pp-resp');
-    const lab = el('label', null, 'Almacén'); const sel = el('select'); ['Piedras Negras', 'Mixtequilla'].forEach((x) => { const o = el('option', null, x); o.value = x; sel.append(o); }); lab.append(sel);
-    const lab2 = el('label', null, 'Archivo'); const inp = el('input'); inp.type = 'file'; inp.accept = '.xlsx,.xls,.xlsm,.csv,.pdf,image/*'; lab2.append(inp);
+    c.append(el('h3', null, 'Subir inventario'));
+    c.append(el('p', 'pp-mia', 'Tal como te llega: Excel, PDF o foto. Uno por almacén.'));
+    const f = el('form', 'pp-inv');
+    const sel = el('select'); sel.setAttribute('aria-label', 'Almacén'); ['Piedras Negras', 'Mixtequilla'].forEach((x) => { const o = el('option', null, x); o.value = x; sel.append(o); });
+    const lab2 = el('label', 'pp-file'); const inp = el('input'); inp.type = 'file'; inp.accept = '.xlsx,.xls,.xlsm,.csv,.pdf,image/*';
+    const nomb = el('span', null, 'Ningún archivo elegido'); lab2.append(inp, el('b', null, 'Elegir archivo'), nomb);
+    inp.addEventListener('change', () => { nomb.textContent = (inp.files && inp.files[0]) ? inp.files[0].name : 'Ningún archivo elegido'; });
     const msg = el('p', 'pp-mia'); const b = el('button', 'pp-btn', 'Subir'); b.type = 'submit';
-    f.append(lab, lab2, b, msg); c.append(f);
+    f.append(sel, lab2, b); c.append(f, msg);
     const lista = el('div'); c.append(lista);
     const pintaLista = async () => {
       lista.replaceChildren();
       try {
         const L = await rpc('mis_inventarios', { p_clave: clave() });
         if (!L.length) { lista.append(el('p', 'pp-mia', 'Todavía no has subido ninguno.')); return; }
-        const ul = el('ul', 'pp-mia'); L.slice(0, 6).forEach((x) => ul.append(el('li', null, x.almacen + ' · ' + x.nombre + ' · ' + hora(x.subido_en)))); lista.append(el('p', 'pp-q', 'Últimos que subiste'), ul);
+        const ul = el('ul', 'pp-ult'); L.slice(0, 4).forEach((x) => ul.append(el('li', null, x.almacen + ' · ' + x.nombre + ' · ' + hora(x.subido_en)))); lista.append(ul);
       } catch (e) { lista.append(el('p', 'pp-err', e.message)); }
     };
     f.addEventListener('submit', async (ev) => {
@@ -137,7 +139,7 @@
       try {
         const b64 = await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => mal(new Error('No se pudo leer el archivo')); r.readAsDataURL(file); });
         await rpc('subir_inventario', { p_clave: clave(), p_almacen: sel.value, p_nombre: file.name, p_tipo: file.type || '', p_contenido: b64 });
-        msg.textContent = 'Listo, se subió el inventario de ' + sel.value + '.'; inp.value = ''; await pintaLista();
+        msg.textContent = 'Listo, se subió el inventario de ' + sel.value + '.'; inp.value = ''; nomb.textContent = 'Ningún archivo elegido'; await pintaLista();
       } catch (e) { msg.textContent = e.message; }
       finally { b.disabled = false; b.textContent = 'Subir'; }
     });

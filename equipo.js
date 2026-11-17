@@ -2,7 +2,7 @@
    Habla con Supabase con la clave del panel, que viene dentro de datos.enc.json (cifrado con la contraseña de Willy). */
 (function () {
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
-  const AREA = { almacen_pn: 'Almacén PN', almacen_mix: 'Almacén Mixtequilla', recepcion: 'Recepción', sistemas: 'SIAD y Power Sales', encargada_mix: 'Encargada Mixtequilla', admin: 'Willy' };
+  const AREA = { vendedor: 'Vendedor', almacen_pn: 'Almacén PN', almacen_mix: 'Almacén Mixtequilla', recepcion: 'Recepción', sistemas: 'SIAD y Power Sales', encargada_mix: 'Encargada Mixtequilla', admin: 'Willy' };
   const RES = { recibio: 'Sí recibió', no_recibio: 'No recibió', no_contesto: 'No contestó', numero_equivocado: 'Número equivocado' };
   const EST = { abierta: ['Pendiente', 'warn'], devuelta: ['Devuelta', 'bad'], respondida: ['Por revisar', 'bad'], aprobada: ['Cerrada', 'ok'], cancelada: ['Cancelada', ''] };
   const hoy = () => new Date(Date.now() - 6 * 3600e3).toISOString().slice(0, 10);
@@ -17,13 +17,38 @@
     if (!clave()) { st.error = 'La conexión del panel llega con la actualización de datos de esta noche. Mañana ya aparece aquí.'; dibujar(); return; }
     st.cargando = true; st.error = null; dibujar();
     try {
-      const [r, t, l] = await Promise.all([rpc('admin_resumen'), rpc('admin_tareas'), rpc('admin_llamadas', { p_dias: 30 })]);
-      st.resumen = r; st.tareas = t; st.llamadas = l;
+      const [r, t, l, inv] = await Promise.all([rpc('admin_resumen'), rpc('admin_tareas'), rpc('admin_llamadas', { p_dias: 30 }), rpc('mis_inventarios').catch(() => [])]);
+      st.resumen = r; st.tareas = t; st.llamadas = l; st.inventarios = inv;
     } catch (e) { st.error = e.message; }
     st.cargando = false; dibujar();
   }
-  const dibujar = () => ['eqResumen', 'eqNueva', 'eqLista', 'eqCodigo', 'verResumen', 'verLista'].forEach((n) => dash.draw(n));
+  const dibujar = () => ['eqResumen', 'eqNueva', 'eqLista', 'eqCodigo', 'verResumen', 'verLista', 'eqInventarios'].forEach((n) => dash.draw(n));
   const aviso = (e) => { if (st.error) { e.append(el('p', 'note', st.error)); return true; } if (!st.resumen) { e.append(el('p', 'note', st.cargando ? 'Cargando…' : '')); return true; } return false; };
+
+
+  /* ---------- Inventarios que sube Rubí (17-nov-2026) ---------- */
+  dash.draw('eqInventarios', (e) => {
+    e.replaceChildren(); if (aviso(e)) return;
+    const L = st.inventarios || [];
+    if (!L.length) { e.append(el('p', 'note', 'Rubí todavía no ha subido inventarios desde su página.')); return; }
+    const t = el('table', 'cpn-t'); const h = el('tr'); ['Almacén', 'Archivo', 'Subido', ''].forEach((x) => h.append(el('th', null, x))); t.append(el('thead')); t.tHead.append(h);
+    const b = el('tbody');
+    L.forEach((x) => {
+      const tr = el('tr'); const td = el('td'); const bt = el('button', 'pill', 'Descargar'); bt.type = 'button';
+      bt.addEventListener('click', async () => {
+        bt.disabled = true;
+        try {
+          const f = await rpc('admin_inventario', { p_id: x.id });
+          const bin = atob(f.contenido); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+          const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([u], { type: f.tipo || 'application/octet-stream' }));
+          a.download = f.almacen.replace(' ', '_') + ' ' + String(f.subido_en).slice(0, 10) + ' ' + f.nombre; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+        } catch (err) { alert(err.message); }
+        bt.disabled = false;
+      });
+      td.append(bt); tr.append(el('td', null, x.almacen), el('td', null, x.nombre), el('td', null, hora(x.subido_en)), td); b.append(tr);
+    });
+    t.append(b); e.append(t);
+  });
 
   /* ---------- Cumplimiento por persona ---------- */
   dash.draw('eqResumen', (e) => {

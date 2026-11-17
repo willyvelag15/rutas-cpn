@@ -20,7 +20,7 @@
   const tok = deUrl || ls.get(LT);
 
   const AREA = { almacen_pn: 'Almacén Piedras Negras', almacen_mix: 'Almacén Mixtequilla', recepcion: 'Recepción', sistemas: 'SIAD y Power Sales', encargada_mix: 'Encargada Mixtequilla', vendedor: 'Vendedor', admin: 'Administrador' };
-  const PRONTO = { almacen_pn: 'Pronto: subir inventarios y la calculadora de programación.' };
+  const PRONTO = {};
   const $ = (s) => document.querySelector(s);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const hoy = () => new Date(Date.now() - 6 * 3600e3).toISOString().slice(0, 10);
@@ -76,6 +76,7 @@
     }
     const ok = (txt) => !st.ruta || !txt || !/^Ruta \d+$/.test(txt) || txt === st.ruta;
     const nav = el('div', 'pp-ir'); v.append(nav);
+    if (st.yo.rol === 'almacen_pn') v.append(await cajaInventario());
     const PZ = window.CPN_PZ;
     if ((P.slides || []).length && PZ) {
       const c = el('section', 'card pp-panel'); c.id = 'pp-s-slides'; c.append(el('h3', null, st.yo.rol === 'vendedor' ? 'Tu semana' : 'Presentación por ruta'));
@@ -106,6 +107,42 @@
       v.append(c);
       const a = el('a', 'pill', s.titulo); a.href = '#pp-s-' + s.id; nav.append(a);
     });
+  }
+
+
+  /* ---------- Rubí sube el inventario de almacén (Piedras Negras y Mixtequilla), 17-nov-2026 ---------- */
+  async function cajaInventario() {
+    const c = el('section', 'card pp-panel'); c.id = 'pp-s-inv';
+    c.append(el('h3', null, 'Subir inventario de almacén'));
+    c.append(el('p', 'pp-mia', 'Sube el archivo tal como te llega (Excel o foto/PDF). Uno por almacén. Con eso se arman los días de inventario y el pedido.'));
+    const f = el('form', 'pp-resp');
+    const lab = el('label', null, 'Almacén'); const sel = el('select'); ['Piedras Negras', 'Mixtequilla'].forEach((x) => { const o = el('option', null, x); o.value = x; sel.append(o); }); lab.append(sel);
+    const lab2 = el('label', null, 'Archivo'); const inp = el('input'); inp.type = 'file'; inp.accept = '.xlsx,.xls,.xlsm,.csv,.pdf,image/*'; lab2.append(inp);
+    const msg = el('p', 'pp-mia'); const b = el('button', 'pp-btn', 'Subir'); b.type = 'submit';
+    f.append(lab, lab2, b, msg); c.append(f);
+    const lista = el('div'); c.append(lista);
+    const pintaLista = async () => {
+      lista.replaceChildren();
+      try {
+        const L = await rpc('mis_inventarios', { p_clave: clave() });
+        if (!L.length) { lista.append(el('p', 'pp-mia', 'Todavía no has subido ninguno.')); return; }
+        const ul = el('ul', 'pp-mia'); L.slice(0, 6).forEach((x) => ul.append(el('li', null, x.almacen + ' · ' + x.nombre + ' · ' + hora(x.subido_en)))); lista.append(el('p', 'pp-q', 'Últimos que subiste'), ul);
+      } catch (e) { lista.append(el('p', 'pp-err', e.message)); }
+    };
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault(); const file = inp.files && inp.files[0];
+      if (!file) { msg.textContent = 'Elige el archivo primero.'; return; }
+      if (file.size > 10 * 1024 * 1024) { msg.textContent = 'El archivo es muy grande (máximo 10 MB).'; return; }
+      b.disabled = true; b.textContent = 'Subiendo…'; msg.textContent = '';
+      try {
+        const b64 = await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => mal(new Error('No se pudo leer el archivo')); r.readAsDataURL(file); });
+        await rpc('subir_inventario', { p_clave: clave(), p_almacen: sel.value, p_nombre: file.name, p_tipo: file.type || '', p_contenido: b64 });
+        msg.textContent = 'Listo, se subió el inventario de ' + sel.value + '.'; inp.value = ''; await pintaLista();
+      } catch (e) { msg.textContent = e.message; }
+      finally { b.disabled = false; b.textContent = 'Subir'; }
+    });
+    await pintaLista();
+    return c;
   }
 
   /* ---------- Hallazgos (solo lo que se encontró; sin recomendaciones) ---------- */

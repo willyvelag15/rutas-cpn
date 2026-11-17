@@ -171,6 +171,13 @@
       sel.addEventListener('change', dibuja); c.append(sel, caja); main.append(c); dibuja(); return;
     }
     const s = it.s;
+    if (s.id === 'envase' && s.mov && window.CPN_ENV) {
+      if (s.nota) c.append(el('p', 'pp-mia', s.nota));
+      const box = el('div', 'envf'); c.append(box); main.append(c);
+      st.env = st.env || {};
+      window.CPN_ENV.render(box, { mov: s.mov, corteDev: s.corteDev, okRuta: ok, estado: st.env });
+      return;
+    }
     if (s.nota) c.append(el('p', 'pp-mia', s.nota));
     if (s.tiles && s.tiles.length) c.append(tilesDe(s));
     if (s.cols && s.cols.length) c.append(tablaDe(s.cols, s.filas, ok));

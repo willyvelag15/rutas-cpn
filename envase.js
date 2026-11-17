@@ -96,6 +96,12 @@
     t.append(tb); e.append(t);
   });
 
+  const envSt = {};
+  dash.draw('envFiltro', (e) => {
+    const E = rows('envase');
+    window.CPN_ENV.render(e, { mov: rows('envase_mov'), corteDev: (E[0] || {}).corteDev, estado: envSt });
+  });
+
   const TIT = { envase: ['Envase', 'Adeudo de envase por ruta'] };
   document.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => {
     const t = TIT[b.getAttribute('data-vista')]; if (!t) return;

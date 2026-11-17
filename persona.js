@@ -85,10 +85,11 @@
     margen: 'M19 5L5 19M7 7m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0M17 17m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0',
     slides: 'M3 4h18v12H3zM12 16v4M8 20h8M7 12l3-3 2 2 4-4',
     inv: 'M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3',
-    pron: 'M4 4h16v16H4zM4 9h16M9 4v16M12 13h5M12 16h3'
+    pron: 'M4 4h16v16H4zM4 9h16M9 4v16M12 13h5M12 16h3',
+    clientesMes: 'M3 20h18M6 16l4-5 3 3 5-7'
   };
   const icono = (k) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', IC[k] || IC.ventas); s.append(p); return s; };
-  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Subir pronóstico S+2' };
+  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Subir pronóstico S+2', clientesMes: 'Clientes del mes' };
 
   function tilesDe(s) { const t = el('div', 'hal-tiles'); (s.tiles || []).forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); return t; }
   function tablaDe(cols, filas, ok) {
@@ -175,6 +176,13 @@
       sel.addEventListener('change', dibuja); c.append(sel, caja); main.append(c); dibuja(); return;
     }
     const s = it.s;
+    if (s.id === 'clientesMes' && s.cli && window.CPN_CLI) {
+      if (s.nota) c.append(el('p', 'pp-mia', s.nota));
+      const box = el('div', 'envf rcli'); c.append(box); main.append(c);
+      st.cli = st.cli || {};
+      window.CPN_CLI.render(box, { filas: s.cli.filas, det: s.cli.det, okRuta: ok, estado: st.cli, dinero: P.dinero !== false });
+      return;
+    }
     if (s.id === 'envase' && s.mov && window.CPN_ENV) {
       if (s.nota) c.append(el('p', 'pp-mia', s.nota));
       const box = el('div', 'envf'); c.append(box); main.append(c);

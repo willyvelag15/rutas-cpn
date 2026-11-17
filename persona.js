@@ -84,10 +84,11 @@
     gastovar: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3',
     margen: 'M19 5L5 19M7 7m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0M17 17m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0',
     slides: 'M3 4h18v12H3zM12 16v4M8 20h8M7 12l3-3 2 2 4-4',
-    inv: 'M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3'
+    inv: 'M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3',
+    pron: 'M4 4h16v16H4zM4 9h16M9 4v16M12 13h5M12 16h3'
   };
   const icono = (k) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', IC[k] || IC.ventas); s.append(p); return s; };
-  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario' };
+  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Subir pronóstico S+2' };
 
   function tilesDe(s) { const t = el('div', 'hal-tiles'); (s.tiles || []).forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); return t; }
   function tablaDe(cols, filas, ok) {
@@ -107,9 +108,10 @@
     if (!P) { v.append(el('p', 'pp-res', 'Tu resumen se carga con la actualización de la noche.')); return; }
     const esVend = st.yo.rol === 'vendedor';
     const ok = (txt) => !st.ruta || !txt || !/^Ruta \d+$/.test(txt) || txt === st.ruta;
-    const S = P.secciones || [];
+    // Con una ruta elegida, cada sección usa sus números de esa ruta (porRuta) y no los de todas
+    const S = (P.secciones || []).map((s) => (st.ruta && s.porRuta && s.porRuta[st.ruta]) ? Object.assign({}, s, s.porRuta[st.ruta]) : s);
     const items = [];
-    if (st.yo.rol === 'almacen_pn') items.push({ id: 'inv' });
+    if (st.yo.rol === 'almacen_pn') items.push({ id: 'inv' }, { id: 'pron' });
     if ((P.slides || []).length && window.CPN_PZ && !esVend) items.push({ id: 'slides' });
     S.forEach((s) => items.push({ id: s.id, s }));
     if (esVend && (P.slides || []).length && window.CPN_PZ) items.push({ id: 'slides' });
@@ -127,7 +129,7 @@
     const cab = el('div', 'pp-cabeza');
     cab.append(el('span', 'pp-mia', 'Datos al ' + dia(P.corte) + ' · se actualiza cada noche'));
     const rutas = P.rutas || [];
-    if (rutas.length > 1 && st.sec !== 'inv') {
+    if (rutas.length > 1 && st.sec !== 'inv' && st.sec !== 'pron') {
       const f = el('div', 'pp-rutas'); ['Todas'].concat(rutas).forEach((x) => { const b = el('button', null, x === 'Todas' ? x : x.replace('Ruta ', 'R')); b.type = 'button'; b.setAttribute('aria-pressed', String((st.ruta || 'Todas') === x)); b.addEventListener('click', () => { st.ruta = x === 'Todas' ? null : x; pintarPanel(v); }); f.append(b); });
       cab.append(f);
     }
@@ -140,13 +142,14 @@
         const k = el('div', 'pp-kpis');
         S.forEach((s) => { const x = (s.tiles || [])[0]; if (!x || k.children.length >= 6) return; const d = el('button', 'pp-kpi' + (x.tono ? ' ' + x.tono : '')); d.type = 'button'; d.append(icono(s.id), el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); d.addEventListener('click', () => { st.sec = s.id; pintarPanel(v); }); k.append(d); });
         main.append(k);
+        if (P.mix && (P.mix.filas || []).length) main.append(graficaMix(P.mix));
       }
       const g = el('div', 'pp-grid');
       items.forEach((x) => {
         const c = el('button', 'pp-cuadro'); c.type = 'button';
         const t = x.s && (x.s.tiles || [])[0];
         c.append(icono(x.id), el('b', null, CORTO[x.id] || (x.s && x.s.titulo)));
-        c.append(el('small', null, x.id === 'inv' ? 'Piedras Negras y Mixtequilla' : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : t ? t.k + ': ' + t.v : 'Ver detalle'));
+        c.append(el('small', null, x.id === 'inv' ? 'Piedras Negras y Mixtequilla' : x.id === 'pron' ? 'El archivo del martes' : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : t ? t.k + ': ' + t.v : 'Ver detalle'));
         c.addEventListener('click', () => { st.sec = x.id; pintarPanel(v); window.scrollTo({ top: 0, behavior: 'smooth' }); });
         g.append(c);
       });
@@ -160,6 +163,7 @@
     h.append(vb, icono(it.id), el('h3', null, it.s ? it.s.titulo : CORTO[it.id]));
     c.append(h);
     if (it.id === 'inv') { c.append(await cajaInventario(true)); main.append(c); return; }
+    if (it.id === 'pron') { c.append(await cajaInventario(true, 'pron')); main.append(c); return; }
     if (it.id === 'slides') {
       const PZ = window.CPN_PZ;
       const per = []; P.slides.forEach((x) => { if (!per.some((p) => p.id === x.periodo.id)) per.push(x.periodo); });
@@ -183,6 +187,72 @@
     if (s.cols && s.cols.length) c.append(tablaDe(s.cols, s.filas, ok));
     if (s.detalle) { const d = el('details'); d.append(el('summary', null, s.detalle.titulo), tablaDe(s.detalle.cols, s.detalle.filas, ok)); c.append(d); }
     main.append(c);
+  }
+
+  /* ---------- Gráficas de pastel: cómo se reparte la venta por producto (día, semana, mes) ---------- */
+  const COLS_P = ['#2E7D4F', '#E0A43A', '#3B82C4', '#C0392B', '#8E5BB5', '#16A3A3', '#D9653B', '#7A8B2E', '#9AA0A6'];
+  function graficaMix(M) {
+    const w = el('section', 'card pp-mix');
+    st.mix = st.mix || { per: 'dia', med: 'cajas', fecha: null };
+    const m = st.mix;
+    const F = (M.filas || []).filter((x) => !st.ruta || 'Ruta ' + x[1] === st.ruta);
+    const fechas = [...new Set((M.filas || []).map((x) => x[0]))].sort();
+    if (!fechas.length) return w;
+    const ult = fechas[fechas.length - 1];
+    if (!m.fecha || !fechas.includes(m.fecha)) m.fecha = ult;
+    const lun = (s0) => { const d = new Date(s0 + 'T12:00:00'); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+    const h = el('div', 'pp-mix-cab');
+    h.append(el('h3', null, 'Cómo se reparte la venta por producto' + (st.ruta ? ' · ' + st.ruta : '')));
+    const ctr = el('div', 'pp-mix-ctr');
+    const seg = (opts, key) => { const g = el('div', 'pp-seg'); opts.forEach(([v, t]) => { const b = el('button', null, t); b.type = 'button'; b.setAttribute('aria-pressed', String(m[key] === v)); b.addEventListener('click', () => { m[key] = v; w.replaceWith(graficaMix(M)); }); g.append(b); }); return g; };
+    ctr.append(seg([['dia', 'Día'], ['sem', 'Semana'], ['mes', 'Mes']], 'per'));
+    const meds = [['cajas', 'Cajas'], ['hl', 'Hl']]; if (M.dinero) meds.push(['pesos', '$']);
+    ctr.append(seg(meds, 'med'));
+    let opciones;
+    if (m.per === 'dia') opciones = fechas.slice().reverse().map((f) => [f, dia(f)]);
+    else if (m.per === 'sem') opciones = [...new Set(fechas.map(lun))].sort().reverse().map((f) => [f, 'Semana del ' + dia(f)]);
+    else opciones = [...new Set(fechas.map((f) => f.slice(0, 7)))].sort().reverse().map((f) => [f, new Date(f + '-15T12:00:00').toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })]);
+    const sel = el('select', 'pp-sel'); opciones.forEach(([v, t]) => { const o = el('option', null, t); o.value = v; sel.append(o); });
+    const k0 = m.per === 'dia' ? m.fecha : m.per === 'sem' ? lun(m.fecha) : m.fecha.slice(0, 7);
+    sel.value = opciones.some((o) => o[0] === k0) ? k0 : opciones[0][0];
+    sel.addEventListener('change', () => { const v0 = sel.value; m.fecha = m.per === 'dia' ? v0 : m.per === 'sem' ? (fechas.filter((f) => lun(f) === v0).pop() || v0) : (fechas.filter((f) => f.slice(0, 7) === v0).pop() || ult); w.replaceWith(graficaMix(M)); });
+    ctr.append(sel);
+    h.append(ctr); w.append(h);
+    const clave0 = sel.value;
+    const enPer = (f) => m.per === 'dia' ? f === clave0 : m.per === 'sem' ? lun(f) === clave0 : f.slice(0, 7) === clave0;
+    const iv = m.med === 'cajas' ? 3 : m.med === 'hl' ? 4 : 5;
+    const ag = {}; F.filter((x) => enPer(x[0])).forEach((x) => { ag[x[2]] = (ag[x[2]] || 0) + (x[iv] || 0); });
+    const tot = Object.values(ag).reduce((a, b) => a + b, 0);
+    if (!tot) { w.append(el('p', 'pp-mia', 'Sin venta en ese periodo.')); return w; }
+    const orden = Object.entries(ag).sort((a, b) => b[1] - a[1]);
+    const top = orden.slice(0, 8).map(([i, v]) => [M.productos[i], v]);
+    const resto = orden.slice(8).reduce((a, x) => a + x[1], 0); if (resto > 0) top.push(['Otros ' + (orden.length - 8) + ' productos', resto]);
+    const fmt = (v) => m.med === 'pesos' ? '$' + Math.round(v).toLocaleString('es-MX') : m.med === 'hl' ? (Math.round(v * 10) / 10).toLocaleString('es-MX') + ' Hl' : Math.round(v).toLocaleString('es-MX') + ' cajas';
+    const cuerpo = el('div', 'pp-mix-cuerpo');
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 200 200'); svg.setAttribute('class', 'pp-pastel'); svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Reparto de la venta por producto');
+    let a0 = -Math.PI / 2;
+    top.forEach(([n, v], i) => {
+      const a1 = a0 + (v / tot) * Math.PI * 2;
+      const path = document.createElementNS(NS, 'path');
+      const R1 = 92, R0 = 56;
+      const p = (r, a) => [100 + r * Math.cos(a), 100 + r * Math.sin(a)];
+      const big = a1 - a0 > Math.PI ? 1 : 0;
+      const [x1, y1] = p(R1, a0), [x2, y2] = p(R1, a1 - 0.0001), [x3, y3] = p(R0, a1 - 0.0001), [x4, y4] = p(R0, a0);
+      path.setAttribute('d', `M${x1},${y1}A${R1},${R1} 0 ${big} 1 ${x2},${y2}L${x3},${y3}A${R0},${R0} 0 ${big} 0 ${x4},${y4}Z`);
+      path.setAttribute('fill', COLS_P[i % COLS_P.length]); path.setAttribute('stroke', 'var(--color-panel)'); path.setAttribute('stroke-width', '1.5');
+      const tt = document.createElementNS(NS, 'title'); tt.textContent = n + ': ' + fmt(v) + ' (' + Math.round(v / tot * 100) + '%)'; path.append(tt);
+      svg.append(path); a0 = a1;
+    });
+    const t1 = document.createElementNS(NS, 'text'); t1.setAttribute('x', 100); t1.setAttribute('y', 98); t1.setAttribute('text-anchor', 'middle'); t1.setAttribute('class', 'pp-pastel-v'); t1.textContent = m.med === 'pesos' ? '$' + (tot >= 1e6 ? (tot / 1e6).toFixed(2) + 'M' : Math.round(tot / 1000) + 'k') : Math.round(tot).toLocaleString('es-MX');
+    const t2 = document.createElementNS(NS, 'text'); t2.setAttribute('x', 100); t2.setAttribute('y', 118); t2.setAttribute('text-anchor', 'middle'); t2.setAttribute('class', 'pp-pastel-k'); t2.textContent = m.med === 'cajas' ? 'cajas' : m.med === 'hl' ? 'hectolitros' : 'venta';
+    svg.append(t1, t2);
+    const ley = el('ul', 'pp-ley');
+    top.forEach(([n, v], i) => { const li = el('li'); const sw = el('i'); sw.style.background = COLS_P[i % COLS_P.length]; li.append(sw, el('span', null, n), el('b', null, Math.round(v / tot * 100) + '%'), el('small', null, fmt(v))); ley.append(li); });
+    cuerpo.append(svg, ley); w.append(cuerpo);
+    w.append(el('p', 'pp-mia', (m.per === 'dia' ? 'Venta del ' + dia(m.fecha) : m.per === 'sem' ? 'Semana del ' + dia(clave0) + ' (lunes a sábado)' : 'Mes completo al ' + dia(ult)) + (st.ruta ? '' : ', todas las rutas') + '. Usa los botones de ruta de arriba para ver una sola.'));
+    return w;
   }
 
   /* ---------- Inicio del vendedor, hecho para el celular ---------- */
@@ -248,11 +318,15 @@
   }
 
   /* ---------- Rubí sube el inventario de almacén (Piedras Negras y Mixtequilla), 17-nov-2026 ---------- */
-  async function cajaInventario(dentro) {
-    const c = el('div', 'pp-invbox'); c.id = 'pp-s-inv';
-    c.append(el('p', 'pp-mia', 'Tal como te llega: Excel, PDF o foto. Uno por almacén.'));
+  async function cajaInventario(dentro, modo) {
+    const esPron = modo === 'pron';
+    const c = el('div', 'pp-invbox'); c.id = esPron ? 'pp-s-pron' : 'pp-s-inv';
+    c.append(el('p', 'pp-mia', esPron
+      ? 'Sube aquí el pronóstico de la S+2 tal como lo mandas a Heineken (el Excel del martes). Esa misma noche la app lo toma para el abasto. Recuerda: la S+1 ya no se cambia, se queda con lo que se pronosticó.'
+      : 'Tal como te llega: Excel, PDF o foto. Uno por almacén.'));
     const f = el('form', 'pp-inv');
-    const sel = el('select'); sel.setAttribute('aria-label', 'Almacén'); ['Piedras Negras', 'Mixtequilla'].forEach((x) => { const o = el('option', null, x); o.value = x; sel.append(o); });
+    const sel = el('select'); sel.setAttribute('aria-label', esPron ? 'Semana' : 'Almacén'); (esPron ? ['Pronóstico S+2'] : ['Piedras Negras', 'Mixtequilla']).forEach((x) => { const o = el('option', null, x); o.value = x; sel.append(o); });
+    if (esPron) { sel.hidden = true; f.classList.add('solo'); }
     const lab2 = el('label', 'pp-file'); const inp = el('input'); inp.type = 'file'; inp.accept = '.xlsx,.xls,.xlsm,.csv,.pdf,image/*';
     const nomb = el('span', null, 'Ningún archivo elegido'); lab2.append(inp, el('b', null, 'Elegir archivo'), nomb);
     inp.addEventListener('change', () => { nomb.textContent = (inp.files && inp.files[0]) ? inp.files[0].name : 'Ningún archivo elegido'; });
@@ -264,7 +338,9 @@
       try {
         const L = await rpc('mis_inventarios', { p_clave: clave() });
         if (!L.length) { lista.append(el('p', 'pp-mia', 'Todavía no has subido ninguno.')); return; }
-        const ul = el('ul', 'pp-ult'); L.slice(0, 4).forEach((x) => ul.append(el('li', null, x.almacen + ' · ' + x.nombre + ' · ' + hora(x.subido_en)))); lista.append(ul);
+        const LL = L.filter((x) => (x.almacen === 'Pronóstico S+2') === esPron);
+        if (!LL.length) { lista.append(el('p', 'pp-mia', 'Todavía no has subido ninguno.')); return; }
+        const ul = el('ul', 'pp-ult'); LL.slice(0, 4).forEach((x) => ul.append(el('li', null, x.almacen + ' · ' + x.nombre + ' · ' + hora(x.subido_en)))); lista.append(ul);
       } catch (e) { lista.append(el('p', 'pp-err', e.message)); }
     };
     f.addEventListener('submit', async (ev) => {
@@ -275,7 +351,7 @@
       try {
         const b64 = await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => mal(new Error('No se pudo leer el archivo')); r.readAsDataURL(file); });
         await rpc('subir_inventario', { p_clave: clave(), p_almacen: sel.value, p_nombre: file.name, p_tipo: file.type || '', p_contenido: b64 });
-        msg.textContent = 'Listo, se subió el inventario de ' + sel.value + '.'; inp.value = ''; nomb.textContent = 'Ningún archivo elegido'; await pintaLista();
+        msg.textContent = esPron ? 'Listo, se subió el pronóstico S+2.' : 'Listo, se subió el inventario de ' + sel.value + '.'; inp.value = ''; nomb.textContent = 'Ningún archivo elegido'; await pintaLista();
       } catch (e) { msg.textContent = e.message; }
       finally { b.disabled = false; b.textContent = 'Subir'; }
     });

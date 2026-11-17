@@ -235,6 +235,20 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 @media (max-width:700px){.envf .envf-full{display:none}.envf-cards{display:flex}.envf-detalle .cpn-t{font-size:12px}}
 .envf-detalle{border-top:1px solid var(--color-border-line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
 .envf-cuenta{margin:0;font-size:15px;font-weight:600;line-height:1.4}
+#persona .pp-mix{display:flex;flex-direction:column;gap:12px;margin:14px 0}
+#persona .pp-mix-cab{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center}#persona .pp-mix-cab h3{margin:0;font-size:17px}
+#persona .pp-mix-ctr{display:flex;flex-wrap:wrap;gap:8px;align-items:center}#persona .pp-mix-ctr .pp-sel{font-size:14px;padding:7px 10px}
+#persona .pp-seg{display:inline-flex;gap:3px;background:var(--color-bg);border:1px solid var(--color-border-line);border-radius:10px;padding:3px}
+#persona .pp-seg button{font:inherit;font-size:13px;border:0;background:transparent;color:var(--color-fg);padding:6px 11px;border-radius:8px;cursor:pointer}
+#persona .pp-seg button[aria-pressed="true"]{background:var(--color-ok);color:#fff;font-weight:600}
+#persona .pp-mix-cuerpo{display:grid;grid-template-columns:minmax(180px,260px) 1fr;gap:18px;align-items:center}
+#persona svg.pp-pastel{width:100%;height:auto;max-width:260px;margin:0 auto;display:block;stroke:none;flex:none}
+#persona .pp-inv.solo{grid-template-columns:1fr auto}
+#persona .pp-pastel-v{font-size:22px;font-weight:700;fill:var(--color-fg)}#persona .pp-pastel-k{font-size:11px;fill:var(--color-fg-muted)}
+#persona .pp-ley{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+#persona .pp-ley li{display:grid;grid-template-columns:12px 1fr auto auto;gap:8px;align-items:center;font-size:13px}
+#persona .pp-ley i{width:12px;height:12px;border-radius:3px}#persona .pp-ley b{font-size:14px}#persona .pp-ley small{color:var(--color-fg-muted);min-width:80px;text-align:right}
+@media (max-width:640px){#persona .pp-mix-cuerpo{grid-template-columns:1fr}#persona .pp-ley small{min-width:0}}
 </style>
 <link rel="stylesheet" href="leaflet.css">
 <script src="d3.min.js"></script>

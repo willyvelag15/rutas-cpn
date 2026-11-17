@@ -1,4 +1,4 @@
-/* Abasto: pedido sugerido en tarimas completas por SKU (S+1 y S+2) contra lo programado y pronosticado. */
+/* Abasto: S+1 fija (lo que se pronosticó, ya no se cambia) y pronóstico sugerido S+2 en tarimas completas por SKU. */
 (function () {
   const F = window.CPN.fmt;
   const rows = (id) => (dash.data(id).status === 'ok' ? dash.data(id).data : []);
@@ -10,27 +10,26 @@
     const r = rows('abasto_res')[0]; if (!r) { e.append(el('p', 'note', 'Falta el inventario de almacén para calcular el pedido.')); return; }
     const tiles = el('div', 'hal-tiles');
     const t = (k, v, s, cls) => { const d = el('div', 'hal-tile' + (cls ? ' ' + cls : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); tiles.append(d); };
-    t('S+1 (semana del ' + dm(r.S1) + ')', F.int(r.tarimasSugS1) + ' tarimas', 'sugeridas · programadas ' + F.int(r.tarimasProgS1), r.tarimasProgS1 > r.tarimasSugS1 + 3 ? 'bad' : '');
-    t('S+2 (semana del ' + dm(r.S2) + ')', F.int(r.tarimasSugS2) + ' tarimas', 'sugeridas · pronosticadas ' + F.int(r.tarimasPronS2), r.tarimasPronS2 > r.tarimasSugS2 + 3 ? 'bad' : '');
-    t('Producto de más', F.money(r.dineroDeMas), 'a costo, entre lo programado y lo pronosticado', r.dineroDeMas > 0 ? 'bad' : '');
+    t('S+1 (semana del ' + dm(r.S1) + ')', F.int(r.tarimasProgS1) + ' tarimas', 'fija, ya no se cambia' + (r.fuenteS1 === 'pronóstico' ? ' (lo pronosticado; falta la hoja de programación)' : ''), '');
+    t('S+2 (semana del ' + dm(r.S2) + ')', F.int(r.tarimasSugS2) + ' tarimas', 'sugeridas para el pronóstico · pronosticadas ' + F.int(r.tarimasPronS2), '');
     e.append(tiles);
     e.append(el('p', 'note', 'Inventario al ' + dm(r.fecha) + ' (almacén + camiones), venta promedio de ' + r.diasVenta + ' días de noviembre. Colchón al cierre de la semana: 3 días en lo que llega casi diario (XX cuarto, caguama) y ' + r.objetivo + ' días en lo demás. Solo tarimas completas.'));
   });
   dash.draw('abaTabla', (e) => {
     e.replaceChildren();
     const A = rows('abasto_sku'); if (!A.length) return;
-    const L = A.filter((x) => st.todos || x.nota || x.sugS1 || x.sugS2);
+    const L = A.filter((x) => st.todos || x.nota || x.sugS2);
     const seg = el('div', 'seg seg-sm');
-    [[false, 'Lo que hay que mover'], [true, 'Todos los SKU']].forEach(([v, t]) => { const b = el('button', null, t); b.type = 'button'; b.setAttribute('aria-pressed', String(st.todos === v)); b.addEventListener('click', () => { st.todos = v; dash.draw('abaTabla'); }); seg.append(b); });
+    [[false, 'Lo que va primero en S+2'], [true, 'Todos los SKU']].forEach(([v, t]) => { const b = el('button', null, t); b.type = 'button'; b.setAttribute('aria-pressed', String(st.todos === v)); b.addEventListener('click', () => { st.todos = v; dash.draw('abaTabla'); }); seg.append(b); });
     e.append(seg);
     const ul = el('ol', 'acciones hal-lista');
     L.forEach((x) => {
       const li = el('li'); const izq = el('div', 'hal-izq');
-      const mal = /de más|no pedir/.test(x.nota || ''); const corto = /Faltan|corto/.test(x.nota || '');
-      izq.append(el('span', 'pill ' + (mal ? 'bad' : corto ? 'warn' : 'ok'), mal ? 'De más' : corto ? 'Corto' : 'Bien'));
+      const urge = /prioridad/.test(x.nota || ''); const falta = /le faltan/.test(x.nota || ''); const raro = /no se ha vendido/i.test(x.nota || '');
+      izq.append(el('span', 'pill ' + (urge ? 'bad' : falta ? 'warn' : raro ? 'warn' : 'ok'), urge ? 'Prioridad' : falta ? 'Va primero' : raro ? 'Revisar' : 'Bien'));
       const c = el('div', 'hal-cuerpo');
       c.append(el('b', null, x.producto + ' (' + x.clave + ')'));
-      c.append(el('span', null, 'S+1: programado ' + F.int(x.progS1) + ' → sugerido ' + F.int(x.sugS1) + ' tarimas · S+2: pronosticado ' + F.int(x.pronS2) + ' → sugerido ' + F.int(x.sugS2)));
+      c.append(el('span', null, 'S+1 (fija): ' + F.int(x.progS1) + ' tarimas, cierra la semana con ' + (x.diasFinS1 == null ? '—' : F.int(Math.max(0, x.diasFinS1))) + ' días · S+2: pronosticado ' + F.int(x.pronS2) + ' → sugerido ' + F.int(x.sugS2)));
       c.append(el('small', null, 'Vende ' + F.int(x.ventaDia) + ' cajas/día · hoy alcanza para ' + (x.diasHoy == null ? '—' : F.int(x.diasHoy)) + ' días · ' + F.int(x.cxt) + ' cajas por tarima' + (x.mesAnt != null ? ' · mes pasado ' + F.int(x.mesAnt) + ' cajas' : '')));
       if (x.nota) c.append(el('em', null, '→ ' + x.nota));
       li.append(izq, c); ul.append(li);

@@ -16,11 +16,25 @@
     const rutas = [...new Set(E.map((x) => x.ruta))];
     const malas = new Set(E.filter((x) => x.estado !== 'Cuadra').map((x) => x.ruta));
     const pend = E.reduce((a, x) => a + (x.pendiente || 0), 0);
+    const m = E[0] || {};
+    if (m.atrasado) {
+      e.append(el('p', 'note warn', 'Ojo: las devoluciones registradas en Power Sales llegan al ' + (m.corteDev ? F.dia(m.corteDev) : '—') + ' y la venta al ' + F.dia(m.corteVentas) + '. Lo vendido después de esa fecha aparece como "por devolver", no como adeudo.'));
+    } else if (m.corteDev) {
+      e.append(el('p', 'note', 'Devoluciones registradas al ' + F.dia(m.corteDev) + '; venta al ' + F.dia(m.corteVentas) + '.'));
+    }
+    const sinDev = E.filter((x) => x.sinDevolverDesde);
+    if (sinDev.length) {
+      const porRuta = {};
+      sinDev.forEach((x) => { (porRuta[x.ruta] = porRuta[x.ruta] || { v: x.vendedor, d: x.sinDevolverDesde, c: [] }).c.push(cj(x.cajasSinDevolver) + ' ' + x.tipo.toLowerCase()); });
+      const ul = el('ul', 'note bad');
+      Object.entries(porRuta).forEach(([r, o]) => ul.append(el('li', null, r + ' (' + o.v + ') no ha entregado envase desde el ' + F.dia(o.d) + ': ' + o.c.join(', ') + '.')));
+      e.append(ul);
+    }
     const tiles = el('div', 'hal-tiles');
     const t = (k, v, s, cls) => { const d = el('div', 'hal-tile' + (cls ? ' ' + cls : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); tiles.append(d); };
     t('Cajas de envase que se deben', cj(debe.reduce((a, x) => a + x.adeudo, 0)), debe.length ? debe.map((x) => x.ruta + ' ' + x.tipo.toLowerCase()).join(' · ') : 'ninguna ruta debe envase', debe.length ? 'bad' : '');
     t('Rutas que cuadran', F.int(rutas.length - malas.size) + ' de ' + F.int(rutas.length), 'vendido contra devuelto hasta su última devolución', '');
-    t('Por devolver (venta reciente)', cj(pend), 'cajas vendidas después de su última devolución', '');
+    t('Por devolver (venta reciente)', cj(pend), (m.corteDev ? 'vendidas después del ' + F.dia(m.corteDev) : 'cajas vendidas después de su última devolución'), '');
     e.append(tiles);
   });
 

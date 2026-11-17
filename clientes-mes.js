@@ -34,7 +34,7 @@
     return svg;
   }
 
-  function detalle(c, DET, dinero, cerrar) {
+  function detalle(c, DET, dinero, mg, cerrar) {
     const w = el('div', 'rc-det');
     const cab = el('div', 'rc-det-cab');
     const tt = el('div'); tt.append(el('h4', null, c.cliente), el('small', null, [c.ruta + ' · ' + c.vendedor, c.giro, c.poblacion, c.nivel].filter(Boolean).join(' · ')));
@@ -43,14 +43,15 @@
     const tiles = el('div', 'hal-tiles');
     const t = (k, v, s, tono) => { const d = el('div', 'hal-tile' + (tono ? ' ' + tono : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); tiles.append(d); };
     t('Hectolitros del mes', n1(c.hl), 'va para ' + n1(c.proyHl) + ' · promedio ' + n1(c.prom3Hl), c.ritmo >= 0.3 ? 'ok' : c.ritmo <= -0.3 ? 'warn' : '');
-    if (dinero) {
-      t('Venta', mx(c.venta), n0(c.cajas) + ' cajas · ' + c.compras + ' compras');
+    if (dinero) t('Venta', mx(c.venta), n0(c.cajas) + ' cajas · ' + c.compras + ' compras');
+    if (mg) {
       t('Descuento y sin cargo', mx(c.descuento + c.sinCargo), 'descuento ' + mx(c.descuento) + ' · sin cargo ' + mx(c.sinCargo), (c.descuento + c.sinCargo) / (c.venta || 1) > 0.12 ? 'warn' : '');
       t('Margen que nos deja', mx(c.margen), pc(c.margenPct) + ' de la venta');
       t(c.ganamos ? 'Ganamos' : 'Perdemos', mx(c.neto), 'margen − ' + mx(c.costoVisitas) + ' de visitarlo (' + c.visitas + ' días)', c.ganamos ? 'ok' : 'bad');
-    } else t('Cajas', n0(c.cajas), c.compras + ' compras');
+    }
+    if (!dinero) t('Cajas', n0(c.cajas), c.compras + ' compras');
     t('Saturación', pc(c.saturacion), 'la ruta lleva ' + pc(c.rutaSat), c.banderas.includes('Grande sin saturación') || c.banderas.includes('Chico con mucha saturación') ? 'warn' : '');
-    if (dinero && c.gvBonif != null) t('Heineken (bonif. + promo)', mx((c.gvBonif || 0) + (c.gvPromo || 0)), mx(c.gvGastoHl) + '/Hl vs ' + mx(c.gvRutaGastoHl) + '/Hl la ruta · ' + (c.gvCorte || ''));
+    if (mg && c.gvBonif != null) t('Heineken (bonif. + promo)', mx((c.gvBonif || 0) + (c.gvPromo || 0)), mx(c.gvGastoHl) + '/Hl vs ' + mx(c.gvRutaGastoHl) + '/Hl la ruta · ' + (c.gvCorte || ''));
     w.append(tiles);
     // productos
     const P = c.productos || [];
@@ -84,6 +85,7 @@
   function render(cont, o) {
     const st = o.estado || (o.estado = {});
     const dinero = o.dinero !== false;
+    const mg = dinero && !o.sinMargen;   // Berenice: con venta pero sin margen, bonificación ni Heineken
     const F0 = (o.filas || []).filter((x) => !o.okRuta || o.okRuta(x.ruta));
     const DET = o.det || [];
     cont.replaceChildren();
@@ -94,11 +96,11 @@
     const bar = el('div', 'rc-bar');
     const q = el('input', 'envf-in'); q.type = 'search'; q.placeholder = 'Buscar cliente o número…'; q.value = st.q;
     const sR = el('select', 'envf-in'); [['', 'Todas las rutas']].concat(rutas.map((r) => [r, r])).forEach(([v, t]) => { const op = el('option', null, t); op.value = v; sR.append(op); }); sR.value = st.ruta;
-    const sO = el('select', 'envf-in'); [['venta', 'Ordenar por venta'], ['hl', 'Por hectolitros'], ['margen', 'Por margen'], ['neto', 'Por lo que nos deja'], ['ritmo', 'Por crecimiento'], ['caida', 'Por caída'], ['sat', 'Por saturación (menos)']].filter((x) => dinero || !['venta', 'margen', 'neto'].includes(x[0])).forEach(([v, t]) => { const op = el('option', null, t); op.value = v; sO.append(op); }); sO.value = st.ord;
+    const sO = el('select', 'envf-in'); [['venta', 'Ordenar por venta'], ['hl', 'Por hectolitros'], ['margen', 'Por margen'], ['neto', 'Por lo que nos deja'], ['ritmo', 'Por crecimiento'], ['caida', 'Por caída'], ['sat', 'Por saturación (menos)']].filter((x) => (dinero || x[0] !== 'venta') && (mg || !['margen', 'neto'].includes(x[0]))).forEach(([v, t]) => { const op = el('option', null, t); op.value = v; sO.append(op); }); sO.value = st.ord;
     bar.append(q); if (rutas.length > 1) bar.append(sR); bar.append(sO);
     cont.append(bar);
     const chips = el('div', 'envf-rapido');
-    const FIL = [['todos', 'Todos'], ['perdemos', 'Perdemos'], ['crece', 'Creciendo'], ['cae', 'Cayendo'], ['sinsat', 'Grandes sin saturación'], ['chicosat', 'Chicos con mucha saturación'], ['tickets', 'Dos tickets'], ['riesgo', 'Con riesgos']].filter((x) => dinero || x[0] !== 'perdemos');
+    const FIL = [['todos', 'Todos'], ['perdemos', 'Perdemos'], ['crece', 'Creciendo'], ['cae', 'Cayendo'], ['sinsat', 'Grandes sin saturación'], ['chicosat', 'Chicos con mucha saturación'], ['tickets', 'Dos tickets'], ['riesgo', 'Con riesgos']].filter((x) => mg || x[0] !== 'perdemos');
     FIL.forEach(([v, t]) => { const b = el('button', 'envf-chip', t); b.type = 'button'; b.setAttribute('aria-pressed', String(st.f === v)); b.addEventListener('click', () => { st.f = v; st.n = 60; render(cont, o); }); chips.append(b); });
     cont.append(chips);
     let tmr; q.addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(() => { st.q = q.value; st.n = 60; render(cont, o); const nq = cont.querySelector('input[type=search]'); if (nq) { nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); } }, 250); });
@@ -120,7 +122,9 @@
     t('Clientes con compra', n0(F.length), fechas.length ? 'del ' + dia(fechas[0]) + ' al ' + dia(fechas[fechas.length - 1]) : '');
     t('Hectolitros', n1(S('hl')), n0(S('cajas')) + ' cajas');
     if (dinero) {
-      t('Venta', mx(S('venta')), 'descuento ' + mx(S('descuento')) + ' · sin cargo ' + mx(S('sinCargo')));
+      t('Venta', mx(S('venta')), mg ? 'descuento ' + mx(S('descuento')) + ' · sin cargo ' + mx(S('sinCargo')) : '');
+    }
+    if (mg) {
       t('Margen', mx(S('margen')), pc(S('margen') / (S('venta') || 1)) + ' de la venta');
       const pierde = F.filter((x) => !x.ganamos);
       t('Clientes que no nos dejan', n0(pierde.length), pierde.length ? mx(pierde.reduce((a, x) => a + x.neto, 0)) + ' en contra' : 'todos dejan', pierde.length ? 'bad' : 'ok');
@@ -131,14 +135,15 @@
 
     // tabla
     const w = el('div', 'tblwrap'); const tb = el('table', 'cpn-t rc-t');
-    const h = el('tr'); [['Cliente', ''], ['Hl', 'num'], ['Va para', 'num']].concat(dinero ? [['Venta', 'num'], ['Desc. + sin cargo', 'num'], ['Margen', 'num'], ['Nos deja', 'num']] : [['Cajas', 'num']]).concat([['Ritmo', 'num'], ['Saturación', 'num'], ['Señales', '']]).forEach(([a, b]) => h.append(el('th', b || null, a)));
+    const h = el('tr'); [['Cliente', ''], ['Hl', 'num'], ['Va para', 'num']].concat(mg ? [['Venta', 'num'], ['Desc. + sin cargo', 'num'], ['Margen', 'num'], ['Nos deja', 'num']] : dinero ? [['Venta', 'num'], ['Cajas', 'num']] : [['Cajas', 'num']]).concat([['Ritmo', 'num'], ['Saturación', 'num'], ['Señales', '']]).forEach(([a, b]) => h.append(el('th', b || null, a)));
     tb.append(el('thead')); tb.tHead.append(h);
     const bb = el('tbody');
     F.slice(0, st.n).forEach((x) => {
       const tr = el('tr', 'rc-fila' + (st.sel === x.id ? ' sel' : '')); tr.tabIndex = 0;
       const tc = el('td'); tc.append(el('b', null, x.cliente), el('small', null, ' ' + x.ruta + ' · #' + x.id));
       tr.append(tc, el('td', 'num', n1(x.hl)), el('td', 'num', n1(x.proyHl)));
-      if (dinero) tr.append(el('td', 'num', mx(x.venta)), el('td', 'num', mx(x.descuento + x.sinCargo)), el('td', 'num', mx(x.margen)), el('td', 'num ' + (x.ganamos ? '' : 'neg'), mx(x.neto)));
+      if (mg) tr.append(el('td', 'num', mx(x.venta)), el('td', 'num', mx(x.descuento + x.sinCargo)), el('td', 'num', mx(x.margen)), el('td', 'num ' + (x.ganamos ? '' : 'neg'), mx(x.neto)));
+      else if (dinero) tr.append(el('td', 'num', mx(x.venta)), el('td', 'num', n1(x.cajas)));
       else tr.append(el('td', 'num', n1(x.cajas)));
       tr.append(el('td', 'num ' + ((x.ritmo || 0) >= 0.3 ? 'ok' : (x.ritmo || 0) <= -0.3 ? 'warn' : ''), x.ritmo == null ? 'nuevo' : (x.ritmo > 0 ? '+' : '') + pc(x.ritmo)), el('td', 'num', pc(x.saturacion)));
       const tdS = el('td'); x.banderas.filter((b, i, a) => a.indexOf(b) === i).forEach((b) => tdS.append(el('span', 'pill ' + (TONO[b] || ''), b), document.createTextNode(' '))); tr.append(tdS);
@@ -153,7 +158,7 @@
       const b = el('button', 'rc-card' + (st.sel === x.id ? ' sel' : '')); b.type = 'button';
       const top = el('div', 'rc-card-top'); top.append(el('b', null, x.cliente), el('small', null, x.ruta + ' · #' + x.id)); b.append(top);
       const nums = el('div', 'rc-card-num');
-      [['Hl', n1(x.hl)], dinero ? ['Venta', mx(x.venta)] : ['Cajas', n1(x.cajas)], dinero ? ['Nos deja', mx(x.neto)] : ['Va para', n1(x.proyHl)], ['Ritmo', x.ritmo == null ? 'nuevo' : (x.ritmo > 0 ? '+' : '') + pc(x.ritmo)]].forEach(([k, v]) => { const d = el('div'); d.append(el('small', null, k), el('b', null, v)); nums.append(d); });
+      [['Hl', n1(x.hl)], dinero ? ['Venta', mx(x.venta)] : ['Cajas', n1(x.cajas)], mg ? ['Nos deja', mx(x.neto)] : ['Va para', n1(x.proyHl)], ['Ritmo', x.ritmo == null ? 'nuevo' : (x.ritmo > 0 ? '+' : '') + pc(x.ritmo)]].forEach(([k, v]) => { const d = el('div'); d.append(el('small', null, k), el('b', null, v)); nums.append(d); });
       b.append(nums);
       const ban = x.banderas.filter((q, i, a) => a.indexOf(q) === i);
       if (ban.length) { const bd = el('div'); ban.forEach((q) => bd.append(el('span', 'pill ' + (TONO[q] || ''), q), document.createTextNode(' '))); b.append(bd); }
@@ -161,10 +166,10 @@
       cards.append(b);
     });
     const selC = st.sel && F.find((x) => x.id === st.sel);
-    if (selC) cont.append(detalle(selC, DET, dinero, () => { st.sel = null; render(cont, o); }));
+    if (selC) cont.append(detalle(selC, DET, dinero, mg, () => { st.sel = null; render(cont, o); }));
     cont.append(w, cards);
     if (F.length > st.n) { const m = el('button', 'envf-chip', 'Ver ' + Math.min(60, F.length - st.n) + ' más (' + (F.length - st.n) + ' restantes)'); m.type = 'button'; m.addEventListener('click', () => { st.n += 60; render(cont, o); }); cont.append(m); }
-    cont.append(el('p', 'pp-mia', 'Acumulado del mes con la venta de Power Sales. Margen = venta − costo de cada caja; "Nos deja" = margen − lo que cuesta visitarlo (diésel por visita de Motum). "Va para" = Hl al cierre a este ritmo; Ritmo = contra su promedio de 3 meses. Saturación = todo menos XX Lager, Tecate y Tecate Light. Toca un cliente para ver su detalle.'));
+    cont.append(el('p', 'pp-mia', 'Acumulado del mes con la venta de Power Sales. ' + (mg ? 'Margen = venta − costo de cada caja; "Nos deja" = margen − lo que cuesta visitarlo (diésel por visita de Motum). ' : '') + '"Va para" = Hl al cierre a este ritmo; Ritmo = contra su promedio de 3 meses. Saturación = todo menos XX Lager, Tecate y Tecate Light. Toca un cliente para ver su detalle.'));
   }
 
   window.CPN_CLI = { render };

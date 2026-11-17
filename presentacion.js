@@ -151,7 +151,7 @@
     mk.append(bar, leg);
     const bn = el('div', 'pz-bn'); bn.style.marginTop = '10px'; bn.append(el('h4', null, 'Bonos del mes'));
     s.bonos.forEach((x) => { const r = el('div', 'pz-row'); r.append(el('span', null, x.nombre + ': ' + n2(x.cajasMes) + ' de ' + x.minimo), el('b', null, x.falta > 0 ? 'faltan ' + n2(x.falta) : 'ya entró')); bn.append(r, barra(x.cajasMes, x.minimo, x.falta > 0 ? '#C98A0B' : '#16A34A')); });
-    mk.append(bn);
+    if ((s.bonos || []).length) mk.append(bn);
     const pr = el('div'); pr.append(el('h4', null, 'Productos vendidos (' + s.nProductos + ')'));
     const t = el('table'); const th = el('tr'); [['Producto', ''], ['Cajas', 'n'], ['% venta', 'n']].forEach(([h, cl]) => th.append(el('th', cl, h))); t.append(th);
     s.productos.slice(0, 10).forEach((p) => { const tr = el('tr'); tr.append(el('td', null, p.producto), el('td', 'n', n2(p.cajas)), el('td', 'n', (Math.round(p.pct * 1000) / 10) + '%')); t.append(tr); });

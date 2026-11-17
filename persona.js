@@ -180,7 +180,7 @@
       if (s.nota) c.append(el('p', 'pp-mia', s.nota));
       const box = el('div', 'envf rcli'); c.append(box); main.append(c);
       st.cli = st.cli || {};
-      window.CPN_CLI.render(box, { filas: s.cli.filas, det: s.cli.det, okRuta: ok, estado: st.cli, dinero: P.dinero !== false });
+      window.CPN_CLI.render(box, { filas: s.cli.filas, det: s.cli.det, okRuta: ok, estado: st.cli, dinero: P.dinero !== false, sinMargen: !!s.cli.sinMargen });
       return;
     }
     if (s.id === 'envase' && s.mov && window.CPN_ENV) {

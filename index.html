@@ -958,7 +958,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     <div class="grid" style="margin-top: var(--cds-gap-md)">
       <div class="card wide">
         <h3>Meta de noviembre</h3>
-        <p class="note">Hectolitros acumulados contra la meta de las 7 rutas. La línea dorada es lo que ya debería llevar según los días hábiles.</p>
+        <p class="note">Hectolitros acumulados contra la meta de las 8 rutas (la Ruta 5 sale de la megabase). La línea dorada es lo que ya debería llevar según los días hábiles.</p>
         <div class="gauge" data-draw="gaugeTotal" data-source="mesRuta"></div>
         <div class="kv">
           <div><span>Llevamos</span><b data-draw="mHl" data-source="mesRuta" data-field="hlMes" data-where="ruta=TOTAL">—</b></div>
@@ -971,7 +971,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 
       <div class="card wide">
         <h3>Semáforo por ruta</h3>
-        <p class="note">Último día con venta. Verde, amarillo o rojo según efectividad y cumplimiento.</p>
+        <p class="note">Último día con venta. Verde, amarillo o rojo según efectividad y cumplimiento. La Ruta 5 no está en Power Sales: se muestra su promedio por día del mes según la megabase y no suma al total del día.</p>
         <div class="tblwrap">
           <table class="cpn-t" data-source="resumenDia" data-row-key="ruta">
             <thead><tr><th data-field="ruta">Ruta</th><th data-field="vendedor" class="hide-sm">Vendedor</th><th data-field="venta" class="num">Venta</th><th data-field="hl" class="num">Hl</th><th data-field="efectividad" class="num">Efectividad</th><th data-field="cumplimiento" class="num">Cumplimiento</th><th data-field="dropsize" class="num hide-sm">Ticket</th><th data-field="jornada" class="hide-sm">Jornada</th><th data-field="semaforo">Estado</th></tr></thead>
@@ -1012,6 +1012,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       <button type="button" data-ruta="Ruta 2" aria-pressed="false">Ruta 2</button>
       <button type="button" data-ruta="Ruta 3" aria-pressed="false">Ruta 3</button>
       <button type="button" data-ruta="Ruta 4" aria-pressed="false">Ruta 4</button>
+      <button type="button" data-ruta="Ruta 5" aria-pressed="false">Ruta 5</button>
       <button type="button" data-ruta="Ruta 6" aria-pressed="false">Ruta 6</button>
       <button type="button" data-ruta="Ruta 7" aria-pressed="false">Ruta 7</button>
       <button type="button" data-ruta="Ruta 13" aria-pressed="false">Ruta 13</button>
@@ -1273,7 +1274,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     largo: (s) => { const d = new Date(s + 'T12:00:00'); const L = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']; return L[d.getDay()] + ' ' + d.getDate() + ' de ' + ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][d.getMonth()]; },
   };
   window.CPN.brandColor = { 'XX Lager': '#C99A06', 'Tecate': '#B3262D', 'Superior': '#2C6FB3', 'Indio': '#7A4E2D', 'Sol': '#E07A1F', 'Miller': '#1E4F91', 'Amstel Ultra': '#7D8C99', 'Strongbow': '#5B8C3A', 'Carta Blanca': '#8A8F2E', 'Heineken': '#1F7A45', 'Otras': '#888' };
-  window.CPN.routeColor = { 'Ruta 1': '#146EF9', 'Ruta 2': '#E5484D', 'Ruta 3': '#16A34A', 'Ruta 4': '#6B7280', 'Ruta 6': '#0EA5B7', 'Ruta 7': '#F08A24', 'Ruta 13': '#7C5CDB' };
+  window.CPN.routeColor = { 'Ruta 1': '#146EF9', 'Ruta 2': '#E5484D', 'Ruta 3': '#16A34A', 'Ruta 4': '#6B7280', 'Ruta 5': '#C2185B', 'Ruta 6': '#0EA5B7', 'Ruta 7': '#F08A24', 'Ruta 13': '#7C5CDB' };
   window.CPN.estado = (r) => { if (!r) return ['—', '']; const e = r.efectividad, c = r.cumplimiento; if (e >= 0.65 && c >= 0.9) return ['Bien', 'ok']; if (e < 0.4 || c < 0.6) return ['Revisar', 'bad']; return ['Atención', 'warn']; };
 })();
 </script>
@@ -1315,10 +1316,10 @@ dash.calc('mesRuta', {
       const mb = m.fuente === 'megabase';
       const hlMes = mb ? (m.hlMes || 0) : d.reduce((a, r) => a + r.hl, 0);
       const nd = mb ? (m.diasMegabase || n) : n;
-      return { ruta: m.ruta, rutaNum: m.rutaNum, vendedor: m.vendedor + (mb ? ' (megabase)' : ''), metaHl: m.metaHl, hlMes, cajasMes: d.reduce((a, r) => a + r.cajas, 0), ventaMes: d.reduce((a, r) => a + r.venta, 0),
+      return { ruta: m.ruta, rutaNum: m.rutaNum, vendedor: m.vendedor + (mb ? ' (megabase)' : ''), metaHl: m.metaHl, hlMes, cajasMes: mb ? (m.cajasMes || 0) : d.reduce((a, r) => a + r.cajas, 0), ventaMes: mb ? (m.ventaMes || 0) : d.reduce((a, r) => a + r.venta, 0),
         avance: m.metaHl ? hlMes / m.metaHl : 0, esperado: n / habiles, diasTrans: n, proyeccion: nd ? hlMes / nd * habiles : 0,
         faltaPorDia: Math.max(0, (m.metaHl - hlMes) / Math.max(1, habiles - n)), metaDia: m.metaHl / habiles, nov25Hl: m.nov25Hl,
-        millerCajas: d.reduce((a, r) => a + (r.millerCajas || 0), 0), auLataCajas: d.reduce((a, r) => a + (r.auLataCajas || 0), 0), au24Cajas: d.reduce((a, r) => a + (r.au24Cajas || 0), 0) };
+        millerCajas: mb ? (m.millerCajas || 0) : d.reduce((a, r) => a + (r.millerCajas || 0), 0), auLataCajas: mb ? (m.auLataCajas || 0) : d.reduce((a, r) => a + (r.auLataCajas || 0), 0), au24Cajas: mb ? (m.au24Cajas || 0) : d.reduce((a, r) => a + (r.au24Cajas || 0), 0), megabase: mb, corteMegabase: m.corteMegabase };
     });
     const s = (k) => rows.reduce((a, r) => a + r[k], 0);
     const t = { ruta: 'TOTAL', rutaNum: 99, vendedor: rows.length + ' rutas', metaHl: s('metaHl'), hlMes: s('hlMes'), cajasMes: s('cajasMes'), ventaMes: s('ventaMes'), diasTrans: n, esperado: n / habiles,
@@ -1449,6 +1450,16 @@ dash.calc('alertas', {
       const s = td(''); const p = document.createElement('span'); p.className = 'pill ' + (r.semaforo === 'Bien' ? 'ok' : r.semaforo === 'Revisar' ? 'bad' : 'warn'); p.textContent = r.semaforo; s.append(p);
       tb.append(tr);
     });
+    const r5 = (get('ruta5').data || [])[0];
+    if (r5 && r5.dias) {
+      const tr = document.createElement('tr'); tr.style.opacity = '0.92';
+      const td = (v, cls) => { const c = document.createElement('td'); c.textContent = v; if (cls) c.className = cls; tr.append(c); return c; };
+      const k = td('Ruta 5'); k.style.fontWeight = '600'; k.style.color = window.CPN.routeColor['Ruta 5'];
+      td(r5.vendedor + ' · prom./día', 'hide-sm'); td(F.money(r5.ventaMes / r5.dias), 'num'); td(F.hl(r5.hlMes / r5.dias), 'num');
+      td('—', 'num'); td('—', 'num'); td(r5.clientesCompra + ' de ' + r5.clientesTotal + ' clientes', 'num hide-sm'); td('megabase al ' + F.dia(r5.corte), 'hide-sm');
+      const s = td(''); const p = document.createElement('span'); p.className = 'pill'; p.textContent = 'Megabase'; s.append(p);
+      tb.append(tr);
+    }
   });
 
   dash.draw('alertas', (ul) => {
@@ -1504,13 +1515,50 @@ dash.calc('alertas', {
   const sel = () => window.CPN.ruta;
   const one = (id, ruta) => { const g = get(id); return g.status === 'ok' ? g.data.find((r) => r.ruta === ruta) : null; };
 
+  // Ruta 5 (megabase): clientes con lo que compró cada uno, y productos de la ruta
+  window.CPN.r5Clientes = (el, x) => {
+    nota(el, 'La Ruta 5 no está en Power Sales: no hay días ni visitas. Aquí van sus clientes del mes según la megabase al ' + F.dia(x.corte) + '. Toca un cliente para ver qué productos compró.');
+    const t = document.createElement('table'); t.className = 'cpn-t';
+    t.innerHTML = '<thead><tr><th>Cliente</th><th class="hide-sm">Cadena</th><th class="num">Hl mes</th><th class="num">Ritmo al cierre</th><th class="num hide-sm">Prom. 3 meses</th><th>Cómo va</th></tr></thead>';
+    const tb = document.createElement('tbody');
+    (x.clientes || []).forEach((c) => {
+      const tr = document.createElement('tr'); tr.style.cursor = 'pointer';
+      const td = (v, cls) => { const d = document.createElement('td'); d.textContent = v; if (cls) d.className = cls; tr.append(d); return d; };
+      const n = td(c.negocio); n.style.fontWeight = '600'; td(c.cadena, 'hide-sm'); td(F.hl(c.hlMes), 'num'); td(F.hl(c.proyeccion), 'num'); td(F.hl(c.hlProm3), 'num hide-sm');
+      const s = td(''); const p = document.createElement('span'); p.className = 'pill ' + (c.estado === 'Va arriba' ? 'ok' : c.estado === 'Parejo' ? '' : c.estado === 'Va abajo' ? 'warn' : 'bad'); p.textContent = c.estado; s.append(p);
+      const det = document.createElement('tr'); det.hidden = true; const dd = document.createElement('td'); dd.colSpan = 6;
+      const ps = (c.productos || []).map((q) => q.nombre + ': ' + F.hl(q.cajas) + ' cj').join(' · ');
+      dd.textContent = (c.productosDe === 'mes' ? 'Compró este mes: ' : 'Este mes no ha comprado. El mes anterior compró: ') + (ps || 'sin productos') + (c.ultimaCompra ? ' · última compra ' + F.dia(c.ultimaCompra) : '') + (c.poblacion ? ' · ' + c.poblacion : '');
+      dd.style.fontSize = '13px'; dd.style.color = 'var(--color-fg-muted)'; det.append(dd);
+      tr.addEventListener('click', () => { det.hidden = !det.hidden; });
+      tb.append(tr, det);
+    });
+    t.append(tb); const w = document.createElement('div'); w.className = 'tblwrap'; w.append(t); el.append(w);
+  };
+  window.CPN.r5Productos = (el, x) => {
+    nota(el, 'Sin motivos de no venta: la Ruta 5 no registra visitas en Power Sales.');
+    const rows = (x.productos || []).slice(0, 12); const max = rows.length ? rows[0].hl : 1;
+    rows.forEach((q) => { const row = document.createElement('div'); row.className = 'brandrow'; const n = document.createElement('span'); n.textContent = q.nombre; const bar = document.createElement('div'); bar.className = 'bar'; const f = document.createElement('i'); f.style.width = (q.hl / max * 100) + '%'; f.style.background = window.CPN.brandColor[q.marca] || 'var(--gold)'; bar.append(f); const c = document.createElement('span'); c.style.textAlign = 'right'; c.style.whiteSpace = 'nowrap'; c.textContent = F.int(q.cajas) + ' cj · ' + q.clientes + ' cl.'; row.append(n, bar, c); el.append(row); });
+  };
+
   dash.draw('rVend', (el) => {
     const m = one('metas', sel()); el.replaceChildren(); if (!m) { el.textContent = '—'; return; }
     const av = document.createElement('div'); av.className = 'av'; av.style.background = window.CPN.routeColor[m.ruta]; av.style.color = '#fff'; av.textContent = m.ruta.replace('Ruta ', 'R');
     const w = document.createElement('div'); const h = document.createElement('h3'); h.textContent = m.vendedor; const p = document.createElement('p'); p.textContent = m.ruta + ' · meta de noviembre ' + F.int(m.metaHl) + ' Hl · noviembre 2025: ' + F.hl(m.nov25Hl) + ' Hl'; w.append(h, p); el.append(av, w);
   });
 
+  const R5 = () => (sel() === 'Ruta 5' ? (get('ruta5').data || [])[0] : null);
+  const titulo = (el, h, n) => { const c = el.closest('.card'); if (!c) return; const a = c.querySelector('h3'), b = c.querySelector('h3 + .note'); if (a) { a.dataset.t0 = a.dataset.t0 || a.textContent; a.textContent = h || a.dataset.t0; } if (b) { b.dataset.t0 = b.dataset.t0 || b.textContent; b.textContent = n || b.dataset.t0; } };
+  const nota = (el, t) => { const p = document.createElement('p'); p.className = 'note'; p.textContent = t; el.append(p); };
   dash.draw('rKpis', (el) => {
+    const x = R5();
+    if (x) {
+      el.replaceChildren(); const b = x.bono || {};
+      [['Megabase al', F.dia(x.corte)], ['Venta del mes (est.)', F.money(x.ventaMes)], ['Hectolitros del mes', F.hl(x.hlMes)], ['Cajas del mes', F.int(x.cajasMes)], ['Margen del mes (est.)', F.money(x.margenMes)],
+        ['Promedio por día', F.hl(x.hlMes / x.dias) + ' Hl'], ['Clientes con compra', x.clientesCompra + ' de ' + x.clientesTotal], ['Miller (cajas)', F.hl(b.millerCajas || 0)], ['Lata 12 oz (cajas)', F.hl(b.auLataCajas || 0)], ['Lata 24 oz (cajas)', F.hl(b.au24Cajas || 0)]]
+        .forEach(([k, v]) => { const d = document.createElement('div'); const s = document.createElement('span'); s.textContent = k; const bb = document.createElement('b'); bb.textContent = v; if (k === 'Megabase al' || k === 'Clientes con compra') bb.style.fontSize = '18px'; d.append(s, bb); el.append(d); });
+      return;
+    }
     const r = one('resumenDia', sel()); el.replaceChildren(); if (!r) { el.textContent = '—'; return; }
     const items = [['Último día', F.dia(r.fecha)], ['Venta', F.money(r.venta)], ['Hectolitros', F.hl(r.hl)], ['Cajas', F.int(r.cajas)], ['Efectividad', F.pct(r.efectividad)], ['Cumplimiento', F.pct(r.cumplimiento)], ['Ticket', F.money(r.dropsize)], ['Visitas', r.visHechas + ' hechas / ' + r.visProg + ' prog.'], ['Jornada', r.jornada], ['Min. por cliente', F.hl(r.minServicio)]];
     items.forEach(([k, v]) => { const d = document.createElement('div'); const s = document.createElement('span'); s.textContent = k; const b = document.createElement('b'); b.textContent = v; if (k === 'Jornada' || k === 'Visitas' || k === 'Último día') b.style.fontSize = '18px'; d.append(s, b); el.append(d); });
@@ -1524,10 +1572,11 @@ dash.calc('alertas', {
     el.append(g, kv);
   });
 
-  dash.draw('rDias', (el) => { const g = get('diario'); if (g.status !== 'ok') { el.replaceChildren(); return; } const rows = g.data.filter((r) => r.ruta === sel()).sort((a, b) => a.fecha < b.fecha ? -1 : 1); window.CPN.bars(el, rows, 'fecha', 'hl', { fmt: F.hl, color: window.CPN.routeColor[sel()], label: (r) => F.dia(r.fecha).split(' ').slice(0, 2).join(' '), ref: (one('mesRuta', sel()) || {}).metaDia }); });
+  dash.draw('rDias', (el) => { const x5 = R5(); titulo(el, x5 && 'Clientes del mes', x5 && 'Hectolitros de cada cliente en el mes, su ritmo al cierre y cómo va contra sus últimos 3 meses.'); if (x5) { el.replaceChildren(); return window.CPN.r5Clientes(el, x5); } const g = get('diario'); if (g.status !== 'ok') { el.replaceChildren(); return; } const rows = g.data.filter((r) => r.ruta === sel()).sort((a, b) => a.fecha < b.fecha ? -1 : 1); window.CPN.bars(el, rows, 'fecha', 'hl', { fmt: F.hl, color: window.CPN.routeColor[sel()], label: (r) => F.dia(r.fecha).split(' ').slice(0, 2).join(' '), ref: (one('mesRuta', sel()) || {}).metaDia }); });
 
   dash.draw('rMotivos', (el) => {
     const g = get('motivos'); el.replaceChildren(); if (g.status !== 'ok') return;
+    const x5 = R5(); titulo(el, x5 && 'Productos del mes', x5 && 'Cajas y número de clientes de cada producto (megabase).'); if (x5) { window.CPN.r5Productos(el, x5); return; }
     const by = {}; g.data.filter((r) => r.ruta === sel()).forEach((r) => { by[r.motivo] = (by[r.motivo] || 0) + r.visitas; });
     const rows = Object.entries(by).sort((a, b) => b[1] - a[1]);
     if (!rows.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Sin visitas sin pedido registradas este mes.'; el.append(p); return; }
@@ -1536,6 +1585,7 @@ dash.calc('alertas', {
   });
 
   dash.draw('rMarcas', (el) => {
+    const x5 = R5(); if (x5) { window.CPN.brandList(el, x5.marcas || []); nota(el, 'Megabase al ' + F.dia(x5.corte) + '.'); return; }
     const g = get('marcas'); if (g.status !== 'ok') { el.replaceChildren(); return; }
     const by = {}; g.data.filter((r) => r.ruta === sel()).forEach((r) => { by[r.marca] = (by[r.marca] || 0) + r.hl; });
     window.CPN.brandList(el, Object.entries(by).map(([marca, hl]) => ({ marca, hl })).sort((a, b) => b.hl - a.hl));

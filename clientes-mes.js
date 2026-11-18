@@ -130,7 +130,7 @@
       t('Clientes que no nos dejan', n0(pierde.length), pierde.length ? mx(pierde.reduce((a, x) => a + x.neto, 0)) + ' en contra' : 'todos dejan', pierde.length ? 'bad' : 'ok');
     }
     const satT = F.reduce((a, x) => a + x.hl * x.saturacion, 0) / (S('hl') || 1);
-    t('Saturación', pc(satT), 'todo menos XX, Tecate y Tecate Light');
+    t('Saturación', pc(satT), 'todo menos XX Lager');
     cont.append(tiles);
 
     // tabla
@@ -169,7 +169,7 @@
     if (selC) cont.append(detalle(selC, DET, dinero, mg, () => { st.sel = null; render(cont, o); }));
     cont.append(w, cards);
     if (F.length > st.n) { const m = el('button', 'envf-chip', 'Ver ' + Math.min(60, F.length - st.n) + ' más (' + (F.length - st.n) + ' restantes)'); m.type = 'button'; m.addEventListener('click', () => { st.n += 60; render(cont, o); }); cont.append(m); }
-    cont.append(el('p', 'pp-mia', 'Acumulado del mes con la venta de Power Sales. ' + (mg ? 'Margen = venta − costo de cada caja; "Nos deja" = margen − lo que cuesta visitarlo (diésel por visita de Motum). ' : '') + '"Va para" = Hl al cierre a este ritmo; Ritmo = contra su promedio de 3 meses. Saturación = todo menos XX Lager, Tecate y Tecate Light. Toca un cliente para ver su detalle.'));
+    cont.append(el('p', 'pp-mia', 'Acumulado del mes con la venta de Power Sales. ' + (mg ? 'Margen = venta − costo de cada caja; "Nos deja" = margen − lo que cuesta visitarlo (diésel por visita de Motum). ' : '') + '"Va para" = Hl al cierre a este ritmo; Ritmo = contra su promedio de 3 meses. Saturación = todo menos XX Lager. Toca un cliente para ver su detalle.'));
   }
 
   /* Clientes en riesgo con su próxima visita (Willy, 17-nov-2026: Berenice y admin) */
@@ -228,7 +228,7 @@
       casos.forEach((x) => { const tr = el('tr'); tr.append(el('td', null, x.cliente), el('td', null, x.ruta), el('td', 'num', n1(x.hl))); semanas.forEach((s0) => { const v = (x.satSem || []).find((q) => q[0] === s0); tr.append(el('td', 'num', v && v[1] != null ? pc(v[1]) : '—')); }); tr.append(el('td', 'num', pc(x.rutaSat))); b2.append(tr); });
       t2.append(b2); w2.append(t2); cont.append(w2);
     }
-    cont.append(el('p', 'pp-mia', 'Saturación = todo menos XX Lager, Tecate y Tecate Light. Grandes = el 25% de los clientes que más compran en la ruta; chicos = el 40% que menos. Si después de hablar con el vendedor la saturación de un cliente grande sube, se ve aquí semana a semana.'));
+    cont.append(el('p', 'pp-mia', 'Saturación = todo menos XX Lager. Grandes = el 25% de los clientes que más compran en la ruta; chicos = el 40% que menos. Si después de hablar con el vendedor la saturación de un cliente grande sube, se ve aquí semana a semana.'));
   }
 
   window.CPN_CLI = { render, riesgo, satSem };

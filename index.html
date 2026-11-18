@@ -1311,16 +1311,19 @@ dash.calc('mesRuta', {
     const n = fechas.length;
     const rows = metas.map((m) => {
       const d = diario.filter((r) => r.ruta === m.ruta);
-      const hlMes = d.reduce((a, r) => a + r.hl, 0);
-      return { ruta: m.ruta, rutaNum: m.rutaNum, vendedor: m.vendedor, metaHl: m.metaHl, hlMes, cajasMes: d.reduce((a, r) => a + r.cajas, 0), ventaMes: d.reduce((a, r) => a + r.venta, 0),
-        avance: m.metaHl ? hlMes / m.metaHl : 0, esperado: n / habiles, diasTrans: n, proyeccion: n ? hlMes / n * habiles : 0,
+      // Ruta 5: no está en Power Sales; sus Hl salen de la megabase (Willy, 17-nov-2026) y suman a la meta general
+      const mb = m.fuente === 'megabase';
+      const hlMes = mb ? (m.hlMes || 0) : d.reduce((a, r) => a + r.hl, 0);
+      const nd = mb ? (m.diasMegabase || n) : n;
+      return { ruta: m.ruta, rutaNum: m.rutaNum, vendedor: m.vendedor + (mb ? ' (megabase)' : ''), metaHl: m.metaHl, hlMes, cajasMes: d.reduce((a, r) => a + r.cajas, 0), ventaMes: d.reduce((a, r) => a + r.venta, 0),
+        avance: m.metaHl ? hlMes / m.metaHl : 0, esperado: n / habiles, diasTrans: n, proyeccion: nd ? hlMes / nd * habiles : 0,
         faltaPorDia: Math.max(0, (m.metaHl - hlMes) / Math.max(1, habiles - n)), metaDia: m.metaHl / habiles, nov25Hl: m.nov25Hl,
         millerCajas: d.reduce((a, r) => a + (r.millerCajas || 0), 0), auLataCajas: d.reduce((a, r) => a + (r.auLataCajas || 0), 0), au24Cajas: d.reduce((a, r) => a + (r.au24Cajas || 0), 0) };
     });
     const s = (k) => rows.reduce((a, r) => a + r[k], 0);
-    const t = { ruta: 'TOTAL', rutaNum: 99, vendedor: '7 rutas', metaHl: s('metaHl'), hlMes: s('hlMes'), cajasMes: s('cajasMes'), ventaMes: s('ventaMes'), diasTrans: n, esperado: n / habiles,
+    const t = { ruta: 'TOTAL', rutaNum: 99, vendedor: rows.length + ' rutas', metaHl: s('metaHl'), hlMes: s('hlMes'), cajasMes: s('cajasMes'), ventaMes: s('ventaMes'), diasTrans: n, esperado: n / habiles,
       nov25Hl: s('nov25Hl'), millerCajas: s('millerCajas'), auLataCajas: s('auLataCajas'), au24Cajas: s('au24Cajas') };
-    t.avance = t.metaHl ? t.hlMes / t.metaHl : 0; t.proyeccion = n ? t.hlMes / n * habiles : 0; t.faltaPorDia = Math.max(0, (t.metaHl - t.hlMes) / Math.max(1, habiles - n)); t.metaDia = t.metaHl / habiles;
+    t.avance = t.metaHl ? t.hlMes / t.metaHl : 0; t.proyeccion = s('proyeccion'); t.faltaPorDia = Math.max(0, (t.metaHl - t.hlMes) / Math.max(1, habiles - n)); t.metaDia = t.metaHl / habiles;
     return rows.sort((a, b) => a.rutaNum - b.rutaNum).concat([t]);
   },
 });

@@ -36,6 +36,11 @@
   window.CPN.empTipo = window.CPN.empTipo || 'Real';
   const emp = () => rows('empresa').filter((r) => r.tipo === window.CPN.empTipo);
   const novEnCurso = () => { const m = one('mesRuta', 'TOTAL'); return m ? m.proyeccion : null; };
+  const mesEnCurso = () => {
+    const m = one('mesRuta', 'TOTAL'); const fs = rows('diario').map((r) => r.fecha).sort(); if (!m || !fs.length) return null;
+    const u = fs[fs.length - 1]; const d = new Date(u + 'T12:00');
+    return { mes: d.getMonth() + 1, hl: m.hlMes, esperado: m.esperado, dias: m.diasTrans, proy: m.proyeccion, corte: d.getDate() + ' ' + MES[d.getMonth()] };
+  };
   function resumenEmp() {
     const e = emp(); if (!e.length) return null;
     const con = e.filter((r) => r.real != null && r.meta && !r.parcial);
@@ -57,7 +62,7 @@
     tile(x, 'Cumplimiento', pct(r.cump), 'de ' + F.int(r.meta) + ' Hl de meta');
     tile(x, 'Contra 2025', sign(r.vs25), 'mismo periodo');
     tile(x, 'Meta anual', F.int(r.metaAnual) + ' Hl', 'faltan ' + F.int(Math.max(0, r.metaAnual - r.real)));
-    if (window.CPN.empTipo === 'Real') { const nv = novEnCurso(); if (nv) tile(x, 'Noviembre (en curso)', F.int(nv) + ' Hl', 'proyección 7 rutas, sin la 5'); }
+    if (window.CPN.empTipo === 'Real') { const nv = novEnCurso(); const mc = mesEnCurso(); if (mc) { tile(x, MES[mc.mes - 1].replace(/^./, (c) => c.toUpperCase()) + ' al ' + mc.corte, F.int(mc.hl) + ' Hl', 'acumulado · ' + pct(mc.hl / (one('mesRuta', 'TOTAL').metaHl || 1)) + ' de la meta'); tile(x, 'Cierre proyectado', F.int(nv) + ' Hl', '8 rutas, con la Ruta 5'); } }
   });
   dash.draw('empChart', (host) => {
     host.replaceChildren(); const e = emp(); if (!e.length) return;
@@ -102,8 +107,23 @@
     const cols = window.CPN.empTipo === 'Real' ? ['Mes', 'Meta', 'Real 2026', '% meta', '2025', 'vs 2025', '2024', '2023'] : ['Mes', 'Meta', 'Híbrida 2026', '% meta', '2025', 'vs 2025'];
     cols.forEach((c, i) => hr.append(el('th', i ? 'num' : null, c))); t.append(el('thead')); t.tHead.append(hr);
     const tb = el('tbody');
+    const enc = window.CPN.empTipo === 'Real' ? mesEnCurso() : null;
     e.forEach((r) => {
       const tr = el('tr'); const f = (v) => (v == null ? '—' : F.int(v));
+      // Mes en curso (Willy, 18-nov-2026): acumulado al día contra la meta y contra 2025 al mismo avance del mes
+      if (enc && r.mes === enc.mes && (r.real == null || r.parcial)) {
+        const pm = r.meta ? enc.hl / r.meta : null, rel = pm != null && enc.esperado ? pm / enc.esperado : null;
+        const base25 = r.y2025 ? r.y2025 * enc.esperado : null, v = base25 ? enc.hl / base25 - 1 : null;
+        const c = (txt, sub, cls) => { const td = el('td', 'num' + (cls ? ' ' + cls : ''), txt); if (sub) { td.append(el('br'), el('small', null, sub)); } return td; };
+        tr.append(c(MES[r.mes - 1], 'al ' + enc.corte, null), c(f(r.meta)), c(f(enc.hl), 'acumulado', null));
+        tr.firstChild.className = '';
+        tr.append(c(pm == null ? '—' : pct(pm), 'esperado ' + pct(enc.esperado), rel == null ? '' : rel >= 1 ? 'ok' : rel >= 0.9 ? 'warn' : 'bad'));
+        tr.append(c(f(r.y2025), base25 ? f(base25) + ' a esta fecha' : null));
+        tr.append(c(v == null ? '—' : sign(v), 'mismo avance', v == null ? '' : v >= 0 ? 'ok' : 'bad'));
+        tr.style.background = 'color-mix(in srgb, var(--gold) 8%, transparent)';
+        if (window.CPN.empTipo === 'Real') tr.append(el('td', 'num', f(r.y2024)), el('td', 'num', f(r.y2023)));
+        tb.append(tr); return;
+      }
       tr.append(el('td', null, MES[r.mes - 1]), el('td', 'num', f(r.meta)), el('td', 'num', f(r.real)));
       const pm = r.real != null && r.meta ? r.real / r.meta : null; tr.append(el('td', 'num ' + (pm == null ? '' : pm >= 1 ? 'ok' : pm >= 0.9 ? 'warn' : 'bad'), pm == null ? '—' : pct(pm)));
       tr.append(el('td', 'num', f(r.y2025)));
@@ -112,6 +132,7 @@
       tb.append(tr);
     });
     t.append(tb); host.append(t);
+    if (enc) host.append(el('p', 'note', MES[enc.mes - 1].replace(/^./, (c) => c.toUpperCase()) + ' va en curso: ' + F.int(enc.hl) + ' Hl acumulados al ' + enc.corte + ' (7 rutas de Power Sales + Ruta 5 de la megabase), ' + F.int(enc.dias) + ' de 25 días hábiles. Contra 2025 se compara con lo que se llevaba al mismo avance del mes; a este ritmo cerraríamos en ' + F.int(enc.proy) + ' Hl. Se actualiza cada noche.'));
   });
   dash.draw('empRutas', (host) => {
     host.replaceChildren(); const er = rows('empresa_ruta').filter((r) => r.real != null && r.meta); if (!er.length) return;

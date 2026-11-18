@@ -1365,7 +1365,7 @@ dash.calc('semana', {
     const ini = iso(lunes), fin = iso(sab);
     const sem = diario.filter((r) => r.fecha >= ini && r.fecha <= fin);
     const nd = new Set(sem.map((r) => r.fecha)).size;
-    const rows = metas.map((m) => {
+    const rows = metas.filter((m) => m.fuente !== 'megabase').map((m) => {
       const d = sem.filter((r) => r.ruta === m.ruta); const s = (k) => d.reduce((a, r) => a + (r[k] || 0), 0);
       const o = { ruta: m.ruta, rutaNum: m.rutaNum, vendedor: m.vendedor, inicio: ini, fin, dias: nd, hl: s('hl'), venta: s('venta'), cajas: s('cajas'), conPedido: s('conPedido'), visHechas: s('visHechas'), visProg: s('visProg'), progHechas: s('progHechas'), millerCajas: s('millerCajas'), metaSemana: m.metaHl * 6 / 25 };
       o.avance = o.metaSemana ? o.hl / o.metaSemana : 0; o.efectividad = o.visHechas ? o.conPedido / o.visHechas : 0; o.cumplimiento = o.visProg ? o.progHechas / o.visProg : 0; return o;

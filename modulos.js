@@ -66,19 +66,28 @@
   dash.draw('hoyTitulo', (e) => {
     const x = datosHoy(); if (!x) { e.textContent = '—'; return; }
     const r = x.m.proyeccion / x.m.metaHl;
-    e.textContent = r >= 1 ? 'Vamos para la meta del mes' : r >= 0.95 ? 'Vamos casi en la meta del mes' : 'Vamos atrás de la meta del mes';
+    // Willy (17-nov-2026): el mensaje grande debe verse como oportunidad, no como regaño
+    const falta = Math.max(0, x.m.metaHl - x.m.proyeccion);
+    e.textContent = r >= 1 ? 'Vamos directo a la meta del mes' : r >= 0.95 ? 'Estamos a un empujón de la meta' : 'Hay ' + F.int(falta) + ' Hl de oportunidad este mes';
   });
   dash.draw('hoyTake', (e) => {
     const x = datosHoy(); if (!x) { e.textContent = '—'; return; }
-    e.textContent = 'Ayer se vendieron ' + hl(x.t.hl) + ' Hl (' + money(x.t.venta) + ') con un margen estimado de ' + money(x.margenAyer) + '. Al ritmo actual cerramos noviembre en ' + hl(x.m.proyeccion) + ' Hl, ' + pct(x.m.proyeccion / x.m.metaHl) + ' de la meta.';
+    const quedan = Math.max(0, 25 - (x.m.diasTrans || 0));
+    const extra = Math.max(0, (x.m.faltaPorDia || 0) - x.t.hl);
+    const mes = new Date(x.t.fecha + 'T12:00').toLocaleDateString('es-MX', { month: 'long' });
+    let txt = 'Ayer vendimos ' + hl(x.t.hl) + ' Hl (' + money(x.t.venta) + ') y nos dejaron ' + money(x.margenAyer) + ' de margen. ';
+    if (x.m.proyeccion >= x.m.metaHl) txt += 'A este ritmo cerramos ' + mes + ' en ' + hl(x.m.proyeccion) + ' Hl: ¡a sostenerlo!';
+    else txt += 'Con este ritmo ya aseguramos ' + hl(x.m.proyeccion) + ' Hl; si en los ' + quedan + ' días que quedan vendemos ' + hl(x.m.faltaPorDia) + ' Hl por día' +
+      (extra > 0 ? ' (' + hl(extra) + ' más que ayer)' : '') + ', llegamos a los ' + F.int(x.m.metaHl) + ' Hl.';
+    e.textContent = txt;
   });
   dash.draw('hoyTiles', (e) => {
     const x = datosHoy(); e.replaceChildren(); if (!x) return;
     tile(e, 'Venta de ayer', money(x.t.venta), hl(x.t.hl) + ' Hl');
     tile(e, 'Margen estimado ayer', money(x.margenAyer), 'antes de gastos');
     tile(e, 'Gasto variable ayer', money(x.gvAyer), 'bonificación + promoción');
-    tile(e, 'Avance del mes', pct(x.m.avance), 'debería ir en ' + pct(x.m.esperado));
-    tile(e, 'Hay que vender por día', hl(x.m.faltaPorDia) + ' Hl', 'para llegar a ' + F.int(x.m.metaHl) + ' Hl');
+    tile(e, 'Avance del mes', pct(x.m.avance), 'el calendario va en ' + pct(x.m.esperado));
+    tile(e, 'Ritmo para la meta', hl(x.m.faltaPorDia) + ' Hl', 'por día para llegar a ' + F.int(x.m.metaHl) + ' Hl');
   });
 
   dash.draw('hoyAcciones', (ol) => {

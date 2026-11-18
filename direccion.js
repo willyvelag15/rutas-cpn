@@ -39,7 +39,7 @@
     e.replaceChildren(); const t = rows('pronostico').find((p) => p.ruta === 'TOTAL'); if (!t) { e.append(el('p', 'note', 'Sin datos.')); return; }
     const llega = t.pronostico >= t.metaHl;
     e.append(el('h2', 'pro-tit', llega ? 'Vamos a llegar a la meta' : 'A este ritmo no llegamos a la meta'));
-    e.append(el('p', 'take', 'Cerraríamos noviembre en ' + F.int(t.pronostico) + ' Hl (entre ' + F.int(t.bajo) + ' y ' + F.int(t.alto) + '). La meta es ' + F.int(t.metaHl) + ' Hl sin la Ruta 5. Faltan ' + t.diasRestan + ' días hábiles: hay que vender ' + hl(t.necesitaDia) + ' Hl por día y esta semana vamos en ' + hl(t.ritmoSemana) + '.'));
+    e.append(el('p', 'take', 'Cerraríamos noviembre en ' + F.int(t.pronostico) + ' Hl (entre ' + F.int(t.bajo) + ' y ' + F.int(t.alto) + '). La meta es ' + F.int(t.metaHl) + ' Hl con la Ruta 5 (de la megabase). Faltan ' + t.diasRestan + ' días hábiles: hay que vender ' + hl(t.necesitaDia) + ' Hl por día y esta semana vamos en ' + hl(t.ritmoSemana) + '.'));
     const tiles = el('div', 'hal-tiles');
     const tt = (k, v, s, cls) => { const d = el('div', 'hal-tile' + (cls ? ' ' + cls : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); tiles.append(d); };
     tt('Pronóstico de cierre', F.int(t.pronostico) + ' Hl', pct(t.pronostico / t.metaHl) + ' de la meta', llega ? '' : 'bad');

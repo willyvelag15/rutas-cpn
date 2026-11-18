@@ -86,10 +86,12 @@
     slides: 'M3 4h18v12H3zM12 16v4M8 20h8M7 12l3-3 2 2 4-4',
     inv: 'M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3',
     pron: 'M4 4h16v16H4zM4 9h16M9 4v16M12 13h5M12 16h3',
-    clientesMes: 'M3 20h18M6 16l4-5 3 3 5-7'
+    clientesMes: 'M3 20h18M6 16l4-5 3 3 5-7',
+    riesgo: 'M12 3l9 16H3zM12 10v4M12 17h.01',
+    saturacion: 'M4 20V10M10 20V4M16 20v-8M22 20H2'
   };
   const icono = (k) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', IC[k] || IC.ventas); s.append(p); return s; };
-  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Subir pronóstico S+2', clientesMes: 'Clientes del mes' };
+  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Subir pronóstico S+2', clientesMes: 'Clientes del mes', riesgo: 'Clientes en riesgo', saturacion: 'Saturación semanal', calidad: 'Calidad de datos' };
 
   function tilesDe(s) { const t = el('div', 'hal-tiles'); (s.tiles || []).forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); return t; }
   function tablaDe(cols, filas, ok) {
@@ -113,6 +115,7 @@
     const S = (P.secciones || []).map((s) => (st.ruta && s.porRuta && s.porRuta[st.ruta]) ? Object.assign({}, s, s.porRuta[st.ruta]) : s);
     const items = [];
     if (st.yo.rol === 'almacen_pn') items.push({ id: 'inv' }, { id: 'pron' });
+    if (st.yo.rol === 'almacen_mix') items.push({ id: 'inv' });
     if ((P.slides || []).length && window.CPN_PZ && !esVend) items.push({ id: 'slides' });
     S.forEach((s) => items.push({ id: s.id, s }));
     if (esVend && (P.slides || []).length && window.CPN_PZ) items.push({ id: 'slides' });
@@ -137,7 +140,7 @@
     main.append(cab);
 
     if (!st.sec) {
-      if (esVend) main.append(inicioVendedor(P));
+      if (esVend && (P.slides || []).length) main.append(inicioVendedor(P));
       else {
         // indicadores clave: el primer cuadro de cada sección
         const k = el('div', 'pp-kpis');
@@ -150,7 +153,7 @@
         const c = el('button', 'pp-cuadro'); c.type = 'button';
         const t = x.s && (x.s.tiles || [])[0];
         c.append(icono(x.id), el('b', null, CORTO[x.id] || (x.s && x.s.titulo)));
-        c.append(el('small', null, x.id === 'inv' ? 'Piedras Negras y Mixtequilla' : x.id === 'pron' ? 'El archivo del martes' : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : t ? t.k + ': ' + t.v : 'Ver detalle'));
+        c.append(el('small', null, x.id === 'inv' ? (st.yo.rol === 'almacen_mix' ? 'Mixtequilla' : 'Piedras Negras y Mixtequilla') : x.id === 'pron' ? 'El archivo del martes' : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : t ? t.k + ': ' + t.v : 'Ver detalle'));
         c.addEventListener('click', () => { st.sec = x.id; pintarPanel(v); window.scrollTo({ top: 0, behavior: 'smooth' }); });
         g.append(c);
       });
@@ -176,6 +179,13 @@
       sel.addEventListener('change', dibuja); c.append(sel, caja); main.append(c); dibuja(); return;
     }
     const s = it.s;
+    if ((s.id === 'riesgo' || s.id === 'saturacion') && window.CPN_CLI) {
+      if (s.nota) c.append(el('p', 'pp-mia', s.nota));
+      const box = el('div', 'envf'); c.append(box); main.append(c);
+      if (s.id === 'riesgo') { st.rsg = st.rsg || {}; window.CPN_CLI.riesgo(box, { filas: (s.cli || {}).filas || [], okRuta: ok, estado: st.rsg }); }
+      else window.CPN_CLI.satSem(box, { sem: (s.sat || {}).sem || [], filas: (s.sat || {}).casos || [], okRuta: ok });
+      return;
+    }
     if (s.id === 'clientesMes' && s.cli && window.CPN_CLI) {
       if (s.nota) c.append(el('p', 'pp-mia', s.nota));
       const box = el('div', 'envf rcli'); c.append(box); main.append(c);
@@ -193,7 +203,7 @@
     if (s.nota) c.append(el('p', 'pp-mia', s.nota));
     if (s.tiles && s.tiles.length) c.append(tilesDe(s));
     if (s.cols && s.cols.length) c.append(tablaDe(s.cols, s.filas, ok));
-    if (s.detalle) { const d = el('details'); d.append(el('summary', null, s.detalle.titulo), tablaDe(s.detalle.cols, s.detalle.filas, ok)); c.append(d); }
+    [s.detalle, s.detalle2].forEach((dd, i) => { if (!dd) return; const d = el('details'); if (i === 1) d.open = true; d.append(el('summary', null, dd.titulo), tablaDe(dd.cols, dd.filas, ok)); c.append(d); });
     main.append(c);
   }
 
@@ -300,6 +310,26 @@
     mini('paradas', pc(Sc.cumplimiento), 'de tus clientes visitados', Sc.cumplimiento < 0.85 ? 'bad' : 'ok');
     mini('cierre', Sc.salida || '—', 'hora de salida', Sc.salida > '10:00' ? 'bad' : '');
     w.append(k);
+    // tu lista de hoy (Willy, 17-nov-2026)
+    const H = P.hoy;
+    if (H && (H.clientes || []).length) {
+      const lh = el('section', 'card pp-hoy');
+      const pend = H.clientes.filter((c) => !c.comproSemana);
+      lh.append(el('h3', null, 'Tu lista del ' + H.dia + ' ' + dia(H.fecha).replace(/^\S+\s/, '')));
+      lh.append(el('p', 'pp-mia', H.clientes.length + ' clientes te tocan. ' + (pend.length ? pend.length + ' no te han comprado últimamente: ábreles venta primero.' : 'Todos te compraron la semana pasada, ¡a mantenerlo!')));
+      const ul = el('ul', 'pp-hoy-l');
+      H.clientes.forEach((c, i) => {
+        const li = el('li', (c.comproSemana ? '' : 'pend') + (i >= 12 ? ' oculto' : ''));
+        const top = el('div', 'pp-hoy-top'); top.append(el('b', null, c.cliente), el('span', 'pill ' + (c.comproSemana ? 'ok' : 'warn'), c.comproSemana ? 'te compró' : 'ábrele venta'));
+        li.append(top);
+        if (c.motivo.length) li.append(el('small', null, c.motivo.join(' · ')));
+        if (c.ofrecer.length) { const o = el('div', 'pp-hoy-of'); o.append(el('span', null, 'Ofrécele: ')); c.ofrecer.forEach((x) => o.append(el('span', 'pill' + (c.bono.includes(x) ? ' ok' : ''), x + (c.bono.includes(x) ? ' (bono)' : '')), document.createTextNode(' '))); li.append(o); }
+        ul.append(li);
+      });
+      lh.append(ul);
+      if (H.clientes.length > 12) { const m = el('button', 'pp-btn2', 'Ver los ' + H.clientes.length); m.type = 'button'; m.addEventListener('click', () => { ul.querySelectorAll('.oculto').forEach((x) => x.classList.remove('oculto')); m.remove(); }); lh.append(m); }
+      w.append(lh);
+    }
     // bonos
     const bo = el('section', 'card pp-bonos'); bo.append(el('h3', null, 'Tus bonos del mes'));
     (s.bonos || []).forEach((b) => { const r = el('div', 'pp-bono'); const top = el('div', 'pp-hero-fila'); top.append(el('span', null, b.nombre.replace(/^Lata/, 'Amstel Ultra lata')), el('b', null, b.falta > 0 ? 'te faltan ' + n1(b.falta) : '¡Ya entraste!')); r.append(top, barra(b.cajasMes, b.minimo, b.falta > 0 ? 'oro' : 'ok'), el('small', null, n1(b.cajasMes) + ' de ' + b.minimo + ' cajas')); bo.append(r); });
@@ -333,8 +363,8 @@
       ? 'Sube aquí el pronóstico de la S+2 tal como lo mandas a Heineken (el Excel del martes). Esa misma noche la app lo toma para el abasto. Recuerda: la S+1 ya no se cambia, se queda con lo que se pronosticó.'
       : 'Tal como te llega: Excel, PDF o foto. Uno por almacén.'));
     const f = el('form', 'pp-inv');
-    const sel = el('select'); sel.setAttribute('aria-label', esPron ? 'Semana' : 'Almacén'); (esPron ? ['Pronóstico S+2'] : ['Piedras Negras', 'Mixtequilla']).forEach((x) => { const o = el('option', null, x); o.value = x; sel.append(o); });
-    if (esPron) { sel.hidden = true; f.classList.add('solo'); }
+    const sel = el('select'); sel.setAttribute('aria-label', esPron ? 'Semana' : 'Almacén'); (esPron ? ['Pronóstico S+2'] : st.yo.rol === 'almacen_mix' ? ['Mixtequilla'] : ['Piedras Negras', 'Mixtequilla']).forEach((x) => { const o = el('option', null, x); o.value = x; sel.append(o); });
+    if (esPron || st.yo.rol === 'almacen_mix') { sel.hidden = true; f.classList.add('solo'); }
     const lab2 = el('label', 'pp-file'); const inp = el('input'); inp.type = 'file'; inp.accept = '.xlsx,.xls,.xlsm,.csv,.pdf,image/*';
     const nomb = el('span', null, 'Ningún archivo elegido'); lab2.append(inp, el('b', null, 'Elegir archivo'), nomb);
     inp.addEventListener('change', () => { nomb.textContent = (inp.files && inp.files[0]) ? inp.files[0].name : 'Ningún archivo elegido'; });
@@ -439,6 +469,7 @@
     c.append(cab, el('h3', null, l.cliente + (l.cliente_id ? ' (' + l.cliente_id + ')' : '')));
     const venta = 'Venta a confirmar: ' + (l.venta_fecha ? dia(l.venta_fecha) : 'fecha sin dato') + (l.venta_cajas != null ? ' · ' + Number(l.venta_cajas).toLocaleString('es-MX') + ' cajas' : '');
     c.append(el('p', 'pp-det', venta));
+    if (l.pista) c.append(el('p', 'pp-det', 'Ese día hay dos entregas registradas (' + l.pista.replace(/^Dos ventas el mismo día en lugares distintos: /, '').replace(/, a [\d,]+ m una de otra.*$/, '') + '). Pregunta si recibió las dos y cuántas cajas en cada una.'));
     if (l.telefono) { const a = el('a', 'pp-tel', 'Llamar ' + l.telefono); a.href = 'tel:' + String(l.telefono).replace(/[^0-9+]/g, ''); c.append(a); }
     else c.append(el('p', 'pp-sintel', 'Sin teléfono registrado. Pídelo a la ruta o búscalo en el directorio, y anótalo en la nota.'));
     if (l.resultado) {

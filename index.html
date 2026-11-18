@@ -274,6 +274,17 @@ svg.rc-dona{width:100%;height:auto;max-width:220px;margin:0 auto;display:block;s
 .rc-lista ul{margin:0;padding-left:18px;font-size:13px;line-height:1.45}
 .rc-dias td.wrap{white-space:normal;font-size:12px}
 #persona svg.rc-dona{width:100%;height:auto;stroke:none;flex:none}
+#persona .pp-hoy-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#persona .pp-hoy-l li{border:1px solid var(--color-border-line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;background:var(--color-bg)}
+#persona .pp-hoy-l li.oculto{display:none}
+#persona .pp-hoy-l li.pend{border-color:color-mix(in srgb,var(--color-warn) 55%,var(--color-border-line))}
+#persona .pp-hoy-top{display:flex;justify-content:space-between;gap:8px;align-items:center}#persona .pp-hoy-top b{font-size:15px}
+#persona .pp-hoy-l small{color:var(--color-fg-muted);font-size:12px}#persona .pp-hoy-of{font-size:12px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+#persona .pp-btn2{font:inherit;font-size:14px;margin-top:8px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);border-radius:999px;padding:8px 14px;cursor:pointer}
+.rc-grupo h4,.rc-sub{margin:6px 0 6px;font-size:15px}
+.rc-riesgo{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.rc-riesgo li{border:1px solid var(--color-border-line);border-radius:12px;padding:9px 12px;display:flex;flex-direction:column;gap:3px;background:var(--color-bg);font-size:13px}
+.rc-riesgo li small{color:var(--color-fg-muted);font-size:12px}
 </style>
 <link rel="stylesheet" href="leaflet.css">
 <script src="d3.min.js"></script>
@@ -738,6 +749,19 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <p class="note">Todos los clientes, acumulado del 1 a hoy: venta, descuento, producto sin cargo, margen, si ganamos o perdemos con él, si crece o cae, saturación, oportunidades y riesgos. Busca un cliente o filtra; tócalo para ver cómo reparte sus compras por producto y día por día.</p>
         <div class="envf rcli" data-draw="rendCli"></div>
       </div>
+      <div class="card wide">
+        <h3>Clientes en riesgo y su próxima visita</h3>
+        <div class="envf" data-draw="riesgoCli"></div>
+      </div>
+      <div class="card wide">
+        <h3>Saturación semana a semana</h3>
+        <div class="envf" data-draw="satSem"></div>
+      </div>
+      <div class="card wide">
+        <h3>Calidad de datos de clientes (Power Sales)</h3>
+        <p class="note">Lo que Monse tiene que corregir: clientes sin ubicación (con la ubicación sugerida donde más se les vende), duplicados, prospectos que ya compran y clientes que no están en la megabase.</p>
+        <div class="envf" data-draw="calidadCli"></div>
+      </div>
     </div>
   </section>
 
@@ -1186,7 +1210,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     <div class="grid">
       <div class="card wide">
         <h3>Pronóstico sugerido S+2</h3>
-        <p class="note">La S+1 ya no se cambia: se queda con lo que se pronosticó. Los ajustes van en el pronóstico de la S+2, que sigue a la meta del mes (4 a 5 viajes por semana). Aquí se ve qué productos van primero al repartir esos viajes: los que terminan la S+1 con menos días de inventario.</p>
+        <p class="note">La S+1 ya no se cambia: se queda con lo que se pronosticó. Los ajustes van en el pronóstico de la S+2, que sigue a la meta del mes (meta ÷ 4 por semana, 4 a 5 viajes). "Por meta" = primero lo que le falta a cada producto para cerrar la S+2 con sus días objetivo (empezando por el que tiene menos), y lo que sobra de la meta se reparte según cómo se vende cada producto; en tarimas completas y viajes completos (no hay medios viajes: cada viaje es de 16 o de 18 tarimas).</p>
         <div data-draw="abaResumen"></div>
         <div data-draw="abaTabla"></div>
       </div>

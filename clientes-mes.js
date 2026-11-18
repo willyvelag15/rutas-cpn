@@ -172,7 +172,66 @@
     cont.append(el('p', 'pp-mia', 'Acumulado del mes con la venta de Power Sales. ' + (mg ? 'Margen = venta − costo de cada caja; "Nos deja" = margen − lo que cuesta visitarlo (diésel por visita de Motum). ' : '') + '"Va para" = Hl al cierre a este ritmo; Ritmo = contra su promedio de 3 meses. Saturación = todo menos XX Lager, Tecate y Tecate Light. Toca un cliente para ver su detalle.'));
   }
 
-  window.CPN_CLI = { render };
+  /* Clientes en riesgo con su próxima visita (Willy, 17-nov-2026: Berenice y admin) */
+  function riesgo(cont, o) {
+    const st = o.estado || (o.estado = {});
+    cont.replaceChildren();
+    const F = (o.filas || []).filter((x) => x.enRiesgo && (!o.okRuta || o.okRuta(x.ruta)) && (!st.ruta || x.ruta === st.ruta));
+    if (!F.length) { cont.append(el('p', 'pp-mia', 'Ningún cliente en riesgo con esos filtros.')); return; }
+    const rutas = [...new Set((o.filas || []).filter((x) => x.enRiesgo && (!o.okRuta || o.okRuta(x.ruta))).map((x) => x.ruta))].sort((a, b) => rnum(a) - rnum(b));
+    if (rutas.length > 1) { const sR = el('select', 'envf-in'); [['', 'Todas las rutas']].concat(rutas.map((r) => [r, r])).forEach(([v, t]) => { const op = el('option', null, t); op.value = v; sR.append(op); }); sR.value = st.ruta || ''; sR.style.maxWidth = '260px'; sR.addEventListener('change', () => { st.ruta = sR.value; riesgo(cont, o); }); cont.append(sR); }
+    cont.append(el('p', 'pp-mia', F.length + ' clientes van cayendo 30% o más o llevan 10 días o más sin comprar. Ordenados por su próxima visita: ese día hay que ir a recuperarlos.'));
+    const grupos = {};
+    F.forEach((x) => { const k = x.proxVisita || 'sin'; (grupos[k] = grupos[k] || []).push(x); });
+    Object.keys(grupos).sort().forEach((k) => {
+      const g = el('div', 'rc-grupo');
+      g.append(el('h4', null, k === 'sin' ? 'Sin día de visita programado' : 'Visita del ' + dia(k) + ' (' + grupos[k].length + ')'));
+      const ul = el('ul', 'rc-riesgo');
+      grupos[k].sort((a, b) => b.prom3Hl - a.prom3Hl).forEach((x) => {
+        const li = el('li');
+        const top = el('div', 'rc-card-top'); top.append(el('b', null, x.cliente), el('small', null, ' ' + x.ruta + ' · #' + x.id));
+        const mot = [];
+        if ((x.ritmo || 0) <= -0.3) mot.push('va ' + Math.round(-x.ritmo * 100) + '% abajo: ' + n1(x.proyHl) + ' Hl contra ' + n1(x.prom3Hl) + ' de promedio');
+        if (x.diasSinComprar >= 10) mot.push(x.diasSinComprar + ' días sin comprar');
+        li.append(top, el('span', null, mot.join(' · ')), el('small', null, 'Le visitan: ' + (x.diasVisita.length ? x.diasVisita.join(', ') : '—') + ' · última compra ' + dia(x.ultimaCompra) + ((x.huecos || []).length ? ' · ofrecer ' + x.huecos.slice(0, 2).join(', ') : '')));
+        ul.append(li);
+      });
+      g.append(ul); cont.append(g);
+    });
+  }
+
+  /* Saturación semana a semana por ruta: grandes contra chicos, y seguimiento de los grandes sin saturación */
+  function satSem(cont, o) {
+    cont.replaceChildren();
+    const SS = (o.sem || []).filter((x) => !o.okRuta || o.okRuta(x.ruta));
+    if (!SS.length) { cont.append(el('p', 'pp-mia', 'Sin datos.')); return; }
+    const semanas = [...new Set(SS.map((x) => x.semana))].sort();
+    const w = el('div', 'tblwrap'); const t = el('table', 'cpn-t');
+    const h = el('tr'); h.append(el('th', null, 'Ruta')); semanas.forEach((s0) => h.append(el('th', 'num', 'Sem. ' + dia(s0).replace(/^\S+\s/, '')))); h.append(el('th', null, '¿Se emparejó?'));
+    t.append(el('thead')); t.tHead.append(h); const b = el('tbody');
+    [...new Set(SS.map((x) => x.ruta))].sort((a, c) => rnum(a) - rnum(c)).forEach((r) => {
+      const X = semanas.map((s0) => SS.find((x) => x.ruta === r && x.semana === s0) || {});
+      const tr = el('tr'); tr.append(el('td', null, r));
+      X.forEach((x) => { const td = el('td', 'num wrap'); td.append(el('b', null, pc(x.satRuta)), el('br'), el('small', null, 'grandes ' + pc(x.satGrandes) + ' · chicos ' + pc(x.satChicos))); tr.append(td); });
+      const brecha = (x) => (x.satChicos != null && x.satGrandes != null ? x.satChicos - x.satGrandes : null);
+      const a = brecha(X[0] || {}), z = brecha(X[X.length - 1] || {});
+      tr.append(el('td', 'wrap', a == null || z == null ? '—' : Math.abs(z) < 0.02 ? 'Parejo' : z > 0 ? (z < a ? 'Mejorando: los chicos todavía llevan más' : 'No: los chicos llevan más que los grandes') : 'Los grandes llevan más'));
+      b.append(tr);
+    });
+    t.append(b); w.append(t); cont.append(w);
+    const casos = (o.filas || []).filter((x) => (x.banderas || []).includes('Grande sin saturación') && (!o.okRuta || o.okRuta(x.ruta))).sort((a, c) => c.hl - a.hl);
+    if (casos.length) {
+      cont.append(el('h4', 'rc-sub', 'Seguimiento: clientes grandes sin saturación'));
+      const w2 = el('div', 'tblwrap'); const t2 = el('table', 'cpn-t'); const h2 = el('tr'); h2.append(el('th', null, 'Cliente'), el('th', null, 'Ruta'), el('th', 'num', 'Hl mes'));
+      semanas.forEach((s0) => h2.append(el('th', 'num', 'Sem. ' + dia(s0).replace(/^\S+\s/, '')))); h2.append(el('th', 'num', 'Su ruta'));
+      t2.append(el('thead')); t2.tHead.append(h2); const b2 = el('tbody');
+      casos.forEach((x) => { const tr = el('tr'); tr.append(el('td', null, x.cliente), el('td', null, x.ruta), el('td', 'num', n1(x.hl))); semanas.forEach((s0) => { const v = (x.satSem || []).find((q) => q[0] === s0); tr.append(el('td', 'num', v && v[1] != null ? pc(v[1]) : '—')); }); tr.append(el('td', 'num', pc(x.rutaSat))); b2.append(tr); });
+      t2.append(b2); w2.append(t2); cont.append(w2);
+    }
+    cont.append(el('p', 'pp-mia', 'Saturación = todo menos XX Lager, Tecate y Tecate Light. Grandes = el 25% de los clientes que más compran en la ruta; chicos = el 40% que menos. Si después de hablar con el vendedor la saturación de un cliente grande sube, se ve aquí semana a semana.'));
+  }
+
+  window.CPN_CLI = { render, riesgo, satSem };
 })();
 
 /* Pantalla del admin */
@@ -185,4 +244,34 @@
     if (b.getAttribute('data-vista') !== 'rendcli') return;
     const a = document.getElementById('top-tit'), s = document.getElementById('top-sub'); if (a) a.textContent = 'Rendimiento de clientes'; if (s) s.textContent = 'Acumulado del mes por cliente';
   }));
+})();
+
+/* Admin: calidad de datos de clientes (Power Sales) */
+(function () {
+  if (!window.dash) return;
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const rows = (id) => (dash.data(id).status === 'ok' ? dash.data(id).data : []);
+  const st = { t: '', n: 40 };
+  dash.draw('calidadCli', (e) => {
+    e.replaceChildren();
+    const Q = rows('calidad_clientes'); if (!Q.length) { e.append(el('p', 'note', 'Sin datos todavía.')); return; }
+    const tipos = [...new Set(Q.map((q) => q.tipo))];
+    const chips = el('div', 'envf-rapido');
+    [['', 'Todos (' + Q.length + ')']].concat(tipos.map((t) => [t, t + ' (' + Q.filter((q) => q.tipo === t).length + ')'])).forEach(([v, t]) => { const b = el('button', 'envf-chip', t); b.type = 'button'; b.setAttribute('aria-pressed', String(st.t === v)); b.addEventListener('click', () => { st.t = v; st.n = 40; dash.draw('calidadCli'); }); chips.append(b); });
+    e.append(chips);
+    const F = Q.filter((q) => !st.t || q.tipo === st.t);
+    const w = el('div', 'tblwrap'); const t = el('table', 'cpn-t'); const h = el('tr'); ['Qué pasa', 'Ruta', 'Cliente', 'Detalle', 'Qué hacer'].forEach((x) => h.append(el('th', null, x)));
+    t.append(el('thead')); t.tHead.append(h); const b = el('tbody');
+    F.slice(0, st.n).forEach((q) => { const tr = el('tr'); tr.append(el('td', null, q.tipo), el('td', null, q.ruta), el('td', null, q.cliente + ' (' + q.id + ')'), el('td', 'wrap', q.detalle), el('td', 'wrap', q.sugerencia)); b.append(tr); });
+    t.append(b); w.append(t); e.append(w);
+    if (F.length > st.n) { const m = el('button', 'envf-chip', 'Ver más (' + (F.length - st.n) + ' restantes)'); m.type = 'button'; m.addEventListener('click', () => { st.n += 60; dash.draw('calidadCli'); }); e.append(m); }
+  });
+})();
+
+(function () {
+  if (!window.dash) return;
+  const rows = (id) => (dash.data(id).status === 'ok' ? dash.data(id).data : []);
+  const e1 = {};
+  dash.draw('riesgoCli', (e) => window.CPN_CLI.riesgo(e, { filas: rows('clientes_mes'), estado: e1 }));
+  dash.draw('satSem', (e) => window.CPN_CLI.satSem(e, { sem: rows('saturacion_semanal'), filas: rows('clientes_mes') }));
 })();

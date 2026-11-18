@@ -11,14 +11,15 @@
     const tiles = el('div', 'hal-tiles');
     const t = (k, v, s, cls) => { const d = el('div', 'hal-tile' + (cls ? ' ' + cls : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); tiles.append(d); };
     t('S+1 (semana del ' + dm(r.S1) + ')', F.int(r.tarimasProgS1) + ' tarimas', 'fija, ya no se cambia' + (r.fuenteS1 === 'pronóstico' ? ' (lo pronosticado; falta la hoja de programación)' : ''), '');
-    t('S+2 (semana del ' + dm(r.S2) + ')', F.int(r.tarimasSugS2) + ' tarimas', 'sugeridas para el pronóstico · pronosticadas ' + F.int(r.tarimasPronS2), '');
+    if (r.tarimasMetaS2 != null) t('Pronóstico S+2 por meta (semana del ' + dm(r.S2) + ')', F.int(r.tarimasMetaS2) + ' tarimas', F.int(r.hlMetaS2) + ' Hl = ' + r.viajesMetaS2 + ' viajes completos (' + (r.viajes18 || 0) + ' de 18 y ' + (r.viajes16 || 0) + ' de 16 tarimas) · meta ' + F.int(r.metaSemanaHl) + ' Hl por semana', 'ok');
+    t('Solo por días de inventario', F.int(r.tarimasSugS2) + ' tarimas', 'lo mínimo para cerrar la S+2 con ' + r.objetivo + ' días · pronosticadas ' + F.int(r.tarimasPronS2), '');
     e.append(tiles);
     e.append(el('p', 'note', 'Inventario al ' + dm(r.fecha) + ' (almacén + camiones), venta promedio de ' + r.diasVenta + ' días de noviembre. Colchón al cierre de la semana: 3 días en lo que llega casi diario (XX cuarto, caguama) y ' + r.objetivo + ' días en lo demás. Solo tarimas completas.'));
   });
   dash.draw('abaTabla', (e) => {
     e.replaceChildren();
     const A = rows('abasto_sku'); if (!A.length) return;
-    const L = A.filter((x) => st.todos || x.nota || x.sugS2);
+    const L = A.filter((x) => st.todos || x.nota || x.sugS2 || x.metaS2).sort((a, b) => (b.metaS2Hl || 0) - (a.metaS2Hl || 0));
     const seg = el('div', 'seg seg-sm');
     [[false, 'Lo que va primero en S+2'], [true, 'Todos los SKU']].forEach(([v, t]) => { const b = el('button', null, t); b.type = 'button'; b.setAttribute('aria-pressed', String(st.todos === v)); b.addEventListener('click', () => { st.todos = v; dash.draw('abaTabla'); }); seg.append(b); });
     e.append(seg);

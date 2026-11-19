@@ -6,6 +6,15 @@
     { n: 'Bodega Piedras Negras', lat: 18.770452, lng: -96.175706 },
     { n: 'Bodega Mixtequilla', lat: 18.71955, lng: -95.98737 },
   ];
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // Willy (18-nov-2026): número y nombre del cliente en cada punto, no solo "Sin pedido"
+  const popup = (p) => {
+    const F = window.CPN.fmt; let h = '';
+    if (p.id) h += '<b>#' + esc(p.id) + ' · ' + esc(p.cli) + '</b><br>';
+    h += esc(p.ruta) + ' · ' + esc(F.largo(p.fecha)) + (p.hora ? ' · ' + esc(p.hora) : '') + '<br>';
+    h += p.venta ? 'Compró' + (p.monto ? ' ' + esc(F.money ? F.money(p.monto) : '$' + p.monto.toLocaleString('es-MX')) : '') : 'Sin pedido' + (p.motivo ? ': ' + esc(p.motivo.toLowerCase()) : '');
+    return h;
+  };
   const color = (r) => (window.CPN && window.CPN.routeColor[r]) || '#1F7A45';
   document.querySelectorAll('[data-periodo]').forEach((b) => b.addEventListener('click', () => {
     window.CPN.mapaPeriodo = b.getAttribute('data-periodo');
@@ -53,7 +62,8 @@
       bounds.push(ll);
       const c = color(p.ruta);
       L.circleMarker(ll, { radius: 7, color: c, weight: 3, fillColor: p.venta ? c : '#ffffff', fillOpacity: p.venta ? 0.9 : 1 })
-        .bindPopup('<b>' + p.ruta + '</b><br>' + (p.venta ? 'Compró' : 'Sin pedido'))
+        .bindPopup(popup(p))
+        .bindTooltip(p.id ? '#' + esc(p.id) + ' ' + esc(p.cli) : p.ruta, { direction: 'top', offset: [0, -6] })
         .addTo(capa);
     });
 

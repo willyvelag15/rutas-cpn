@@ -11,6 +11,7 @@
   const popup = (p) => {
     const F = window.CPN.fmt; let h = '';
     if (p.id) h += '<b>#' + esc(p.id) + ' · ' + esc(p.cli) + '</b><br>';
+    if (p.n) h += 'No ha comprado en el mes · ' + p.n + (p.n === 1 ? ' visita' : ' visitas') + '<br>Última visita: ';
     h += esc(p.ruta) + ' · ' + esc(F.largo(p.fecha)) + (p.hora ? ' · ' + esc(p.hora) : '') + '<br>';
     h += p.venta ? 'Compró' + (p.monto ? ' ' + esc(F.money ? F.money(p.monto) : '$' + p.monto.toLocaleString('es-MX')) : '') : 'Sin pedido' + (p.motivo ? ': ' + esc(p.motivo.toLowerCase()) : '');
     return h;
@@ -48,7 +49,18 @@
     const filtro = (window.CPN && window.CPN.mapa) || 'todas';
     const periodo = (window.CPN && window.CPN.mapaPeriodo) || 'dia';
     const mes = ult.slice(0, 7);
-    const pts = g.data.filter((r) => (periodo === 'dia' ? r.fecha === ult : r.fecha.slice(0, 7) === mes) && (periodo !== 'sinventa' || !r.venta) && (filtro === 'todas' || r.ruta === filtro));
+    let pts = g.data.filter((r) => (periodo === 'dia' ? r.fecha === ult : r.fecha.slice(0, 7) === mes) && (filtro === 'todas' || r.ruta === filtro));
+    if (periodo === 'sinventa') {
+      // Willy (18-nov-2026): "Solo sin venta (mes)" = clientes que no han comprado NADA en el mes; un punto por cliente (su última visita)
+      const compraron = new Set(pts.filter((r) => r.venta && r.id).map((r) => r.ruta + '|' + r.id));
+      const ult1 = new Map();
+      pts.filter((r) => !r.venta && !(r.id && compraron.has(r.ruta + '|' + r.id))).forEach((r) => {
+        const k = r.id ? r.ruta + '|' + r.id : r.ruta + '|' + r.dx + ',' + r.dy;
+        const o = ult1.get(k); const n = o ? (o.n || 1) + 1 : 1;
+        if (!o || r.fecha + (r.hora || '') > o.fecha + (o.hora || '')) ult1.set(k, { ...r, n }); else o.n = n;
+      });
+      pts = [...ult1.values()];
+    }
     const bounds = [];
 
     BODEGAS.forEach((b) => {
@@ -71,7 +83,7 @@
     setTimeout(() => m.invalidateSize(), 50);
 
     const t = document.createElement('span');
-    t.textContent = (periodo === 'dia' ? window.CPN.fmt.largo(ult) : 'Mes en curso') + ' · ' + pts.length + ' visitas · ' + pts.filter((p) => p.venta).length + ' con compra';
+    t.textContent = periodo === 'sinventa' ? 'Mes en curso · ' + pts.length + ' clientes visitados que no han comprado nada en el mes' : (periodo === 'dia' ? window.CPN.fmt.largo(ult) : 'Mes en curso') + ' · ' + pts.length + ' visitas · ' + pts.filter((p) => p.venta).length + ' con compra';
     pie.append(t);
     Object.entries(window.CPN.routeColor).filter(([r]) => filtro === 'todas' || r === filtro).forEach(([r, c]) => {
       const s = document.createElement('span');

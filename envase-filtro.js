@@ -23,18 +23,21 @@
     const D = R.reduce((a, x) => a + (x.devuelto || 0), 0);
     const ents = R.filter((x) => (x.devuelto || 0) > 0);
     const ult = ents.length ? ents[ents.length - 1] : null;
-    let lim = ult ? ult.fecha : '';
-    if (corteDev) { const c = corteDev < hasta ? corteDev : hasta; if (c >= desde && c > lim) lim = c; }
+    // Regla 20-nov-2026 (Willy lo revisó con los técnicos de Power Sales): se cuenta solo hasta la ÚLTIMA ENTREGA DE LA
+    // PROPIA RUTA; lo vendido después es "por entregar" (la Ruta 7 entrega por semana). Aviso si lleva 3+ días sin entregar.
+    const lim = ult ? ult.fecha : '';
+    const ref = corteDev ? (corteDev < hasta ? corteDev : hasta) : hasta;
     const vEnt = ult ? R.filter((x) => x.fecha <= ult.fecha).reduce((a, x) => a + (x.vendido || 0), 0) : 0;
     const vHasta = lim ? R.filter((x) => x.fecha <= lim).reduce((a, x) => a + (x.vendido || 0), 0) : 0;
     const faltaEnt = ult ? ini + vEnt - D : 0;              // lo que no completó el día que entregó
     const noEntrego = vHasta - vEnt + (ult ? 0 : ini);       // lo que vendió después y ya tocaba entregar
     const debe = lim ? ini + vHasta - D : 0;
     const pend = V - vHasta;
-    const diasSin = R.filter((x) => (!ult || x.fecha > ult.fecha) && x.fecha <= (lim || '') && (x.vendido || 0) > 0).length;
+    const diasSin = R.filter((x) => (!ult || x.fecha > ult.fecha) && x.fecha <= ref && (x.vendido || 0) > 0).length;
     let estado = 'Cuadra', tono = 'ok';
     if (debe > TOL) { estado = 'Debe envase'; tono = 'bad'; }
     else if (debe < -TOL) { estado = 'Entregó de más'; tono = 'warn'; }
+    else if (ult && pend > TOL && diasSin >= 3) { estado = 'Lleva ' + diasSin + ' días sin entregar'; tono = 'warn'; }
     else if (!ult && V > 0) { estado = 'Sin entregas en estas fechas'; tono = 'warn'; }
     else if (!V && !D) { estado = 'Sin movimiento'; tono = ''; }
     return { ini, V, D, ult, lim, vEnt, vHasta, faltaEnt, noEntrego, debe, pend, diasSin, estado, tono, dias: R };
@@ -115,7 +118,8 @@
           if (x.noEntrego > TOL) partes.push((x.ult ? 'después del ' + dia(x.ult.fecha) : 'desde el ' + dia(st.desde)) + ' vendió ' + n0(x.noEntrego) + ' cajas hasta el ' + dia(x.lim) + ' y no las entregó, aunque las demás rutas ya entregaron hasta ese día');
           t += partes.join('; además, ') + '. Debe ' + n0(x.debe) + ' cajas: cuenta el envase en el camión o busca una devolución que no se capturó.';
         } else if (x.estado === 'Entregó de más') t += 'entregó ' + n0(-x.debe) + ' cajas más de lo que vendió hasta el ' + dia(x.lim) + '. Puede ser envase de días antes del ' + dia(st.desde) + ' (amplía las fechas) o una devolución capturada en la ruta equivocada.';
-        else t += 'vendió ' + n0(x.V) + ' cajas y no hay ninguna entrega de envase en estas fechas; todavía no se cobra porque es venta después del ' + dia(o.corteDev) + '.';
+        else if (x.ult) t += 'su última entrega fue el ' + dia(x.ult.fecha) + ' y desde entonces vendió ' + n0(x.pend) + ' cajas en ' + x.diasSin + ' días. No es adeudo todavía: es lo que le toca entregar en su próxima devolución.';
+        else t += 'vendió ' + n0(x.V) + ' cajas y no hay ninguna entrega de envase en estas fechas.';
         li.append(el('span', null, t)); li.style.cursor = 'pointer'; li.addEventListener('click', () => { st.ver = x.ruta + '|' + x.tipo; render(cont, o); const d = cont.querySelector('.envf-detalle'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
         ul.append(li);
       });
@@ -153,7 +157,7 @@
       cards.append(b);
     });
     cont.append(cards);
-    cont.append(el('p', 'pp-mia', 'Cómo se cuenta: lo que traían de antes del ' + dia(st.desde) + ' + lo vendido hasta el corte − lo que entregaron = lo que deben. El corte es el ' + dia(o.corteDev && o.corteDev < st.hasta ? o.corteDev : st.hasta) + ' (último día en que las rutas ya entregaron envase en Power Sales) o su propia última entrega si fue después. Lo vendido después del corte todavía no toca entregarlo y va en "Por entregar". Toca una fila para ver el día por día.'));
+    cont.append(el('p', 'pp-mia', 'Cómo se cuenta: lo que traían de antes del ' + dia(st.desde) + ' + lo vendido hasta la última entrega de esa ruta − lo que entregaron = lo que deben. Lo vendido después de su última entrega va en "Por entregar" (cada ruta entrega a su ritmo; la Ruta 7, por ejemplo, entrega por semana). Si pasan 3 días con venta sin entregar, sale el aviso. Toca una fila para ver el día por día.'));
 
     /* ---------- detalle día por día ---------- */
     let sel = filas.filter((x) => st.ver === x.ruta + '|' + x.tipo);

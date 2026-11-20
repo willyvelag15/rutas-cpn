@@ -17,10 +17,10 @@
      mayoría de las rutas ya tiene su devolución capturada) o hasta su última entrega, lo que sea más tarde. */
   function cuenta(M, desde, hasta, corteDev) {
     const antes = M.filter((x) => x.fecha < desde);
-    const ini = antes.reduce((a, x) => a + (x.vendido || 0) - (x.devuelto || 0), 0);
+    const ini = antes.reduce((a, x) => a + (x.vendido || 0) - (x.devuelto || 0) - (x.arqueo || 0), 0);   // arqueo 20-nov: ajuste que deja en 0
     const R = M.filter((x) => x.fecha >= desde && x.fecha <= hasta);
     const V = R.reduce((a, x) => a + (x.vendido || 0), 0);
-    const D = R.reduce((a, x) => a + (x.devuelto || 0), 0);
+    const D = R.reduce((a, x) => a + (x.devuelto || 0) + (x.arqueo || 0), 0);
     const ents = R.filter((x) => (x.devuelto || 0) > 0);
     const ult = ents.length ? ents[ents.length - 1] : null;
     // Regla 20-nov-2026 (Willy lo revisó con los técnicos de Power Sales): se cuenta solo hasta la ÚLTIMA ENTREGA DE LA
@@ -178,7 +178,7 @@
       let s = x.ini;
       if (Math.abs(x.ini) > 0.5) { const tr = el('tr', 'envf-ini'); tr.append(el('td', null, 'Antes del ' + dia(st.desde)), el('td'), el('td'), el('td'), el('td', 'num', n0(s)), el('td', null, 'saldo que traían')); b2.append(tr); }
       x.dias.forEach((m) => {
-        s += (m.vendido || 0) - (m.devuelto || 0);
+        s += (m.vendido || 0) - (m.devuelto || 0) - (m.arqueo || 0);
         const despues = !x.lim || m.fecha > x.lim; const falta = x.ult && m.fecha > x.ult.fecha && !despues && (m.vendido || 0) > 0;
         const tr = el('tr', (m.devuelto ? 'envf-ent' : '') + (despues ? ' envf-desp' : '') + (falta || (!x.ult && !despues && x.debe > TOL) ? ' envf-falta' : ''));
         tr.append(el('td', null, dia(m.fecha)), el('td', 'num', m.cargado ? n0(m.cargado) : '—'), el('td', 'num', n0(m.vendido)), el('td', 'num' + (m.devuelto ? ' ok' : ''), m.devuelto ? n0(m.devuelto) : '—'), el('td', 'num', n0(s)), el('td', null, m.docs || (despues ? 'por entregar' : (falta || !x.ult) && (m.vendido || 0) > 0 ? 'no entregó (ya tocaba)' : '')));

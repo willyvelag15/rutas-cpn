@@ -285,6 +285,37 @@ svg.rc-dona{width:100%;height:auto;max-width:220px;margin:0 auto;display:block;s
 .rc-riesgo{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .rc-riesgo li{border:1px solid var(--color-border-line);border-radius:12px;padding:9px 12px;display:flex;flex-direction:column;gap:3px;background:var(--color-bg);font-size:13px}
 .rc-riesgo li small{color:var(--color-fg-muted);font-size:12px}
+.pr{display:grid;gap:14px}
+.pr-cab{display:grid;gap:8px}
+.pr-prm{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.pr-campo{display:grid;gap:4px;font-size:12px;color:var(--color-fg-muted)}
+.pr-campo input{width:130px;padding:9px 10px;border-radius:10px;border:1px solid var(--color-border);background:var(--color-panel);color:var(--color-fg);font-size:15px}
+.pr-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.pr-tiles .ht{background:var(--color-panel);border:1px solid var(--color-border);border-radius:12px;padding:10px 12px;display:grid;gap:2px}
+.pr-tiles .ht b{font-size:20px}.pr-tiles .ht small{color:var(--color-fg-muted);font-size:12px}
+.pr-tiles .ht.warn{border-color:color-mix(in srgb,var(--color-warn) 60%,transparent)}.pr-tiles .ht.bad{border-color:color-mix(in srgb,var(--color-bad) 60%,transparent)}
+.pr-h{margin:6px 0 0;font-size:14px}
+.pr-t td.pr-r{background:color-mix(in srgb,var(--color-bad) 22%,transparent);font-weight:700}
+.pr-t td.pr-a{background:color-mix(in srgb,#E9B949 30%,transparent);font-weight:700}
+.pr-t td.pr-v{background:color-mix(in srgb,var(--color-ok) 22%,transparent);font-weight:700}
+.pr-t tr.pr-tot td{font-weight:700;border-top:2px solid var(--color-border)}
+.pr-viajes{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
+.pr-viaje{border:1px solid var(--color-border);border-radius:12px;padding:10px;display:grid;gap:6px;background:var(--color-panel)}
+.pr-vcab{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pr-vcab b{font-size:15px}
+.pr-vtot{font-size:12px;margin-left:auto}.pr-vtot.ok{color:var(--color-ok)}.pr-vtot.bad{color:var(--color-bad);font-weight:700}
+.pr-cap,.pr-lin select{padding:6px 8px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg,transparent);color:var(--color-fg);font-size:13px;max-width:100%}
+.pr-lin{display:grid;grid-template-columns:1fr 64px 28px;gap:4px 6px;align-items:center;padding-bottom:4px;border-bottom:1px solid var(--color-border)}
+.pr-lin .pr-hl{grid-column:1/-1;order:4}
+.pr-lin select{min-width:0}
+.pr-lin input{padding:6px 8px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg,transparent);color:var(--color-fg);font-size:14px;text-align:right}
+.pr-hl{font-size:12px;color:var(--color-fg-muted);white-space:nowrap}
+.pr-x{border:0;background:transparent;color:var(--color-fg-muted);font-size:18px;cursor:pointer;line-height:1}
+.pr-add{border:1px dashed var(--color-border);background:transparent;color:var(--color-fg);border-radius:10px;padding:8px;cursor:pointer;font-size:13px}
+.pr-addv{min-height:60px}
+.pr-acc{display:flex;flex-wrap:wrap;gap:8px}
+.pp-btn.pr-sec{background:transparent;color:var(--color-fg);border:1px solid var(--color-border)}
+.pp-det summary{cursor:pointer;font-size:13px;color:var(--color-fg-muted);margin-top:8px}
 </style>
 <link rel="stylesheet" href="leaflet.css">
 <script src="d3.min.js"></script>
@@ -1215,6 +1246,11 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <div data-draw="abaResumen"></div>
         <div data-draw="abaTabla"></div>
       </div>
+      <div class="card wide">
+        <h3>Pronóstico S+2 editable (el mismo que ve Rubí)</h3>
+        <p class="note">Sugerido con el último inventario que subió Rubí. Puedes mover los viajes, cambiar los días objetivo y los Hl, y descargar el Excel con el formato del PRONOSTICO GENERAL.</p>
+        <div data-draw="pronEditable"></div>
+      </div>
     </div>
   </section>
 
@@ -1720,6 +1756,7 @@ dash.calc('alertas', {
 <script src="modulos2.js"></script>
 <script src="hallazgos.js"></script>
 <script src="envase-filtro.js"></script>
+<script src="pronostico.js"></script>
 <script src="clientes-mes.js"></script>
 <script src="envase.js"></script>
 <script src="presentacion.js"></script>

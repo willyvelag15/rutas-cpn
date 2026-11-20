@@ -91,7 +91,7 @@
     saturacion: 'M4 20V10M10 20V4M16 20v-8M22 20H2'
   };
   const icono = (k) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', IC[k] || IC.ventas); s.append(p); return s; };
-  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Subir pronóstico S+2', clientesMes: 'Clientes del mes', riesgo: 'Clientes en riesgo', saturacion: 'Saturación semanal', calidad: 'Calidad de datos' };
+  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Pronóstico S+2', clientesMes: 'Clientes del mes', riesgo: 'Clientes en riesgo', saturacion: 'Saturación semanal', calidad: 'Calidad de datos' };
 
   function tilesDe(s) { const t = el('div', 'hal-tiles'); (s.tiles || []).forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); return t; }
   function tablaDe(cols, filas, ok) {
@@ -153,7 +153,7 @@
         const c = el('button', 'pp-cuadro'); c.type = 'button';
         const t = x.s && (x.s.tiles || [])[0];
         c.append(icono(x.id), el('b', null, CORTO[x.id] || (x.s && x.s.titulo)));
-        c.append(el('small', null, x.id === 'inv' ? (st.yo.rol === 'almacen_mix' ? 'Mixtequilla' : 'Piedras Negras y Mixtequilla') : x.id === 'pron' ? 'El archivo del martes' : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : t ? t.k + ': ' + t.v : 'Ver detalle'));
+        c.append(el('small', null, x.id === 'inv' ? (st.yo.rol === 'almacen_mix' ? 'Mixtequilla' : 'Piedras Negras y Mixtequilla') : x.id === 'pron' ? (P.pron ? 'Arma el pedido de la ' + P.pron.hojaS2.toLowerCase() : 'El archivo del martes') : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : t ? t.k + ': ' + t.v : 'Ver detalle'));
         c.addEventListener('click', () => { st.sec = x.id; pintarPanel(v); window.scrollTo({ top: 0, behavior: 'smooth' }); });
         g.append(c);
       });
@@ -167,7 +167,15 @@
     h.append(vb, icono(it.id), el('h3', null, it.s ? it.s.titulo : CORTO[it.id]));
     c.append(h);
     if (it.id === 'inv') { c.append(await cajaInventario(true)); main.append(c); return; }
-    if (it.id === 'pron') { c.append(await cajaInventario(true, 'pron')); main.append(c); return; }
+    if (it.id === 'pron') {
+      // Pronóstico S+2 editable (Willy, 20-nov-2026): la app sugiere el pedido en viajes y Rubí lo ajusta
+      if (P.pron && window.CPN_PRON) {
+        const box = el('div'); c.append(box);
+        window.CPN_PRON.render(box, P.pron, { subir: (nombre, b64) => rpc('subir_inventario', { p_clave: clave(), p_almacen: 'Pronóstico S+2', p_nombre: nombre, p_tipo: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', p_contenido: b64 }) });
+        const det = el('details', 'pp-det'); det.append(el('summary', null, 'O sube tu archivo de pronóstico'), await cajaInventario(true, 'pron')); c.append(det);
+      } else c.append(await cajaInventario(true, 'pron'));
+      main.append(c); return;
+    }
     if (it.id === 'slides') {
       const PZ = window.CPN_PZ;
       const per = []; P.slides.forEach((x) => { if (!per.some((p) => p.id === x.periodo.id)) per.push(x.periodo); });

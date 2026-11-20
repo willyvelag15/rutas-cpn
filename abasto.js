@@ -71,4 +71,10 @@
     const t = TIT[b.getAttribute('data-vista')]; if (!t) return;
     const a = document.getElementById('top-tit'), s = document.getElementById('top-sub'); if (a) a.textContent = t[0]; if (s) s.textContent = t[1];
   }));
+
+  // Pronóstico S+2 editable (Willy, 20-nov-2026)
+  dash.draw('pronEditable', (host) => {
+    const d = dash.data('pron_rubi'); const P = d && d.status === 'ok' && d.data && d.data.length ? d.data[0] : null;
+    if (!window.CPN_PRON) return; if (host._pron === P) return; host._pron = P; window.CPN_PRON.render(host, P, {});
+  });
 })();

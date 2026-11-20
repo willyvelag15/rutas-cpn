@@ -140,6 +140,7 @@
     main.append(cab);
 
     if (!st.sec) {
+      { const root = document.querySelector('#persona .pp'); if (root) root.classList.remove('pp-ancho'); }
       if (esVend && (P.slides || []).length) main.append(inicioVendedor(P));
       else {
         // indicadores clave: el primer cuadro de cada sección
@@ -162,6 +163,7 @@
     }
 
     const it = items.find((x) => x.id === st.sec);
+    { const root = document.querySelector('#persona .pp'); if (root) root.classList.toggle('pp-ancho', st.sec === 'pron'); }
     const c = el('section', 'card pp-panel');
     const h = el('div', 'pp-sec-cab'); const vb = el('button', 'pp-volver'); vb.type = 'button'; vb.setAttribute('aria-label', 'Volver al inicio'); vb.textContent = '‹'; vb.addEventListener('click', () => { st.sec = null; pintarPanel(v); });
     h.append(vb, icono(it.id), el('h3', null, it.s ? it.s.titulo : CORTO[it.id]));

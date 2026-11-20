@@ -98,35 +98,39 @@
     const opcionesSku = (P.productos || []).slice().sort((a, b) => a.rotacion - b.rotacion);
 
     const wrap = el('div', 'pr');
-    const cab = el('div', 'pr-cab');
-    cab.append(el('p', 'pp-mia', 'Pedido para la ' + P.hojaS2.toLowerCase().replace('semana del', 'semana del') + ' (S+2, se manda el martes en Hl). Inventario: ' + (P.inventarioArchivo || '—') + '. La S+1 (' + dia(P.S1) + ') ya no se cambia: trae ' + n0(sumProg(P)) + ' tarimas.'));
-    // parámetros de Rubí
+    // Barra superior: qué semana es, parámetros de Rubí y botones (pensado para computadora)
+    const bar = el('div', 'pr-bar');
+    const info = el('div', 'pr-info');
+    info.append(el('b', null, P.hojaS2.charAt(0) + P.hojaS2.slice(1).toLowerCase()),
+      el('span', null, 'S+2 · se manda el martes en Hl · inventario ' + (P.inventarioArchivo || '—').replace(/\.xlsx$/i, '')),
+      el('span', null, 'Meta ' + n0(P.metaSemanaHl) + ' Hl por semana · S+1 (' + dia(P.S1) + ') fija: ' + n0(sumProg(P)) + ' tarimas · ' + (P.semanaFuerte ? 'semana de quincena: hasta 5 viajes' : 'semana normal: 4 viajes')));
     const prm = el('div', 'pr-prm');
     const campo = (lab, val, min, max, step, on) => { const l = el('label', 'pr-campo'); l.append(el('span', null, lab)); const i = el('input'); i.type = 'number'; i.min = min; i.max = max; i.step = step; i.value = val; i.addEventListener('change', () => on(Number(i.value))); l.append(i); return l; };
     prm.append(
       campo('Días de inventario', st.dias, 3, 40, 1, (v) => { st.dias = v || 15; guarda(); pinta(); }),
-      campo('Hl a pedir esta semana', st.hl, 0, 3000, 1, (v) => { st.hl = v || 0; st.nViajes = null; guarda(); }),
+      campo('Hl a pedir', st.hl, 0, 3000, 1, (v) => { st.hl = v || 0; st.nViajes = null; guarda(); }),
       campo('Viajes', st.nViajes || st.viajes.length, 1, 6, 1, (v) => { st.nViajes = v || null; guarda(); }));
-    const bSug = el('button', 'pp-btn', 'Armar pedido sugerido'); bSug.type = 'button';
+    const bSug = el('button', 'pp-btn', 'Armar sugerido'); bSug.type = 'button';
     bSug.addEventListener('click', () => { if (st.viajes.some((v) => v.lineas.length) && !window.confirm('Esto reemplaza los viajes que tienes armados. ¿Seguir?')) return; st.viajes = sugerir(P, st.dias, st.hl, st.nViajes); guarda(); pinta(); });
     prm.append(bSug);
-    cab.append(prm);
-    cab.append(el('p', 'pp-mia', 'Meta del mes ' + n0(P.metaMes) + ' Hl ÷ 4 = ' + n0(P.metaSemanaHl) + ' Hl por semana. Viajes completos de 16 o 18 tarimas: normalmente 4 por semana y 5 solo en semana de quincena o fiestas' + (P.semanaFuerte ? ' (esta S+2 sí es de quincena).' : ' (esta S+2 no es de quincena).')));
-    wrap.append(cab);
-    const tiles = el('div', 'pr-tiles'); const resumenBox = el('div'); const viajesBox = el('div', 'pr-viajes'); const invBox = el('div');
-    const acc = el('div', 'pr-acc'); const msg = el('p', 'pp-mia');
-    wrap.append(tiles, el('h4', 'pr-h', 'Pronóstico por SKU (se calcula con los viajes de abajo)'), resumenBox, el('h4', 'pr-h', 'Viajes: mueve los SKU y las tarimas'), viajesBox, acc, msg, el('h4', 'pr-h', 'Días de inventario'), invBox);
+    const acc = el('div', 'pr-acc'); const msg = el('p', 'pr-msg');
+    bar.append(info, prm, acc);
+    const tiles = el('div', 'pr-tiles'); const resumenBox = el('div', 'pr-scroll'); const viajesBox = el('div', 'pr-viajes'); const invBox = el('div');
+    const colV = el('section', 'pr-col'); colV.append(el('h4', 'pr-h', 'Viajes · cambia el SKU o las tarimas y arriba se recalcula'), viajesBox);
+    const colS = el('section', 'pr-col'); colS.append(el('h4', 'pr-h', 'Pronóstico por SKU'), resumenBox);
+    const colI = el('section', 'pr-col'); colI.append(el('h4', 'pr-h', 'Días de inventario'), invBox);
+    wrap.append(bar, msg, tiles, colV, colS, colI);
     cont.append(wrap);
 
-    const bX = el('button', 'pp-btn', 'Descargar Excel'); bX.type = 'button';
+    const bX = el('button', 'pp-btn pr-sec', 'Descargar Excel'); bX.type = 'button';
     bX.addEventListener('click', async () => { try { bX.disabled = true; msg.textContent = 'Armando el Excel…'; const { nombre, b64 } = await exportar(P, st); descargar(nombre, b64); msg.textContent = 'Listo: ' + nombre; } catch (e) { msg.textContent = 'No se pudo armar el Excel: ' + e.message; } finally { bX.disabled = false; } });
     acc.append(bX);
     if (opts.subir) {
-      const bS = el('button', 'pp-btn pr-sec', 'Guardar y mandar a Willy'); bS.type = 'button';
+      const bS = el('button', 'pp-btn', 'Guardar y mandar'); bS.type = 'button';
       bS.addEventListener('click', async () => { try { bS.disabled = true; msg.textContent = 'Guardando…'; const { nombre, b64 } = await exportar(P, st); await opts.subir(nombre, b64); msg.textContent = 'Guardado. Esta noche se integra al abasto y queda en el archivo de pronósticos.'; } catch (e) { msg.textContent = 'No se pudo guardar: ' + e.message; } finally { bS.disabled = false; } });
       acc.append(bS);
     }
-    const bR = el('button', 'pp-btn pr-sec', 'Volver al sugerido'); bR.type = 'button';
+    const bR = el('button', 'pr-link', 'Volver al sugerido'); bR.type = 'button';
     bR.addEventListener('click', () => { if (!window.confirm('¿Borrar tus cambios y volver al pedido sugerido?')) return; LS.del(KEY); render(cont, P, opts); });
     acc.append(bR);
 
@@ -146,11 +150,11 @@
       // resumen por SKU
       resumenBox.replaceChildren();
       const tw = el('div', 'tblwrap'); const tb = el('table', 'cpn-t pr-t');
-      const hd = el('tr'); ['SKU', 'Descripción', 'Hl', 'Peso', 'Costo', 'Tarimas', 'C x T', 'Total cajas', 'Costo total', 'Días al cierre S+2'].forEach((x, i) => hd.append(el('th', i > 1 ? 'num' : null, x)));
+      const hd = el('tr'); ['SKU', 'Descripción', 'Tarimas', 'Hl', 'Peso', 'C x T', 'Cajas', 'Costo caja', 'Costo total', 'Días al cierre S+2'].forEach((x, i) => hd.append(el('th', i > 1 ? 'num' : null, x)));
       tb.append(el('thead')); tb.tHead.append(hd); const bd = el('tbody');
       R.filas.forEach((f) => { const tr = el('tr'); const d = diasDe(f.p, f.cajas); const td = el('td', 'num ' + semaf(d, st.dias), d == null ? '—' : n1(d));
-        tr.append(el('td', null, String(f.sku)), el('td', null, f.p.desc || ''), el('td', 'num', n1(f.hl)), el('td', 'num', n1(f.p.hlTarima)), el('td', 'num', money(f.p.costo)), el('td', 'num', n0(f.tarimas)), el('td', 'num', n0(f.p.cxt)), el('td', 'num', n0(f.cajas)), el('td', 'num', money(f.costo)), td); bd.append(tr); });
-      const tt = el('tr', 'pr-tot'); tt.append(el('td'), el('td', null, 'TOTALES'), el('td', 'num', n1(R.tot.hl)), el('td'), el('td'), el('td', 'num', n0(R.tot.tarimas)), el('td'), el('td', 'num', n0(R.tot.cajas)), el('td', 'num', money(R.tot.costo)), el('td')); bd.append(tt);
+        tr.append(el('td', null, String(f.sku)), el('td', 'pr-desc', (f.p.desc || '').replace(/^\d+-/, '')), el('td', 'num', n0(f.tarimas)), el('td', 'num', n1(f.hl)), el('td', 'num', (f.p.hlTarima || 0).toFixed(2)), el('td', 'num', n0(f.p.cxt)), el('td', 'num', n0(f.cajas)), el('td', 'num', money(f.p.costo)), el('td', 'num', money(f.costo)), td); bd.append(tr); });
+      const tt = el('tr', 'pr-tot'); tt.append(el('td'), el('td', null, 'Totales'), el('td', 'num', n0(R.tot.tarimas)), el('td', 'num', n1(R.tot.hl)), el('td'), el('td'), el('td', 'num', n0(R.tot.cajas)), el('td'), el('td', 'num', money(R.tot.costo)), el('td')); bd.append(tt);
       tb.append(bd); tw.append(tb); resumenBox.append(tw);
       pintaViajes(); pintaInv(R);
     }
@@ -164,35 +168,37 @@
         h.append(el('b', null, 'Viaje ' + (vi + 1)));
         const cap = el('select', 'pr-cap'); cap.setAttribute('aria-label', 'Tarimas del viaje ' + (vi + 1)); [18, 16].forEach((c) => { const o = el('option', null, c + ' tarimas'); o.value = c; cap.append(o); }); cap.value = v.cap;
         cap.addEventListener('change', () => { v.cap = Number(cap.value); guarda(); pinta(); });
-        h.append(cap, el('span', 'pr-vtot ' + (sT === v.cap ? 'ok' : 'bad'), sT + ' / ' + v.cap + ' tarimas · ' + n1(hlV) + ' Hl'));
+        h.append(cap, el('span', 'pr-vtot ' + (sT === v.cap ? 'ok' : 'bad'), sT + '/' + v.cap + ' tar · ' + n1(hlV) + ' Hl'));
         const del = el('button', 'pr-x', '×'); del.type = 'button'; del.setAttribute('aria-label', 'Quitar viaje ' + (vi + 1));
         del.addEventListener('click', () => { if (v.lineas.length && !window.confirm('¿Quitar el viaje ' + (vi + 1) + '?')) return; st.viajes.splice(vi, 1); guarda(); pinta(); });
         h.append(del); card.append(h);
         v.lineas.forEach((l, li) => {
           const r = el('div', 'pr-lin');
           const s = el('select'); s.setAttribute('aria-label', 'SKU'); const o0 = el('option', null, 'Elige SKU'); o0.value = ''; s.append(o0);
-          opcionesSku.forEach((p) => { const o = el('option', null, p.sku + ' · ' + (p.desc || '').replace(/^\d+-/, '')); o.value = p.sku; s.append(o); });
+          opcionesSku.forEach((p) => { const o = el('option', null, (p.desc || '').replace(/^\d+-/, '') + ' · ' + p.sku); o.value = p.sku; s.append(o); });
           s.value = l.sku || ''; s.addEventListener('change', () => { l.sku = Number(s.value) || null; guarda(); pinta(); });
           const tq = el('input'); tq.type = 'number'; tq.min = 0; tq.max = 18; tq.step = 1; tq.value = l.tarimas; tq.setAttribute('aria-label', 'Tarimas');
           tq.addEventListener('change', () => { l.tarimas = Math.max(0, Math.round(Number(tq.value) || 0)); guarda(); pinta(); });
           const p = M.get(l.sku) || {};
           const x = el('button', 'pr-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Quitar renglón'); x.addEventListener('click', () => { v.lineas.splice(li, 1); guarda(); pinta(); });
-          r.append(s, tq, el('span', 'pr-hl', n1((Number(l.tarimas) || 0) * (p.hlTarima || 0)) + ' Hl · ' + n0((Number(l.tarimas) || 0) * (p.cxt || 0)) + ' cj'), x);
+          r.append(s, tq, el('span', 'pr-hl', n1((Number(l.tarimas) || 0) * (p.hlTarima || 0)) + ' Hl'), x);
           card.append(r);
         });
-        const add = el('button', 'pr-add', '+ Agregar SKU'); add.type = 'button'; add.addEventListener('click', () => { v.lineas.push({ sku: null, tarimas: 0 }); guarda(); pinta(); });
+        const add = el('button', 'pr-add', '+ SKU'); add.type = 'button'; add.addEventListener('click', () => { v.lineas.push({ sku: null, tarimas: 0 }); guarda(); pinta(); });
         card.append(add); viajesBox.append(card);
       });
-      const addV = el('button', 'pr-add pr-addv', '+ Agregar viaje'); addV.type = 'button';
+      const addV = el('button', 'pr-add pr-addv', '+ Viaje'); addV.type = 'button';
       addV.addEventListener('click', () => { st.viajes.push({ cap: 18, lineas: [] }); guarda(); pinta(); });
       viajesBox.append(addV);
     }
 
     function pintaInv(R) {
       invBox.replaceChildren();
-      invBox.append(el('p', 'pp-mia', 'Rojo: menos de 7 días. Amarillo: menos de ' + st.dias + ' días (tu objetivo). Verde: ' + st.dias + ' días o más. Los días salen de la venta diaria del mes. "Al iniciar S+2" ya cuenta lo que llega en la S+1.'));
-      const tw = el('div', 'tblwrap'); const tb = el('table', 'cpn-t pr-t');
-      const hd = el('tr'); ['#', 'SKU', 'Producto', 'Almacén (cj)', 'Camiones (cj)', 'Venta por día (cj)', 'Días hoy', 'Llega S+1 (tar)', 'Días al iniciar S+2', 'Pedido S+2 (tar)', 'Días al cierre S+2'].forEach((x, i) => hd.append(el('th', i > 2 ? 'num' : null, x)));
+      const ley = el('div', 'pr-ley'); [['#e5484d', 'menos de 7 días'], ['#E9B949', 'menos de ' + st.dias + ' días (tu objetivo)'], ['#30a46c', st.dias + ' días o más']].forEach(([c, t]) => { const x = el('span'); const i = el('i'); i.style.background = c; x.append(i, document.createTextNode(t)); ley.append(x); });
+      ley.append(el('span', null, 'Días = cajas ÷ venta diaria del mes. "Al iniciar S+2" ya suma lo que llega en la S+1.'));
+      invBox.append(ley);
+      const tw = el('div', 'tblwrap pr-inv'); const tb = el('table', 'cpn-t pr-t');
+      const hd = el('tr'); ['#', 'SKU', 'Producto', 'Almacén', 'Camiones', 'Venta/día', 'Días hoy', 'Llega S+1', 'Días inicio S+2', 'Pedido S+2', 'Días cierre S+2'].forEach((x, i) => hd.append(el('th', i > 2 ? 'num' : null, x)));
       tb.append(el('thead')); tb.tHead.append(hd); const bd = el('tbody');
       (P.productos || []).filter((p) => p.ventaDia > 0 || p.almacen > 0 || R.porSku.has(p.sku)).forEach((p) => {
         const tq = R.porSku.get(p.sku) || 0; const dh = p.ventaDia > 0 ? (p.almacen + p.camiones) / p.ventaDia : null; const di = p.ventaDia > 0 ? inicio(p) / p.ventaDia : null; const df = diasDe(p, tq * p.cxt);

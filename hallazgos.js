@@ -117,6 +117,9 @@
       else if (x.estado === 'Camión pasó a otra hora') d = 'Durante la visita el camión estaba a ' + km(x.dCamion) + ' del cliente; pasó por ahí a otra hora del día.';
       else d = 'Ese día el camión nunca pasó a menos de ' + km(x.dDia) + ' del cliente.';
       if (x.dCaptura != null) d += ' Power Sales registró la venta a ' + km(x.dCaptura) + ' de donde estaba el camión.';
+      if (x.ubic === 'Motum') d += ' (Ubicación del cliente: su punto en Motum.)';
+      else if (x.ubicRevisar) d += ' (Su punto en Motum parece mal ubicado: el camión nunca pasó por ahí en el mes; se usó donde capturan en Power Sales.)';
+      else if (x.ubic === 'Power Sales') d += ' (El cliente no está en Motum; se usó donde capturan en Power Sales.)';
       c.append(el('span', null, d), el('small', null, F.dia(x.fecha) + ' · ' + x.hora + ' · ' + x.vendedor));
       c.append(el('em', null, '→ Llamar al cliente y confirmar que recibió el pedido ese día y a qué precio.'));
       li.append(izq, c); ul.append(li);

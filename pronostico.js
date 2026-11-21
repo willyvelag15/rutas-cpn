@@ -126,8 +126,8 @@
     bX.addEventListener('click', async () => { try { bX.disabled = true; msg.textContent = 'Armando el Excel…'; const { nombre, b64 } = await exportar(P, st); descargar(nombre, b64); msg.textContent = 'Listo: ' + nombre; } catch (e) { msg.textContent = 'No se pudo armar el Excel: ' + e.message; } finally { bX.disabled = false; } });
     acc.append(bX);
     if (opts.subir) {
-      const bS = el('button', 'pp-btn', 'Guardar y mandar'); bS.type = 'button';
-      bS.addEventListener('click', async () => { try { bS.disabled = true; msg.textContent = 'Guardando…'; const { nombre, b64 } = await exportar(P, st); await opts.subir(nombre, b64); msg.textContent = 'Guardado. Esta noche se integra al abasto y queda en el archivo de pronósticos.'; } catch (e) { msg.textContent = 'No se pudo guardar: ' + e.message; } finally { bS.disabled = false; } });
+      const bS = el('button', 'pp-btn', 'Confirmar y mandar'); bS.type = 'button';
+      bS.addEventListener('click', async () => { if (!window.confirm('¿Confirmar este pronóstico de la ' + P.hojaS2.toLowerCase() + ' y mandarlo a Willy?')) return; try { bS.disabled = true; msg.textContent = 'Guardando…'; const { nombre, b64 } = await exportar(P, st); await opts.subir(nombre, b64); msg.textContent = 'Confirmado. Ya lo ve Willy y esta noche se integra al abasto.'; } catch (e) { msg.textContent = 'No se pudo guardar: ' + e.message; } finally { bS.disabled = false; } });
       acc.append(bS);
     }
     const bR = el('button', 'pr-link', 'Volver al sugerido'); bR.type = 'button';

@@ -689,6 +689,9 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <p class="note">Busca ventas que el vendedor pudo simular: ticket a nombre de un cliente pero capturado lejos de su negocio o en la bodega, dos tickets el mismo día, clientes que ya no compraban o que de pronto compran mucho más. También ventas sin liquidar o con faltante. Son focos para confirmar con el cliente, no pruebas. Solo se muestran los de los últimos 7 días. Toca una ruta para ver solo la suya.</p>
         <div data-draw="hallazgosResumen"></div>
         <div data-draw="hallazgosLista"></div>
+        <h4 class="hal-sub">Liquidación día por día</h4>
+        <p class="note">Cada día de venta (Scorecard de Power Sales) contra las liquidaciones de Power Sales que lo cubren. Se empatan por importe exacto y por la hora real en que se capturó la liquidación, no por la fecha que pone Power Sales (a veces pone el día siguiente aunque se liquidó esa misma noche). "Sin liquidación" solo sale si ningún pago lo cubre.</p>
+        <div data-draw="liqCruce"></div>
         <h4 class="hal-sub">Camión (Motum) contra Power Sales</h4>
         <p class="note">Para cada venta se busca dónde estaba el camión con GPS de Motum mientras duró la visita y se compara con donde está el negocio del cliente. Confirmada = el camión estuvo a menos de 250 m. Las rutas 2 y 4 no tienen GPS.</p>
         <div data-draw="hallazgosGps"></div>
@@ -1232,6 +1235,11 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <p class="note">Alertas de la cámara (celular, distracción, fatiga, cinturón) y del camión (vueltas bruscas, velocidad, pánico, desconexión del GPS). Cada alerta trae las fotos que tomó la cámara en ese momento: toca una foto para verla grande.</p>
         <div data-draw="motResumen"></div>
         <div data-draw="motLista"></div>
+      </div>
+      <div class="card wide">
+        <h3>Ventas registradas dentro del CEDIS</h3>
+        <p class="note">Ventas que el teléfono del vendedor registró a 20 m o menos de las coordenadas fijas del CEDIS (Piedras Negras 18.77027, -96.17569 · Mixtequilla 18.71949, -95.98737). No dependen del GPS del camión; si ese día la ruta sí trae camión con GPS, se dice dónde estaba el camión a esa hora (doble check). Las cadenas (OXXO, 3B) y el Depósito Heineken se capturan normalmente en el CEDIS y están aparte.</p>
+        <div data-draw="ventasCedis"></div>
       </div>
       <div class="card wide">
         <h3>Ventas registradas después de regresar</h3>
@@ -1790,6 +1798,7 @@ dash.calc('alertas', {
 <script src="hallazgos.js"></script>
 <script src="envase-filtro.js"></script>
 <script src="pronostico.js"></script>
+<script src="cedis.js"></script>
 <script src="clientes-mes.js"></script>
 <script src="envase.js"></script>
 <script src="presentacion.js"></script>

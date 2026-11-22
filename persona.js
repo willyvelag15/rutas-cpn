@@ -309,6 +309,50 @@
     return el('p', 'pp-mia', 'Tu lista sale con la actualización de la noche.');
   }
 
+  /* ---------- Pastel de marcas del vendedor (Willy, 21-nov-2026): su cartera por marca, saturación contra XX Lager ---------- */
+  const MARCAS_RE = [[/^(XX|DOS EQUIS)/i, 'XX Lager'], [/^TECATE/i, 'Tecate'], [/^CARTA BLANCA/i, 'Carta Blanca'], [/^INDIO/i, 'Indio'], [/^SOL\b/i, 'Sol'],
+    [/^HEINEKEN/i, 'Heineken'], [/^AMSTEL/i, 'Amstel Ultra'], [/^MILLER/i, 'Miller'], [/^SUPERIOR/i, 'Superior'], [/^BOHEMIA/i, 'Bohemia'],
+    [/^COORS/i, 'Coors'], [/^NOCHE BUENA/i, 'Noche Buena'], [/^STRONGBOW/i, 'Strongbow'], [/^KLOSTER/i, 'Kloster'], [/^LAGUNITAS/i, 'Lagunitas']];
+  const marcaDe = (p) => { const x = MARCAS_RE.find(([r]) => r.test(String(p).trim())); return x ? x[1] : String(p).trim().split(/\s+/).slice(0, 2).join(' '); };
+  function graficaMarcas(P) {
+    const sP = (P.secciones || []).find((x) => x.id === 'productosVend');
+    if (!sP || !(sP.filas || []).length) return null;
+    const num = (t) => parseFloat(String(t).replace(/,/g, '')) || 0;
+    const ag = {}; sP.filas.forEach((f) => { const m = marcaDe(f[0]); ag[m] = (ag[m] || 0) + num(f[2]); });
+    const tot = Object.values(ag).reduce((a, b) => a + b, 0);
+    if (!tot) return null;
+    const xx = ag['XX Lager'] || 0; const sat = 1 - xx / tot;
+    const orden = Object.entries(ag).sort((a, b) => (a[0] === 'XX Lager' ? -1 : b[0] === 'XX Lager' ? 1 : b[1] - a[1]));
+    const top = orden.length <= 9 ? orden.slice() : orden.slice(0, 8); const resto = orden.length <= 9 ? 0 : orden.slice(8).reduce((a, x) => a + x[1], 0); if (resto > 0) top.push(['Otras ' + (orden.length - 8) + ' marcas', resto]);
+    const COL = ['#1F7A45', '#E0A526', '#3B82C4', '#C2410C', '#8B5CF6', '#0EA5A4', '#DB2777', '#65A30D', '#94A3B8'];
+    const w = el('section', 'card pp-mix');
+    const h = el('div', 'pp-mix-cab'); h.append(el('h3', null, 'Tu cartera por marca')); w.append(h);
+    const ok = sat >= 0.10;
+    const res = el('div', 'hal-tiles');
+    [['Saturación', Math.round(sat * 100) + '%', 'meta: 10% o más', ok ? 'ok' : 'bad'], ['XX Lager', Math.round((1 - sat) * 100) + '%', 'máximo 90%', ok ? 'ok' : 'bad']].forEach(([k, v, s0, tono]) => { const d = el('div', 'hal-tile ' + tono); d.append(el('span', null, k), el('b', null, v), el('small', null, s0)); res.append(d); });
+    w.append(res);
+    const cuerpo = el('div', 'pp-mix-cuerpo');
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 200 200'); svg.setAttribute('class', 'pp-pastel'); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Tu venta del mes por marca');
+    let a0 = -Math.PI / 2;
+    top.forEach(([n, v], i) => {
+      const a1 = a0 + (v / tot) * Math.PI * 2; const R1 = 92, R0 = 56; const p = (r, a) => [100 + r * Math.cos(a), 100 + r * Math.sin(a)]; const big = a1 - a0 > Math.PI ? 1 : 0;
+      const [x1, y1] = p(R1, a0), [x2, y2] = p(R1, a1 - 0.0001), [x3, y3] = p(R0, a1 - 0.0001), [x4, y4] = p(R0, a0);
+      const path = document.createElementNS(NS, 'path'); path.setAttribute('d', `M${x1},${y1}A${R1},${R1} 0 ${big} 1 ${x2},${y2}L${x3},${y3}A${R0},${R0} 0 ${big} 0 ${x4},${y4}Z`);
+      path.setAttribute('fill', COL[i % COL.length]); path.setAttribute('stroke', 'var(--color-panel)'); path.setAttribute('stroke-width', '1.5');
+      const tt = document.createElementNS(NS, 'title'); tt.textContent = n + ': ' + (Math.round(v * 10) / 10) + ' Hl (' + Math.round(v / tot * 100) + '%)'; path.append(tt); svg.append(path); a0 = a1;
+    });
+    const t1 = document.createElementNS(NS, 'text'); t1.setAttribute('x', 100); t1.setAttribute('y', 98); t1.setAttribute('text-anchor', 'middle'); t1.setAttribute('class', 'pp-pastel-v'); t1.textContent = Math.round(sat * 100) + '%';
+    const t2 = document.createElementNS(NS, 'text'); t2.setAttribute('x', 100); t2.setAttribute('y', 118); t2.setAttribute('text-anchor', 'middle'); t2.setAttribute('class', 'pp-pastel-k'); t2.textContent = 'saturación';
+    svg.append(t1, t2);
+    const ley = el('ul', 'pp-ley');
+    top.forEach(([n, v], i) => { const li = el('li'); const sw = el('i'); sw.style.background = COL[i % COL.length]; li.append(sw, el('span', null, n), el('b', null, Math.round(v / tot * 100) + '%'), el('small', null, (Math.round(v * 10) / 10).toLocaleString('es-MX') + ' Hl')); ley.append(li); });
+    cuerpo.append(svg, ley); w.append(cuerpo);
+    w.append(el('p', 'pp-mia', ok ? 'Vas bien: traes ' + Math.round(sat * 100) + '% de saturación. Mantenlo arriba de 10%.' : 'Te falta saturación: vendes ' + Math.round((1 - sat) * 100) + '% de XX Lager. Ofrece otras marcas para llegar al 10%: unos ' + (Math.round(Math.max(0, (0.10 * tot - (tot - xx)) / 0.9) * 10) / 10) + ' Hl más de otras marcas.'));
+    w.append(el('p', 'pp-mia', 'Hectolitros del mes. Saturación = todo lo que no es XX Lager.'));
+    return w;
+  }
+
   function inicioVendedor(P) {
     const w = el('div', 'pp-vend');
     const sl = (P.slides || []).map((x) => x.slide);
@@ -338,6 +382,7 @@
     if (M.necesitaDia > 0) mes.append(el('p', 'pp-mia', 'Para llegar a la meta ocupas ' + n1(M.necesitaDia) + ' Hl diarios en los ' + M.diasRestan + ' días que quedan.'));
     else if (M.hlMes >= M.metaHl && M.metaHl) mes.append(el('p', 'pp-mia', '¡Ya pasaste tu meta del mes! Todo lo que vendas ahora es extra.'));
     w.append(mes);
+    { const gm = graficaMarcas(P); if (gm) w.append(gm); }
     // cuadritos
     const k = el('div', 'pp-mini');
     const mini = (ic, a, b, cls) => { const d = el('div', 'pp-mini-c' + (cls ? ' ' + cls : '')); d.append(icono(ic), el('b', null, a), el('span', null, b)); k.append(d); };

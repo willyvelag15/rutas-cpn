@@ -90,8 +90,9 @@
     riesgo: 'M12 3l9 16H3zM12 10v4M12 17h.01',
     saturacion: 'M4 20V10M10 20V4M16 20v-8M22 20H2'
   };
+  ['metaVend:avance', 'topVend:clientesMes', 'caidaVend:riesgo', 'satVend:saturacion', 'productosVend:productos', 'hoy:sinCompra'].forEach((x) => { const [k, v] = x.split(':'); if (!IC[k]) IC[k] = IC[v] || IC.ventas; });
   const icono = (k) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', IC[k] || IC.ventas); s.append(p); return s; };
-  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Pronóstico S+2', clientesMes: 'Clientes del mes', riesgo: 'Clientes en riesgo', saturacion: 'Saturación semanal', calidad: 'Calidad de datos' };
+  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Pronóstico S+2', clientesMes: 'Clientes del mes', riesgo: 'Clientes en riesgo', saturacion: 'Saturación semanal', calidad: 'Calidad de datos', hoy: 'Tu lista de hoy', metaVend: 'Tu meta', topVend: 'Mejores clientes', caidaVend: 'Clientes en caída', satVend: 'Saturación', productosVend: 'Tus productos' };
 
   function tilesDe(s) { const t = el('div', 'hal-tiles'); (s.tiles || []).forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); return t; }
   function tablaDe(cols, filas, ok) {
@@ -117,6 +118,7 @@
     if (st.yo.rol === 'almacen_pn') items.push({ id: 'inv' }, { id: 'pron' });
     if (st.yo.rol === 'almacen_mix') items.push({ id: 'inv' });
     if ((P.slides || []).length && window.CPN_PZ && !esVend) items.push({ id: 'slides' });
+    if (esVend && P.hoy && (P.hoy.clientes || []).length) items.push({ id: 'hoy' });
     S.forEach((s) => items.push({ id: s.id, s }));
     if (esVend && (P.slides || []).length && window.CPN_PZ) items.push({ id: 'slides' });
     if (st.sec && !items.some((x) => x.id === st.sec)) st.sec = null;
@@ -128,7 +130,15 @@
     menu.append(boton('inicio', 'Inicio'));
     items.forEach((x) => menu.append(boton(x.id, CORTO[x.id] || (x.s && x.s.titulo) || x.id)));
     const main = el('div', 'pp-main');
-    dash.append(menu, main); v.append(dash);
+    const velo = el('div', 'pp-velo');
+    const cierra = () => { menu.classList.remove('abierto'); velo.classList.remove('abierto'); };
+    velo.addEventListener('click', cierra);
+    dash.append(menu, velo, main); v.append(dash);
+    // celular: menú lateral que se abre con el botón ☰ (Willy, 21-nov-2026: nada de puro scroll)
+    const mb = el('button', 'pp-menubtn'); mb.type = 'button'; mb.setAttribute('aria-label', 'Abrir menú');
+    mb.append(el('span', 'pp-hamb', '☰'), el('span', null, (st.sec ? (CORTO[st.sec] || ((items.find((x) => x.id === st.sec) || {}).s || {}).titulo || 'Menú') : 'Inicio')));
+    mb.addEventListener('click', () => { menu.classList.add('abierto'); velo.classList.add('abierto'); });
+    main.append(mb);
 
     const cab = el('div', 'pp-cabeza');
     cab.append(el('span', 'pp-mia', 'Datos al ' + dia(P.corte) + ' · se actualiza cada noche'));
@@ -154,7 +164,7 @@
         const c = el('button', 'pp-cuadro'); c.type = 'button';
         const t = x.s && (x.s.tiles || [])[0];
         c.append(icono(x.id), el('b', null, CORTO[x.id] || (x.s && x.s.titulo)));
-        c.append(el('small', null, x.id === 'inv' ? (st.yo.rol === 'almacen_mix' ? 'Mixtequilla' : 'Piedras Negras y Mixtequilla') : x.id === 'pron' ? (P.pron ? 'Arma el pedido de la ' + P.pron.hojaS2.toLowerCase() : 'El archivo del martes') : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : t ? t.k + ': ' + t.v : 'Ver detalle'));
+        c.append(el('small', null, x.id === 'inv' ? (st.yo.rol === 'almacen_mix' ? 'Mixtequilla' : 'Piedras Negras y Mixtequilla') : x.id === 'pron' ? (P.pron ? 'Arma el pedido de la ' + P.pron.hojaS2.toLowerCase() : 'El archivo del martes') : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : x.id === 'hoy' ? P.hoy.clientes.length + ' clientes te tocan el ' + P.hoy.dia : t ? t.k + ': ' + t.v : 'Ver detalle'));
         c.addEventListener('click', () => { st.sec = x.id; pintarPanel(v); window.scrollTo({ top: 0, behavior: 'smooth' }); });
         g.append(c);
       });
@@ -168,6 +178,7 @@
     const h = el('div', 'pp-sec-cab'); const vb = el('button', 'pp-volver'); vb.type = 'button'; vb.setAttribute('aria-label', 'Volver al inicio'); vb.textContent = '‹'; vb.addEventListener('click', () => { st.sec = null; pintarPanel(v); });
     h.append(vb, icono(it.id), el('h3', null, it.s ? it.s.titulo : CORTO[it.id]));
     c.append(h);
+    if (it.id === 'hoy') { c.append(listaHoy(P)); main.append(c); return; }
     if (it.id === 'inv') { c.append(await cajaInventario(true)); main.append(c); return; }
     if (it.id === 'pron') {
       // Pronóstico S+2 editable (Willy, 20-nov-2026): la app sugiere el pedido en viajes y Rubí lo ajusta
@@ -284,6 +295,29 @@
   }
 
   /* ---------- Inicio del vendedor, hecho para el celular ---------- */
+  function listaHoy(P) {
+    const H = P.hoy;
+    if (H && (H.clientes || []).length) {
+      const lh = el('section', 'card pp-hoy');
+      const pend = H.clientes.filter((c) => !c.comproSemana);
+      lh.append(el('h3', null, 'Tu lista del ' + H.dia + ' ' + dia(H.fecha).replace(/^\S+\s/, '')));
+      lh.append(el('p', 'pp-mia', H.clientes.length + ' clientes te tocan. ' + (pend.length ? pend.length + ' no te han comprado últimamente: ábreles venta primero.' : 'Todos te compraron la semana pasada, ¡a mantenerlo!')));
+      const ul = el('ul', 'pp-hoy-l');
+      H.clientes.forEach((c, i) => {
+        const li = el('li', (c.comproSemana ? '' : 'pend') + (i >= 12 ? ' oculto' : ''));
+        const top = el('div', 'pp-hoy-top'); top.append(el('b', null, c.cliente), el('span', 'pill ' + (c.comproSemana ? 'ok' : 'warn'), c.comproSemana ? 'te compró' : 'ábrele venta'));
+        li.append(top);
+        if (c.motivo.length) li.append(el('small', null, c.motivo.join(' · ')));
+        if (c.ofrecer.length) { const o = el('div', 'pp-hoy-of'); o.append(el('span', null, 'Ofrécele: ')); c.ofrecer.forEach((x) => o.append(el('span', 'pill' + (c.bono.includes(x) ? ' ok' : ''), x + (c.bono.includes(x) ? ' (bono)' : '')), document.createTextNode(' '))); li.append(o); }
+        ul.append(li);
+      });
+      lh.append(ul);
+      if (H.clientes.length > 12) { const m = el('button', 'pp-btn2', 'Ver los ' + H.clientes.length); m.type = 'button'; m.addEventListener('click', () => { ul.querySelectorAll('.oculto').forEach((x) => x.classList.remove('oculto')); m.remove(); }); lh.append(m); }
+      return lh;
+    }
+    return el('p', 'pp-mia', 'Tu lista sale con la actualización de la noche.');
+  }
+
   function inicioVendedor(P) {
     const w = el('div', 'pp-vend');
     const sl = (P.slides || []).map((x) => x.slide);
@@ -310,7 +344,8 @@
     mes.append(el('small', null, 'Tu mes'));
     const f2 = el('div', 'pp-hero-fila'); f2.append(el('b', null, n1(M.hlMes) + ' Hl'), el('span', null, 'de ' + n0(M.metaHl) + ' · ' + pc(M.avance)));
     mes.append(f2, barra(M.hlMes, M.metaHl));
-    if (M.necesitaDia) mes.append(el('p', 'pp-mia', 'Para llegar a la meta ocupas ' + n1(M.necesitaDia) + ' Hl diarios en los ' + M.diasRestan + ' días que quedan.'));
+    if (M.necesitaDia > 0) mes.append(el('p', 'pp-mia', 'Para llegar a la meta ocupas ' + n1(M.necesitaDia) + ' Hl diarios en los ' + M.diasRestan + ' días que quedan.'));
+    else if (M.hlMes >= M.metaHl && M.metaHl) mes.append(el('p', 'pp-mia', '¡Ya pasaste tu meta del mes! Todo lo que vendas ahora es extra.'));
     w.append(mes);
     // cuadritos
     const k = el('div', 'pp-mini');
@@ -320,38 +355,6 @@
     mini('paradas', pc(Sc.cumplimiento), 'de tus clientes visitados', Sc.cumplimiento < 0.85 ? 'bad' : 'ok');
     mini('cierre', Sc.salida || '—', 'hora de salida', Sc.salida > '10:00' ? 'bad' : '');
     w.append(k);
-    // tu lista de hoy (Willy, 17-nov-2026)
-    const H = P.hoy;
-    if (H && (H.clientes || []).length) {
-      const lh = el('section', 'card pp-hoy');
-      const pend = H.clientes.filter((c) => !c.comproSemana);
-      lh.append(el('h3', null, 'Tu lista del ' + H.dia + ' ' + dia(H.fecha).replace(/^\S+\s/, '')));
-      lh.append(el('p', 'pp-mia', H.clientes.length + ' clientes te tocan. ' + (pend.length ? pend.length + ' no te han comprado últimamente: ábreles venta primero.' : 'Todos te compraron la semana pasada, ¡a mantenerlo!')));
-      const ul = el('ul', 'pp-hoy-l');
-      H.clientes.forEach((c, i) => {
-        const li = el('li', (c.comproSemana ? '' : 'pend') + (i >= 12 ? ' oculto' : ''));
-        const top = el('div', 'pp-hoy-top'); top.append(el('b', null, c.cliente), el('span', 'pill ' + (c.comproSemana ? 'ok' : 'warn'), c.comproSemana ? 'te compró' : 'ábrele venta'));
-        li.append(top);
-        if (c.motivo.length) li.append(el('small', null, c.motivo.join(' · ')));
-        if (c.ofrecer.length) { const o = el('div', 'pp-hoy-of'); o.append(el('span', null, 'Ofrécele: ')); c.ofrecer.forEach((x) => o.append(el('span', 'pill' + (c.bono.includes(x) ? ' ok' : ''), x + (c.bono.includes(x) ? ' (bono)' : '')), document.createTextNode(' '))); li.append(o); }
-        ul.append(li);
-      });
-      lh.append(ul);
-      if (H.clientes.length > 12) { const m = el('button', 'pp-btn2', 'Ver los ' + H.clientes.length); m.type = 'button'; m.addEventListener('click', () => { ul.querySelectorAll('.oculto').forEach((x) => x.classList.remove('oculto')); m.remove(); }); lh.append(m); }
-      w.append(lh);
-    }
-    // bonos
-    const bo = el('section', 'card pp-bonos'); bo.append(el('h3', null, 'Tus bonos del mes'));
-    (s.bonos || []).forEach((b) => { const r = el('div', 'pp-bono'); const top = el('div', 'pp-hero-fila'); top.append(el('span', null, b.nombre.replace(/^Lata/, 'Amstel Ultra lata')), el('b', null, b.falta > 0 ? 'te faltan ' + n1(b.falta) : '¡Ya entraste!')); r.append(top, barra(b.cajasMes, b.minimo, b.falta > 0 ? 'oro' : 'ok'), el('small', null, n1(b.cajasMes) + ' de ' + b.minimo + ' cajas')); bo.append(r); });
-    w.append(bo);
-    // clientes por visitar
-    const L = (s.perdida && s.perdida.lista) || [];
-    if (L.length) {
-      const cl = el('section', 'card'); cl.append(el('h3', null, 'Clientes que no te han comprado'));
-      const ul = el('ul', 'pp-clientes');
-      L.slice(0, 8).forEach((x) => { const li = el('li'); li.append(el('b', null, x.cliente), el('span', null, (x.dias != null ? x.dias + ' días sin comprar' : 'sin compra') + ' · ' + n1(x.cajas) + ' cajas')); ul.append(li); });
-      cl.append(ul); w.append(cl);
-    }
     // alertas
     if ((s.alertas || []).length) {
       const al = el('section', 'card'); al.append(el('h3', null, 'Pendientes'));

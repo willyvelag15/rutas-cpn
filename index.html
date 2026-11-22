@@ -262,6 +262,16 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .rc-card .pill{font-size:11px}
 @media (max-width:700px){.rcli .rc-full{display:none}.rc-cards{display:flex}}
 #persona .pp-main{min-width:0}#persona .pp-menu{align-self:start}
+#persona .pp-menubtn{display:flex;align-items:center;gap:10px;font:inherit;font-size:15px;font-weight:600;color:var(--color-fg);background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:12px;padding:10px 14px;cursor:pointer;align-self:flex-start}
+#persona .pp-hamb{font-size:18px;line-height:1}
+#persona .pp-velo{display:none}
+@media (max-width:899px){
+  #persona .pp-menu.abierto{display:flex;flex-direction:column;gap:2px;position:fixed;left:0;top:0;bottom:0;width:80%;max-width:300px;z-index:60;overflow-y:auto;background:var(--color-panel);border-right:1px solid var(--color-border-line);padding:16px 10px;box-shadow:0 0 40px rgba(0,0,0,.35)}
+  #persona .pp-menu.abierto button{display:flex;align-items:center;gap:12px;font:inherit;font-size:15px;text-align:left;color:var(--color-fg-muted);background:transparent;border:0;border-radius:10px;padding:12px 12px;cursor:pointer}
+  #persona .pp-menu.abierto button[aria-pressed="true"]{color:#fff;background:#1F7A45;font-weight:600}
+  #persona .pp-velo.abierto{display:block;position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.45)}
+}
+@media (min-width:900px){#persona .pp-menubtn{display:none}}
 .rc-det-cab{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.rc-det-cab h4{margin:0;font-size:17px}.rc-det-cab small{color:var(--color-fg-muted)}
 .rc-x{font:inherit;font-size:13px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);border-radius:999px;padding:6px 12px;cursor:pointer}
 .rc-mix{display:grid;grid-template-columns:minmax(160px,220px) 1fr;gap:16px;align-items:start}@media (max-width:700px){.rc-mix{grid-template-columns:1fr}}

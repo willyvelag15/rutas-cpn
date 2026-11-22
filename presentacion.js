@@ -165,7 +165,7 @@
     lo.append(lt);
     if (L.lista.length) {
       const tt = el('table'); tt.style.marginTop = '6px'; const h = el('tr'); [['Cliente', ''], ['Última compra', ''], ['Cajas', 'n']].concat(sd ? [] : [['Pesos', 'n']]).forEach(([x, cl]) => h.append(el('th', cl, x))); tt.append(h);
-      L.lista.slice(0, 8).forEach((x) => { const tr = el('tr'); tr.append(el('td', null, x.cliente), el('td', null, x.ultimaCompra ? fd(x.ultimaCompra) + (x.dias != null ? ' (' + x.dias + ' días)' : '') : 'sin compra'), el('td', 'n', n1(x.cajas))); if (!sd) tr.append(el('td', 'n', mx(x.pesos))); tt.append(tr); });
+      L.lista.slice(0, 8).forEach((x) => { const tr = el('tr'); tr.append(el('td', null, cpnCli(x, 'id')), el('td', null, x.ultimaCompra ? fd(x.ultimaCompra) + (x.dias != null ? ' (' + x.dias + ' días)' : '') : 'sin compra'), el('td', 'n', n1(x.cajas))); if (!sd) tr.append(el('td', 'n', mx(x.pesos))); tt.append(tr); });
       lo.append(tt);
     }
     bd.append(lo);

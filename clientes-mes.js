@@ -37,7 +37,7 @@
   function detalle(c, DET, dinero, mg, cerrar) {
     const w = el('div', 'rc-det');
     const cab = el('div', 'rc-det-cab');
-    const tt = el('div'); tt.append(el('h4', null, c.cliente), el('small', null, [c.ruta + ' · ' + c.vendedor, c.giro, c.poblacion, c.nivel].filter(Boolean).join(' · ')));
+    const tt = el('div'); tt.append(el('h4', null, cpnCli(c, 'id')), el('small', null, [c.ruta + ' · ' + c.vendedor, c.giro, c.poblacion, c.nivel].filter(Boolean).join(' · ')));
     const x = el('button', 'rc-x', 'Cerrar'); x.type = 'button'; x.addEventListener('click', cerrar);
     cab.append(tt, x); w.append(cab);
     const tiles = el('div', 'hal-tiles');
@@ -140,7 +140,7 @@
     const bb = el('tbody');
     F.slice(0, st.n).forEach((x) => {
       const tr = el('tr', 'rc-fila' + (st.sel === x.id ? ' sel' : '')); tr.tabIndex = 0;
-      const tc = el('td'); tc.append(el('b', null, x.cliente), el('small', null, ' ' + x.ruta + ' · #' + x.id));
+      const tc = el('td'); tc.append(el('b', null, cpnCli(x, 'id')), el('small', null, ' ' + x.ruta));
       tr.append(tc, el('td', 'num', n1(x.hl)), el('td', 'num', n1(x.proyHl)));
       if (mg) tr.append(el('td', 'num', mx(x.venta)), el('td', 'num', mx(x.descuento + x.sinCargo)), el('td', 'num', mx(x.margen)), el('td', 'num ' + (x.ganamos ? '' : 'neg'), mx(x.neto)));
       else if (dinero) tr.append(el('td', 'num', mx(x.venta)), el('td', 'num', n1(x.cajas)));
@@ -156,7 +156,7 @@
     const cards = el('div', 'rc-cards');
     F.slice(0, st.n).forEach((x) => {
       const b = el('button', 'rc-card' + (st.sel === x.id ? ' sel' : '')); b.type = 'button';
-      const top = el('div', 'rc-card-top'); top.append(el('b', null, x.cliente), el('small', null, x.ruta + ' · #' + x.id)); b.append(top);
+      const top = el('div', 'rc-card-top'); top.append(el('b', null, cpnCli(x, 'id')), el('small', null, x.ruta)); b.append(top);
       const nums = el('div', 'rc-card-num');
       [['Hl', n1(x.hl)], dinero ? ['Venta', mx(x.venta)] : ['Cajas', n1(x.cajas)], mg ? ['Nos deja', mx(x.neto)] : ['Va para', n1(x.proyHl)], ['Ritmo', x.ritmo == null ? 'nuevo' : (x.ritmo > 0 ? '+' : '') + pc(x.ritmo)]].forEach(([k, v]) => { const d = el('div'); d.append(el('small', null, k), el('b', null, v)); nums.append(d); });
       b.append(nums);
@@ -189,7 +189,7 @@
       const ul = el('ul', 'rc-riesgo');
       grupos[k].sort((a, b) => b.prom3Hl - a.prom3Hl).forEach((x) => {
         const li = el('li');
-        const top = el('div', 'rc-card-top'); top.append(el('b', null, x.cliente), el('small', null, ' ' + x.ruta + ' · #' + x.id));
+        const top = el('div', 'rc-card-top'); top.append(el('b', null, cpnCli(x, 'id')), el('small', null, ' ' + x.ruta));
         const mot = [];
         if ((x.ritmo || 0) <= -0.3) mot.push('va ' + Math.round(-x.ritmo * 100) + '% abajo: ' + n1(x.proyHl) + ' Hl contra ' + n1(x.prom3Hl) + ' de promedio');
         if (x.diasSinComprar >= 10) mot.push(x.diasSinComprar + ' días sin comprar');
@@ -225,7 +225,7 @@
       const w2 = el('div', 'tblwrap'); const t2 = el('table', 'cpn-t'); const h2 = el('tr'); h2.append(el('th', null, 'Cliente'), el('th', null, 'Ruta'), el('th', 'num', 'Hl mes'));
       semanas.forEach((s0) => h2.append(el('th', 'num', 'Sem. ' + dia(s0).replace(/^\S+\s/, '')))); h2.append(el('th', 'num', 'Su ruta'));
       t2.append(el('thead')); t2.tHead.append(h2); const b2 = el('tbody');
-      casos.forEach((x) => { const tr = el('tr'); tr.append(el('td', null, x.cliente), el('td', null, x.ruta), el('td', 'num', n1(x.hl))); semanas.forEach((s0) => { const v = (x.satSem || []).find((q) => q[0] === s0); tr.append(el('td', 'num', v && v[1] != null ? pc(v[1]) : '—')); }); tr.append(el('td', 'num', pc(x.rutaSat))); b2.append(tr); });
+      casos.forEach((x) => { const tr = el('tr'); tr.append(el('td', null, cpnCli(x, 'id')), el('td', null, x.ruta), el('td', 'num', n1(x.hl))); semanas.forEach((s0) => { const v = (x.satSem || []).find((q) => q[0] === s0); tr.append(el('td', 'num', v && v[1] != null ? pc(v[1]) : '—')); }); tr.append(el('td', 'num', pc(x.rutaSat))); b2.append(tr); });
       t2.append(b2); w2.append(t2); cont.append(w2);
     }
     cont.append(el('p', 'pp-mia', 'Saturación = todo menos XX Lager. Grandes = el 25% de los clientes que más compran en la ruta; chicos = el 40% que menos. Si después de hablar con el vendedor la saturación de un cliente grande sube, se ve aquí semana a semana.'));
@@ -262,7 +262,7 @@
     const F = Q.filter((q) => !st.t || q.tipo === st.t);
     const w = el('div', 'tblwrap'); const t = el('table', 'cpn-t'); const h = el('tr'); ['Qué pasa', 'Ruta', 'Cliente', 'Detalle', 'Qué hacer'].forEach((x) => h.append(el('th', null, x)));
     t.append(el('thead')); t.tHead.append(h); const b = el('tbody');
-    F.slice(0, st.n).forEach((q) => { const tr = el('tr'); tr.append(el('td', null, q.tipo), el('td', null, q.ruta), el('td', null, q.cliente + ' (' + q.id + ')'), el('td', 'wrap', q.detalle), el('td', 'wrap', q.sugerencia)); b.append(tr); });
+    F.slice(0, st.n).forEach((q) => { const tr = el('tr'); tr.append(el('td', null, q.tipo), el('td', null, q.ruta), el('td', null, cpnCli(q, 'id')), el('td', 'wrap', q.detalle), el('td', 'wrap', q.sugerencia)); b.append(tr); });
     t.append(b); w.append(t); e.append(w);
     if (F.length > st.n) { const m = el('button', 'envf-chip', 'Ver más (' + (F.length - st.n) + ' restantes)'); m.type = 'button'; m.addEventListener('click', () => { st.n += 60; dash.draw('calidadCli'); }); e.append(m); }
   });

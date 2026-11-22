@@ -25,7 +25,7 @@
     L.forEach((x) => {
       const tr = el('tr'); const a = el('a', null, 'ver'); a.href = 'https://www.google.com/maps?q=' + x.gps; a.target = '_blank'; a.rel = 'noopener';
       const tm = el('td'); tm.append(a);
-      tr.append(el('td', null, dia(x.fecha)), el('td', null, x.hora), el('td', null, x.ruta), el('td', null, x.vendedor), el('td', null, x.cliente + ' (' + x.clienteId + ')'), el('td', 'num', money(x.venta)), el('td', null, x.cedis), el('td', 'num', String(x.metros)), el('td', null, x.camion), el('td', x.gravedad === 'alta' ? 'bad' : '', x.clase), tm);
+      tr.append(el('td', null, dia(x.fecha)), el('td', null, x.hora), el('td', null, x.ruta), el('td', null, x.vendedor), el('td', null, cpnCli(x)), el('td', 'num', money(x.venta)), el('td', null, x.cedis), el('td', 'num', String(x.metros)), el('td', null, x.camion), el('td', x.gravedad === 'alta' ? 'bad' : '', x.clase), tm);
       b.append(tr);
     });
     t.append(b); w.append(t); host.append(w);

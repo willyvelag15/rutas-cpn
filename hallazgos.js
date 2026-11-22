@@ -68,7 +68,7 @@
       const r = el('span', 'hal-r', h.ruta); r.style.color = color(h.ruta);
       izq.append(p, r);
       const c = el('div', 'hal-cuerpo');
-      const tit = el('b', null, h.tipo + (h.cliente ? ' · ' + h.cliente + (h.clienteId && h.clienteId.indexOf(',') < 0 ? ' (' + h.clienteId + ')' : '') : ''));
+      const tit = el('b', null, h.tipo + (h.cliente ? ' · ' + (h.clienteId && String(h.clienteId).indexOf(',') < 0 ? cpnCli(h) : h.cliente) : ''));
       c.append(tit, el('span', null, h.detalle));
       const meta = el('small', null, F.dia(h.fecha) + (h.vendedor ? ' · ' + h.vendedor : '') + (h.monto ? ' · ' + F.money(h.monto) : ''));
       c.append(meta);
@@ -111,7 +111,7 @@
       const p = el('span', 'pill ' + NOCONF[x.estado], x.estado.replace('Camión ', ''));
       const r = el('span', 'hal-r', x.ruta); r.style.color = color(x.ruta); izq.append(p, r);
       const c = el('div', 'hal-cuerpo');
-      c.append(el('b', null, x.cliente + ' (' + x.clienteId + ') · ' + F.money(x.venta)));
+      c.append(el('b', null, cpnCli(x) + ' · ' + F.money(x.venta)));
       let d;
       if (x.estado === 'Camión en la bodega') d = 'A la hora de la venta el camión estaba en la bodega' + (x.dCamion != null ? ', a ' + km(x.dCamion) + ' del cliente.' : '.');
       else if (x.estado === 'Camión pasó a otra hora') d = 'Durante la visita el camión estaba a ' + km(x.dCamion) + ' del cliente; pasó por ahí a otra hora del día.';

@@ -130,7 +130,7 @@
     e.append(el('p', 'note', 'Venta por venta, de la más reciente a la más vieja:'));
     const ul = el('ol', 'acciones hal-lista'); const n = st.reg ? T.length : Math.min(8, T.length);
     T.slice(0, n).forEach((x) => { const li = el('li'); const izq = el('div', 'hal-izq'); const r = el('span', 'hal-r', x.ruta); r.style.color = color(x.ruta); izq.append(el('span', 'pill bad', 'Tras regresar'), r);
-      const c = el('div', 'hal-cuerpo'); c.append(el('b', null, x.cliente + ' (' + x.clienteId + ') · ' + F.money(x.venta)));
+      const c = el('div', 'hal-cuerpo'); c.append(el('b', null, cpnCli(x) + ' · ' + F.money(x.venta)));
       c.append(el('span', null, 'El camión llegó a la bodega a las ' + x.regreso + ' y la venta se registró a las ' + x.hora + (x.dCaptura != null && x.dCaptura < 150 ? ', con el teléfono en la bodega (' + x.dCaptura + ' m).' : '.')));
       c.append(el('small', null, F.dia(x.fecha) + ' · ' + x.vendedor)); li.append(izq, c); ul.append(li); });
     e.append(ul);

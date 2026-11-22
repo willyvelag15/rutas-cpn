@@ -296,7 +296,7 @@
       const ul = el('ul', 'pp-hoy-l');
       H.clientes.forEach((c, i) => {
         const li = el('li', (c.comproSemana ? '' : 'pend') + (i >= 12 ? ' oculto' : ''));
-        const top = el('div', 'pp-hoy-top'); top.append(el('b', null, (c.id ? '#' + c.id + ' · ' : '') + c.cliente + (c.prop ? ' · ' + c.prop : '')), el('span', 'pill ' + (c.comproSemana ? 'ok' : 'warn'), c.comproSemana ? 'te compró' : 'ábrele venta'));
+        const top = el('div', 'pp-hoy-top'); top.append(el('b', null, cpnCli(c, 'id')), el('span', 'pill ' + (c.comproSemana ? 'ok' : 'warn'), c.comproSemana ? 'te compró' : 'ábrele venta'));
         li.append(top);
         if (c.motivo.length) li.append(el('small', null, c.motivo.join(' · ')));
         if (c.ofrecer.length) { const o = el('div', 'pp-hoy-of'); o.append(el('span', null, 'Ofrécele: ')); c.ofrecer.forEach((x) => o.append(el('span', 'pill' + (c.bono.includes(x) ? ' ok' : ''), x + (c.bono.includes(x) ? ' (bono)' : '')), document.createTextNode(' '))); li.append(o); }
@@ -515,7 +515,7 @@
     const c = el('article', 'card pp-l' + (l.resultado ? ' hecha' : ''));
     const cab = el('div', 'pp-cab'); cab.append(el('span', 'pill', l.ruta || 'Sin ruta'));
     if (l.fecha && l.fecha < hoy() && !l.resultado) cab.append(el('span', 'pp-lim bad', 'De ' + dia(l.fecha)));
-    c.append(cab, el('h3', null, l.cliente + (l.cliente_id ? ' (' + l.cliente_id + ')' : '')));
+    c.append(cab, el('h3', null, cpnCli(l, 'cliente_id')));
     const venta = 'Venta a confirmar: ' + (l.venta_fecha ? dia(l.venta_fecha) : 'fecha sin dato') + (l.venta_cajas != null ? ' · ' + Number(l.venta_cajas).toLocaleString('es-MX') + ' cajas' : '');
     c.append(el('p', 'pp-det', venta));
     if (l.pista) c.append(el('p', 'pp-det', 'Ese día hay dos entregas registradas (' + l.pista.replace(/^Dos ventas el mismo día en lugares distintos: /, '').replace(/, a [\d,]+ m una de otra.*$/, '') + '). Pregunta si recibió las dos y cuántas cajas en cada una.'));

@@ -96,7 +96,7 @@
     seg(e, RUTAS.map((r) => [r, r.replace('Ruta ', 'R')]), st.ven, (k) => { st.ven = k; st.masS = false; dash.draw('venSinVisita'); });
     const L = S.filter((s) => s.ruta === st.ven); const ol = el('ol', 'acciones hal-lista');
     const n = st.masS ? L.length : Math.min(12, L.length);
-    L.slice(0, n).forEach((s) => item(ol, null, s.cliente + ' (' + s.clienteId + ')', 'Cliente ' + s.tamano + ', compra ' + hl(s.hlMes) + ' Hl al mes' + (s.colonia ? ' · ' + s.colonia : '') + '.',
+    L.slice(0, n).forEach((s) => item(ol, null, cpnCli(s), 'Cliente ' + s.tamano + ', compra ' + hl(s.hlMes) + ' Hl al mes' + (s.colonia ? ' · ' + s.colonia : '') + '.',
       'Última visita: ' + (s.ultimaVisita ? F.dia(s.ultimaVisita) : 'no se ha visitado este mes') + ' · última compra: ' + (s.ultimaCompra ? F.dia(s.ultimaCompra) : '—'), null, s.tamano === 'chico' ? ['warn', 'Chico'] : s.tamano === 'grande' ? ['bad', 'Grande'] : ['ok', 'Mediano']));
     if (!L.length) ol.append(el('li', null, 'Visitó a todos sus clientes activos esta semana.'));
     e.append(el('p', 'note', L.length + (L.length === 1 ? ' cliente activo' : ' clientes activos') + ' de ' + st.ven + ' sin visita en los últimos 6 días hábiles.')); e.append(ol);
@@ -109,7 +109,7 @@
     seg(e, [['todas', 'Todas']].concat(RUTAS.map((r) => [r, r.replace('Ruta ', 'R')])), st.opo, (k) => { st.opo = k; st.masA = false; st.masP = false; dash.draw('opoAlejando'); dash.draw('opoPotencial'); });
     const L = A.filter((a) => st.opo === 'todas' || a.ruta === st.opo); const ol = el('ol', 'acciones hal-lista');
     const n = st.masA ? L.length : Math.min(10, L.length);
-    L.slice(0, n).forEach((a) => item(ol, a.ruta, a.cliente + ' · ' + a.diasSin + ' días sin comprar',
+    L.slice(0, n).forEach((a) => item(ol, a.ruta, cpnCli(a) + ' · ' + a.diasSin + ' días sin comprar',
       'Normalmente compra cada ' + Math.round(a.cadaDias) + ' días (' + hl(a.hlMes) + ' Hl al mes, ' + F.money(a.margenMes) + ' de margen). Última compra: ' + F.dia(a.ultimaCompra) + '.',
       (a.visitadoSemana ? 'Sí lo visitaron esta semana' : 'No lo visitaron esta semana') + (a.motivo ? ' · motivo: ' + a.motivo.replace(/\s*-\s*$/, '').toLowerCase() : ''),
       a.visitadoSemana ? 'Ir con el vendedor y preguntar qué pasó (competencia, precio, crédito).' : 'Que el vendedor lo visite esta semana.', a.tamano === 'grande' ? ['bad', 'Grande'] : a.tamano === 'mediano' ? ['warn', 'Mediano'] : ['ok', 'Chico']));
@@ -119,7 +119,7 @@
   dash.draw('opoPotencial', (e) => {
     e.replaceChildren(); const L = rows('crecercli').filter((a) => st.opo === 'todas' || a.ruta === st.opo); const ol = el('ol', 'acciones hal-lista');
     const n = st.masP ? L.length : Math.min(8, L.length);
-    L.slice(0, n).forEach((c) => item(ol, c.ruta, c.cliente + ' · ' + c.giro, 'Compra ' + hl(c.hlMes) + ' Hl al mes; un ' + c.giro.toLowerCase() + ' normal compra ' + hl(c.hlGiro) + '. Si llega a lo normal deja ' + F.money(c.potencialMargen) + ' más de margen al mes.', c.ofrecer ? 'Ofrecer: ' + c.ofrecer : null, null, null));
+    L.slice(0, n).forEach((c) => item(ol, c.ruta, cpnCli(c) + ' · ' + c.giro, 'Compra ' + hl(c.hlMes) + ' Hl al mes; un ' + c.giro.toLowerCase() + ' normal compra ' + hl(c.hlGiro) + '. Si llega a lo normal deja ' + F.money(c.potencialMargen) + ' más de margen al mes.', c.ofrecer ? 'Ofrecer: ' + c.ofrecer : null, null, null));
     e.append(ol); mas(e, L.length, n, () => { st.masP = true; dash.draw('opoPotencial'); });
   });
   dash.draw('opoPoblacion', (e) => {
@@ -144,7 +144,7 @@
     seg(e, OP, st.bon, (k) => { st.bon = k; st.masB = false; dash.draw('bonLista'); });
     const L = B.filter((b) => b.veredicto === st.bon).sort((a, b) => (st.bon === 'Crece con poca bonificación' ? a.exceso - b.exceso : b.exceso - a.exceso));
     const ol = el('ol', 'acciones hal-lista'); const n = st.masB ? L.length : Math.min(10, L.length);
-    L.slice(0, n).forEach((b) => item(ol, b.ruta, b.cliente + ' (' + b.clienteId + ')',
+    L.slice(0, n).forEach((b) => item(ol, b.ruta, cpnCli(b),
       F.money(b.gasto) + ' de bonificación y promoción por ' + hl(b.hl) + ' Hl: ' + F.money(b.gastoHl) + ' por Hl contra ' + F.money(b.rutaGastoHl) + ' de su ruta (' + (b.exceso >= 0 ? F.money(b.exceso) + ' de más' : F.money(-b.exceso) + ' de menos') + ').',
       'Volumen ' + signo(b.tendencia) + ' (ago-oct contra ene-jul) · margen ' + F.money(b.margenMes) + ' al mes · ' + b.visitasMes + ' días con visita al mes' + (b.hallazgos ? ' · sale ' + b.hallazgos + (b.hallazgos === 1 ? ' vez' : ' veces') + ' en Hallazgos' : ''),
       st.bon === 'Recibe de más y no crece' ? 'Bajarle el apoyo o pedir que crezca; revisar a quién le vende.' : st.bon === 'No deja: cuesta más visitarlo' ? 'Pasarlo a visita cada 15 días o a pedido por teléfono.' : st.bon === 'Crece con poca bonificación' ? 'Cuidarlo: es buen cliente para premiar con promoción.' : null,
@@ -168,7 +168,7 @@
   });
   dash.draw('kmFuera', (e) => {
     e.replaceChildren(); const Z = rows('fuerazona'); const ol = el('ol', 'acciones');
-    Z.forEach((z) => item(ol, z.ruta, z.cliente + ' (' + z.clienteId + ')', 'Está a ' + hl(z.kmMismaRuta) + ' km de los clientes de su ruta y a ' + F.int(z.mOtraRuta) + ' m de ' + z.vecinosOtraRuta + ' clientes de ' + z.rutaSugerida + '. Compra ' + hl(z.hlMes) + ' Hl al mes.', null, 'Valorar pasarlo a ' + z.rutaSugerida + '.', null));
+    Z.forEach((z) => item(ol, z.ruta, cpnCli(z), 'Está a ' + hl(z.kmMismaRuta) + ' km de los clientes de su ruta y a ' + F.int(z.mOtraRuta) + ' m de ' + z.vecinosOtraRuta + ' clientes de ' + z.rutaSugerida + '. Compra ' + hl(z.hlMes) + ' Hl al mes.', null, 'Valorar pasarlo a ' + z.rutaSugerida + '.', null));
     if (!Z.length) ol.append(el('li', null, 'Todos los clientes quedan en la zona de su ruta.'));
     e.append(ol);
   });

@@ -99,9 +99,9 @@
     const iR = cols.findIndex((x) => x[0] === 'Ruta');
     const F = filas.filter((f) => iR < 0 || ok(f[iR]));
     if (!F.length) return el('p', 'pp-mia', 'Nada que mostrar.');
-    const w = el('div', 'tblwrap'); const t = el('table', 'cpn-t'); const h = el('tr'); cols.forEach(([n, cl]) => h.append(el('th', cl || null, n)));
+    const w = el('div', 'tblwrap'); const t = el('table', 'cpn-t pp-tarj'); const h = el('tr'); cols.forEach(([n, cl]) => h.append(el('th', cl || null, n)));
     t.append(el('thead')); t.tHead.append(h); const b = el('tbody');
-    F.forEach((f) => { const tr = el('tr'); f.forEach((x, i) => tr.append(el('td', (cols[i] && cols[i][1]) || null, x))); b.append(tr); });
+    F.forEach((f) => { const tr = el('tr'); f.forEach((x, i) => { const td = el('td', (cols[i] && cols[i][1]) || null, x); td.setAttribute('data-k', (cols[i] && cols[i][0]) || ''); tr.append(td); }); b.append(tr); });
     t.append(b); w.append(t); return w;
   }
 
@@ -296,7 +296,7 @@
       const ul = el('ul', 'pp-hoy-l');
       H.clientes.forEach((c, i) => {
         const li = el('li', (c.comproSemana ? '' : 'pend') + (i >= 12 ? ' oculto' : ''));
-        const top = el('div', 'pp-hoy-top'); top.append(el('b', null, c.cliente), el('span', 'pill ' + (c.comproSemana ? 'ok' : 'warn'), c.comproSemana ? 'te compró' : 'ábrele venta'));
+        const top = el('div', 'pp-hoy-top'); top.append(el('b', null, (c.id ? '#' + c.id + ' · ' : '') + c.cliente + (c.prop ? ' · ' + c.prop : '')), el('span', 'pill ' + (c.comproSemana ? 'ok' : 'warn'), c.comproSemana ? 'te compró' : 'ábrele venta'));
         li.append(top);
         if (c.motivo.length) li.append(el('small', null, c.motivo.join(' · ')));
         if (c.ofrecer.length) { const o = el('div', 'pp-hoy-of'); o.append(el('span', null, 'Ofrécele: ')); c.ofrecer.forEach((x) => o.append(el('span', 'pill' + (c.bono.includes(x) ? ' ok' : ''), x + (c.bono.includes(x) ? ' (bono)' : '')), document.createTextNode(' '))); li.append(o); }

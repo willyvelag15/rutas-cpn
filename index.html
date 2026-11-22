@@ -262,6 +262,17 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .rc-card .pill{font-size:11px}
 @media (max-width:700px){.rcli .rc-full{display:none}.rc-cards{display:flex}}
 #persona .pp-main{min-width:0}#persona .pp-menu{align-self:start}
+@media (max-width:640px){
+  #persona table.pp-tarj thead{display:none}
+  #persona table.pp-tarj,#persona table.pp-tarj tbody,#persona table.pp-tarj tr,#persona table.pp-tarj td{display:block;width:100%}
+  #persona table.pp-tarj tr{border:1px solid var(--color-border-line);border-radius:12px;padding:10px 12px;margin:0 0 10px}
+  #persona table.pp-tarj td{display:flex;justify-content:space-between;gap:12px;text-align:right;border:0;padding:3px 0;white-space:normal}
+  #persona table.pp-tarj td::before{content:attr(data-k);color:var(--color-fg-muted);text-align:left;font-size:13px;flex:none;max-width:45%}
+  #persona table.pp-tarj td[data-k=""]{font-weight:700;justify-content:flex-start}
+  #persona table.pp-tarj td[data-k=""]::before{display:none}
+  #persona table.pp-tarj td[data-k="Cliente"]{font-weight:700;text-align:left;justify-content:flex-start}
+  #persona table.pp-tarj td[data-k="Cliente"]::before{display:none}
+}
 #persona .pp-menubtn{display:flex;align-items:center;gap:10px;font:inherit;font-size:15px;font-weight:600;color:var(--color-fg);background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:12px;padding:10px 14px;cursor:pointer;align-self:flex-start}
 #persona .pp-hamb{font-size:18px;line-height:1}
 #persona .pp-velo{display:none}

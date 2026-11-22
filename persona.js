@@ -136,7 +136,7 @@
     dash.append(menu, velo, main); v.append(dash);
     // celular: menú lateral que se abre con el botón ☰ (Willy, 21-nov-2026: nada de puro scroll)
     const mb = el('button', 'pp-menubtn'); mb.type = 'button'; mb.setAttribute('aria-label', 'Abrir menú');
-    mb.append(el('span', 'pp-hamb', '☰'), el('span', null, (st.sec ? (CORTO[st.sec] || ((items.find((x) => x.id === st.sec) || {}).s || {}).titulo || 'Menú') : 'Inicio')));
+    mb.append(el('span', 'pp-hamb', '☰'), el('span', null, (st.sec ? (CORTO[st.sec] || ((items.find((x) => x.id === st.sec) || {}).s || {}).titulo || 'Menú') : 'Menú')));
     mb.addEventListener('click', () => { menu.classList.add('abierto'); velo.classList.add('abierto'); });
     main.append(mb);
 
@@ -159,16 +159,7 @@
         main.append(k);
         if (P.mix && (P.mix.filas || []).length) main.append(graficaMix(P.mix));
       }
-      const g = el('div', 'pp-grid');
-      items.forEach((x) => {
-        const c = el('button', 'pp-cuadro'); c.type = 'button';
-        const t = x.s && (x.s.tiles || [])[0];
-        c.append(icono(x.id), el('b', null, CORTO[x.id] || (x.s && x.s.titulo)));
-        c.append(el('small', null, x.id === 'inv' ? (st.yo.rol === 'almacen_mix' ? 'Mixtequilla' : 'Piedras Negras y Mixtequilla') : x.id === 'pron' ? (P.pron ? 'Arma el pedido de la ' + P.pron.hojaS2.toLowerCase() : 'El archivo del martes') : x.id === 'slides' ? (esVend ? 'Tu diapositiva de la semana' : 'Diapositivas por ruta') : x.id === 'hoy' ? P.hoy.clientes.length + ' clientes te tocan el ' + P.hoy.dia : t ? t.k + ': ' + t.v : 'Ver detalle'));
-        c.addEventListener('click', () => { st.sec = x.id; pintarPanel(v); window.scrollTo({ top: 0, behavior: 'smooth' }); });
-        g.append(c);
-      });
-      main.append(g);
+      // (21-nov-2026, Willy) sin cuadros de secciones en el Inicio: todo se abre desde el menú lateral
       return;
     }
 

@@ -215,18 +215,75 @@
     e.append(el('p', 'note', 'Se recalcula todas las noches con la venta del día. Por defecto aparece la última semana completa, que es la que se manda el lunes. "Compartir" abre WhatsApp en el celular; en la computadora guarda la imagen.'));
   });
 
+
+  /* Mensaje general para el grupo (Willy, 23-nov-2026): uno solo, máximo 2 párrafos, cómo nos fue y cómo estuvo la semana. Sin pesos. */
+  function mensajeGeneral(S, P, X) {
+    const R = S.filter((s) => s.kpi && s.kpi.hl != null);
+    if (!R.length) return '';
+    const sum = (f) => R.reduce((a, s) => a + (f(s) || 0), 0);
+    const hl = sum((s) => s.kpi.hl), meta = sum((s) => s.kpi.metaPeriodo);
+    const ant = sum((s) => (s.kpi.comparaciones && s.kpi.comparaciones[0] ? s.kpi.comparaciones[0].hl : null));
+    const cmb = ant ? hl / ant - 1 : null;
+    const hlMes = sum((s) => s.mes && s.mes.hlMes), metaMes = sum((s) => s.mes && s.mes.metaHl), pron = sum((s) => s.mes && s.mes.pronostico);
+    const dr = Math.max(...R.map((s) => (s.mes && s.mes.diasRestan) || 0));
+    const nec = dr ? Math.max(0, metaMes - hlMes) / dr : 0;
+    const xx = sum((s) => ((s.marcas || []).find((m) => m.marca === 'XX Lager') || {}).hl), mhl = sum((s) => (s.marcas || []).reduce((a, m) => a + m.hl, 0));
+    const sat = mhl ? 1 - xx / mhl : null;
+    const pasaron = R.filter((s) => s.kpi.avance >= 1).sort((a, b) => b.kpi.avance - a.kpi.avance);
+    const crecen = R.filter((s) => s.kpi.cambio != null && s.kpi.cambio >= 0.05).sort((a, b) => b.kpi.cambio - a.kpi.cambio);
+    const nom = (s) => s.vendedor.split(' ')[0] + ' (' + s.ruta + ')';
+    const lista = (a) => a.length <= 1 ? a.join('') : a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1];
+    const per = P.tipo === 'mes' ? 'en el mes' : 'esta semana';
+    let p1 = 'Equipo, así nos fue ' + (P.tipo === 'mes' ? 'en ' + P.etiqueta.toLowerCase() : 'la ' + P.etiqueta.toLowerCase()) + ': sacamos ' + n1(hl) + ' Hl de ' + n1(meta) + ' de meta (' + pc(meta ? hl / meta : null) + ')';
+    if (cmb != null && P.tipo === 'semana') p1 += ', ' + (cmb >= 0.02 ? n0(cmb * 100) + '% más' : cmb <= -0.02 ? n0(-cmb * 100) + '% menos' : 'casi lo mismo') + ' que la semana anterior';
+    p1 += '. ';
+    if (P.tipo === 'mes') {
+      p1 = p1.replace(/\. $/, '');
+      p1 += ', y por los días que van deberíamos ir en ' + pc(P.dias / 25) + '. ';
+      const mejor = R.slice().sort((a, b) => (b.mes.avance || 0) - (a.mes.avance || 0)).filter((s) => (s.mes.avance || 0) >= P.dias / 25);
+      if (mejor.length) p1 += 'Felicidades a ' + lista(mejor.slice(0, 3).map(nom)) + (mejor.length === 1 ? ', que va' : ', que van') + ' al corriente o arriba de su meta. ';
+      if (pron) p1 += 'A este ritmo cerramos en ' + n0(pron) + ' Hl.';
+    } else {
+    if (pasaron.length) p1 += 'Felicidades a ' + lista(pasaron.slice(0, 3).map(nom)) + (pasaron.length === 1 ? ', que pasó' : ', que pasaron') + ' su meta' + (P.tipo === 'mes' ? '' : ' de la semana') + '. ';
+    else if (crecen.length) p1 += 'Bien por ' + lista(crecen.slice(0, 3).map(nom)) + ', que crecieron contra la semana anterior. ';
+    p1 += 'En el mes llevamos ' + n0(hlMes) + ' de ' + n0(metaMes) + ' Hl (' + pc(metaMes ? hlMes / metaMes : null) + ')' + (pron ? ' y a este ritmo cerramos en ' + n0(pron) + ' Hl' : '') + '.';
+    }
+    const efe = sum((s) => s.score && s.score.conPedido) / (sum((s) => s.score && s.score.visHechas) || 1);
+    const pend = sum((s) => s.perdida && s.perdida.clientes), pcj = sum((s) => s.perdida && s.perdida.cajas);
+    const bonoOk = []; R.forEach((s) => (s.bonos || []).forEach((b) => { if (b.cajasMes >= b.minimo) bonoOk.push(s.vendedor.split(' ')[0] + ' en ' + b.nombre); }));
+    let p2 = (metaMes > hlMes ? 'Para llegar a la meta del mes nos faltan ' + n0(metaMes - hlMes) + ' Hl en ' + dr + ' días: ocupamos unos ' + n1(nec) + ' Hl diarios entre todos. ' : '¡Ya pasamos la meta del mes! Todo lo que vendamos ahora es extra. ');
+    p2 += 'Esta semana enfóquense en tres cosas: ';
+    const foco = [];
+    foco.push('cerrar más visitas con pedido (hoy compran ' + n0(efe * 10) + ' de cada 10 visitas)');
+    if (sat != null) foco.push(sat >= 0.10 ? 'mantener la saturación arriba de 10% (vamos en ' + pc(sat) + '), ofreciendo otras marcas además de XX Lager' : 'subir la saturación a 10% (vamos en ' + pc(sat) + '): ofrezcan Tecate, Indio, Sol, Amstel Ultra y Miller en cada visita');
+    if (pend) foco.push('recuperar a los ' + n0(pend) + ' clientes que no compraron ' + per + ', que son como ' + n0(pcj) + ' cajas que se dejaron de vender');
+    p2 += foco.slice(0, 3).join('; ') + '. ';
+    p2 += bonoOk.length ? 'En bonos ya van ' + lista(bonoOk.slice(0, 4)) + '; los demás todavía alcanzan, revisen en su página cuántas cajas les faltan. ' : 'En los bonos nadie ha llegado todavía: revisen en su página cuántas cajas les faltan de Miller y Amstel Ultra. ';
+    p2 += 'A darle, que sí se puede.';
+    return p1 + '\n\n' + p2;
+  }
+
   dash.draw('pzSlides', (e) => {
     e.replaceChildren(); const X = data(); if (!X) return;
     const P = X.periodos.find((p) => p.id === st.periodo); if (!P) return;
     const S = X.slides.filter((s) => s.periodo === P.id && (st.ruta === 'todas' || s.ruta === st.ruta)).sort((a, b) => a.rutaNum - b.rutaNum);
     const list = el('div', 'pz-list'); list.id = 'pz-slides';
+    const todasP = X.slides.filter((s) => s.periodo === P.id);
+    const msg = mensajeGeneral(todasP, P, X);
+    if (msg) {
+      const wg = el('div', 'pz-wrap');
+      const mg = el('div', 'pz-msg'); mg.append(el('b', null, 'Mensaje para el grupo de vendedores (cópialo y pégalo en WhatsApp)'), document.createTextNode(msg));
+      const bt = el('div', 'pz-ctl'); const b3 = el('button', 'pz-btn', 'Copiar mensaje'); b3.type = 'button';
+      b3.onclick = async () => { try { await navigator.clipboard.writeText(msg); b3.textContent = 'Copiado'; } catch (err) { const r = document.createRange(); r.selectNodeContents(mg); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b3.textContent = 'Selecciónalo y copia'; } setTimeout(() => { b3.textContent = 'Copiar mensaje'; }, 2000); };
+      bt.append(b3); wg.append(mg, bt); list.append(wg);
+    }
     S.forEach((s) => {
       const w = el('div', 'pz-wrap'); const node = slide(s, P, X.corte);
       const bt = el('div', 'pz-ctl');
       const b1 = el('button', 'pz-btn', 'Compartir'); b1.type = 'button'; b1.onclick = async () => { b1.disabled = true; try { await bajar(node, s, P, true); } catch (err) { alert('No se pudo crear la imagen: ' + err.message); } b1.disabled = false; };
       const b2 = el('button', 'pz-btn sec', 'Guardar imagen'); b2.type = 'button'; b2.onclick = async () => { b2.disabled = true; try { await bajar(node, s, P, false); } catch (err) { console.log(err); } b2.disabled = false; };
       bt.append(b1, b2);
-      if (s.mensaje) {
+      if (false && s.mensaje) {   // (23-nov-2026) ya no hay mensaje por ruta: uno general arriba
         const mg = el('div', 'pz-msg'); mg.append(el('b', null, 'Mensaje para ' + s.vendedor.split(' ')[0] + ' (cópialo y pégalo en WhatsApp)'), document.createTextNode(s.mensaje));
         const b3 = el('button', 'pz-btn sec', 'Copiar mensaje'); b3.type = 'button';
         b3.onclick = async () => { try { await navigator.clipboard.writeText(s.mensaje); b3.textContent = 'Copiado'; } catch (e) { const r = document.createRange(); r.selectNodeContents(mg.lastChild.parentNode); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b3.textContent = 'Selecciónalo y copia'; } setTimeout(() => { b3.textContent = 'Copiar mensaje'; }, 2000); };

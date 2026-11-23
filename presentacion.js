@@ -222,8 +222,9 @@
     if (!R.length) return '';
     const sum = (f) => R.reduce((a, s) => a + (f(s) || 0), 0);
     const hl = sum((s) => s.kpi.hl), meta = sum((s) => s.kpi.metaPeriodo);
-    const ant = sum((s) => (s.kpi.comparaciones && s.kpi.comparaciones[0] ? s.kpi.comparaciones[0].hl : null));
-    const cmb = ant ? hl / ant - 1 : null;
+    // contra la semana anterior POR DÍA (la semana puede venir incompleta o con festivo)
+    const eq = sum((s) => (s.kpi.cambio != null && s.kpi.cambio > -1 ? s.kpi.hl / (1 + s.kpi.cambio) : null));
+    const cmb = eq ? hl / eq - 1 : null;
     const hlMes = sum((s) => s.mes && s.mes.hlMes), metaMes = sum((s) => s.mes && s.mes.metaHl), pron = sum((s) => s.mes && s.mes.pronostico);
     const dr = Math.max(...R.map((s) => (s.mes && s.mes.diasRestan) || 0));
     const nec = dr ? Math.max(0, metaMes - hlMes) / dr : 0;
@@ -235,7 +236,7 @@
     const lista = (a) => a.length <= 1 ? a.join('') : a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1];
     const per = P.tipo === 'mes' ? 'en el mes' : 'esta semana';
     let p1 = 'Equipo, así nos fue ' + (P.tipo === 'mes' ? 'en ' + P.etiqueta.toLowerCase() : 'la ' + P.etiqueta.toLowerCase()) + ': sacamos ' + n1(hl) + ' Hl de ' + n1(meta) + ' de meta (' + pc(meta ? hl / meta : null) + ')';
-    if (cmb != null && P.tipo === 'semana') p1 += ', ' + (cmb >= 0.02 ? n0(cmb * 100) + '% más' : cmb <= -0.02 ? n0(-cmb * 100) + '% menos' : 'casi lo mismo') + ' que la semana anterior';
+    if (cmb != null && P.tipo === 'semana') p1 += ', ' + (cmb >= 0.02 ? n0(cmb * 100) + '% más por día' : cmb <= -0.02 ? n0(-cmb * 100) + '% menos por día' : 'casi lo mismo por día') + ' que la semana anterior' + (P.completa ? '' : ' (semana en curso, al ' + fd(P.hasta) + ')');
     p1 += '. ';
     if (P.tipo === 'mes') {
       p1 = p1.replace(/\. $/, '');

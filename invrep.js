@@ -44,7 +44,7 @@
       const b = base.get(k) || { clave: k, sku: '', producto: '', almacen: 0, camiones: 0, cxt: 0, ventaDia: 0, lxc: 0, facMes: 1 };
       const alm = src && src.porClave && src.porClave[k] != null ? src.porClave[k] : b.almacen;
       const nom = (src && src.nombres && src.nombres[k]) || b.producto || k;
-      const inv = alm || 0;   // (Willy, 24-nov-2026) solo lo que trae el Excel: inventario en almacén, sin camiones const vd = b.ventaDia || 0; const lxc = b.lxc || 0;
+      /* (Willy, 24-nov-2026) solo lo que trae el Excel: inventario en almacén, sin camiones */ const inv = alm || 0; const vd = b.ventaDia || 0; const lxc = b.lxc || 0;
       if (!inv && !vd) return;
       const dias = vd > 0 ? inv / vd : null;
       let fin = null; if (dias != null) { fin = new Date(hoy); let n = dias; while (n >= 1) { fin.setDate(fin.getDate() + 1); if (esVenta(fin)) n--; } }

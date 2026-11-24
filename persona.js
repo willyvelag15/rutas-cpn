@@ -180,7 +180,7 @@
     if (it.id === 'inv') {
       // (Willy, 24-nov-2026) a la derecha, el reporte de días de inventario listo para imprimir
       const pr = P.pron; const der = el('div', 'ir-der');
-      const pinta = (src) => { if (window.CPN_INVREP) window.CPN_INVREP.render(der, pr, src); };
+      const pinta = (src) => { try { if (window.CPN_INVREP) window.CPN_INVREP.render(der, pr, src); } catch (e) { der.replaceChildren(el('p', 'pp-err', 'No se pudo armar el reporte: ' + e.message)); } };
       const ultimo = () => { try { const u = JSON.parse(localStorage.getItem('cpn-inv-ult')); if (u && pr && u.ts > Date.parse((pr.generado || '') + 'Z')) return { archivo: u.nombre, cuando: u.ts, porClave: u.porClave, nombres: u.nombres }; } catch (e) { /* */ } return pr ? { archivo: pr.inventarioArchivo, cuando: Date.parse((pr.fecha || '') + 'T12:00') || Date.now() } : null; };
       const izq = await cajaInventario(true, null, async (file, almacen) => {
         if (!pr || almacen !== 'Piedras Negras' || !/\.xls[xm]?$/i.test(file.name) || !window.CPN_INVREP) return;

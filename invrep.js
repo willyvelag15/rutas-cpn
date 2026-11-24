@@ -61,14 +61,16 @@
   function render(cont, pron, src) {
     cont.replaceChildren();
     if (!pron || !(pron.invRep || []).length) { cont.append(el('p', 'pp-mia', 'El reporte de días de inventario aparece cuando hay datos de venta.')); return; }
-    const obj = pron.diasObjetivo || 20;
+    let obj = pron.diasObjetivo || 20; try { const g = Number(localStorage.getItem('cpn-invrep-obj')); if (g > 0) obj = g; } catch (e) { /* */ }
     const D = filas(pron, src);
     const cab = el('div', 'ir-cab');
     const tit = el('div'); tit.append(el('b', null, 'Días de inventario'), el('small', null, (src && src.archivo ? src.archivo : pron.inventarioArchivo) + ' · ' + fechaEs(D.hoy) + ' · inventario = almacén + camiones · venta diaria del mes · mes = ' + D.mesNombre + ' (' + D.diasMes + ' días de venta' + (D.mesNombre === 'diciembre' ? ', con el aumento de diciembre del año pasado' : '') + ')'));
     const acc = el('div', 'ir-acc');
     const bP = el('button', 'pp-btn', 'Imprimir'); bP.type = 'button'; bP.addEventListener('click', () => imprimir(D, src, pron, obj));
     const bX = el('button', 'pp-btn pr-sec', 'Excel'); bX.type = 'button'; bX.addEventListener('click', async () => { try { bX.disabled = true; await excel(D, src, pron, obj); } catch (e) { window.alert('No se pudo armar el Excel: ' + e.message); } finally { bX.disabled = false; } });
-    acc.append(bP, bX); cab.append(tit, acc);
+    const lo = el('label', 'pr-campo ir-obj'); lo.append(el('span', null, 'Días objetivo')); const io = el('input'); io.type = 'number'; io.min = 3; io.max = 60; io.step = 1; io.value = obj;
+    io.addEventListener('change', () => { const v = Math.max(3, Math.round(Number(io.value) || 20)); try { localStorage.setItem('cpn-invrep-obj', String(v)); } catch (e) { /* */ } render(cont, pron, src); }); 
+    acc.append(lo, bP, bX); cab.append(tit, acc);
     const ley = el('div', 'pr-ley'); [['#e5484d', 'menos de 7 días'], ['#E9B949', 'menos de ' + obj + ' días'], ['#30a46c', obj + ' días o más']].forEach(([c, t]) => { const x = el('span'); const i = el('i'); i.style.background = c; x.append(i, document.createTextNode(t)); ley.append(x); });
     const tw = el('div', 'tblwrap ir-tw'); const tb = el('table', 'cpn-t pr-t ir-t');
     const hd = el('tr'); COLS.forEach((x, i) => hd.append(el('th', i > 2 ? 'num' : null, x))); tb.append(el('thead')); tb.tHead.append(hd);

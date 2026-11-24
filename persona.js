@@ -170,6 +170,8 @@
     h.append(vb, icono(it.id), el('h3', null, it.s ? it.s.titulo : CORTO[it.id]));
     c.append(h);
     if (it.id === 'hoy') { c.append(listaHoy(P)); main.append(c); return; }
+    // (Willy, 24-nov-2026) Programa Heineken de Rubí en recuadros, más fácil de leer
+    if (it.id === 'programa' && P.pron && P.pron.programa && window.CPN_PRON && window.CPN_PRON.programaCards) { const b = el('div'); window.CPN_PRON.programaCards(b, P.pron); c.append(b); main.append(c); return; }
     if (it.id === 'inv') {
       // (Willy, 24-nov-2026) a la derecha, el reporte de días de inventario listo para imprimir
       const pr = P.pron; const der = el('div', 'ir-der');

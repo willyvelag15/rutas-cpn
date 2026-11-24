@@ -84,6 +84,39 @@
     return { filas, tot, porSku: S };
   }
 
+  // ---------- Pedidos del Programa de Franquicias en recuadros (Willy, 24-nov-2026) ----------
+  const EST = (e, g) => { const x = String(e || '').toUpperCase(); if (x === 'RECIBIDO') return ['Ya llegó', 'ok']; if (x.startsWith('NO PRELIBERADO')) return ['Detenido por crédito', 'bad']; if (x === 'PRELIBERADO') return ['Preliberado', 'ok']; if (x === 'CREADO') return ['Creado', 'warn']; if (x === 'EMBARCADO' || String(g || '').toUpperCase() === 'EMBARCADO') return ['En camino', 'ok']; return [e || '—', '']; };
+  const fCorta = (s) => { if (!s) return '—'; const d = new Date(s + 'T12:00'); return d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }); };
+  function tarjetaPedido(x) {
+    const c = el('div', 'pr-viaje pg-card'); const h = el('div', 'pr-vcab');
+    const [et, tono] = EST(x.estatus, x.grupo); const tar = (x.productos || []).reduce((a, y) => a + (Number(y.tarimas) || 0), 0);
+    h.append(el('b', null, fCorta(x.fechaPlan)), el('span', 'pg-est ' + tono, et), el('span', 'pr-vtot', n0(tar) + ' tar · ' + n1(x.hl) + ' Hl'));
+    c.append(h, el('small', 'pg-num', 'Pedido ' + x.pedido + (x.fechaReal ? ' · llegó ' + fCorta(x.fechaReal) : '')));
+    (x.productos || []).slice().sort((a, b) => (b.tarimas || 0) - (a.tarimas || 0)).forEach((y) => { const r = el('div', 'pg-lin'); r.append(el('span', null, String(y.producto || y.sku).replace(/^\d+-/, '')), el('b', null, n0(y.tarimas) + ' tar')); c.append(r); });
+    return c;
+  }
+  function grupoPedidos(titulo, nota, lista) {
+    const sec = el('section', 'pr-col'); sec.append(el('h4', 'pr-h', titulo)); if (nota) sec.append(el('p', 'pp-mia', nota));
+    const g = el('div', 'pr-viajes'); if (!lista.length) g.append(el('p', 'pp-mia', 'Ninguno.')); lista.forEach((x) => g.append(tarjetaPedido(x))); sec.append(g); return sec;
+  }
+  // Para la sección "Programa Heineken" de Rubí
+  function programaCards(cont, P) {
+    cont.replaceChildren(); const G = P && P.programa;
+    if (!G) { cont.append(el('p', 'pp-mia', 'Todavía no se ha leído el Programa de Franquicias.')); return; }
+    const tiles = el('div', 'pr-tiles'); const t = (k, v, sub, tono) => { const d = el('div', 'ht' + (tono ? ' ' + tono : '')); d.append(el('span', null, k), el('b', null, v)); if (sub) d.append(el('small', null, sub)); tiles.append(d); };
+    t('Ya llegó en el mes', n0(G.embarcado) + ' Hl', Math.round((G.cumplimiento || 0) * 100) + '% de la meta de ' + n0(G.meta) + ' Hl', (G.cumplimiento || 0) < (G.avanceTiempo || 0) ? 'warn' : '');
+    const pend = (G.pedidos || []).filter((x) => String(x.estatus).toUpperCase() !== 'RECIBIDO' && !x.fechaReal);
+    const pendHl = pend.reduce((a, x) => a + (x.hl || 0), 0); const pendT = pend.reduce((a, x) => a + (x.productos || []).reduce((b, y) => b + (y.tarimas || 0), 0), 0);
+    t('Por llegar', n0(pendHl) + ' Hl', pend.length + ' pedidos · ' + n0(pendT) + ' tarimas');
+    const det = pend.filter((x) => String(x.estatus).toUpperCase().startsWith('NO PRELIBERADO'));
+    if (det.length) t('Detenidos por crédito', String(det.length), n0(det.reduce((a, x) => a + (x.hl || 0), 0)) + ' Hl esperando pago', 'bad');
+    t('Falta para la meta', n0(G.faltaHl) + ' Hl', G.lugar ? 'lugar ' + G.lugar + ' de ' + (G.franquicias || '—') + ' franquicias' : '');
+    cont.append(el('p', 'pp-mia', 'Programa del ' + fCorta(G.fecha) + '. Todo lo que dice "por llegar" ya está pedido: el pronóstico lo cuenta para no volverlo a pedir.'), tiles);
+    cont.append(grupoPedidos('Por llegar', null, pend.sort((a, b) => (a.fechaPlan || '').localeCompare(b.fechaPlan || ''))));
+    const lleg = (G.pedidos || []).filter((x) => !pend.includes(x)).sort((a, b) => (b.fechaPlan || '').localeCompare(a.fechaPlan || ''));
+    const d = el('details', 'pp-det'); d.append(el('summary', null, 'Ya llegaron este mes (' + lleg.length + ')')); const g = el('div', 'pr-viajes'); lleg.forEach((x) => g.append(tarjetaPedido(x))); d.append(g); cont.append(d);
+  }
+
   const semaf = (d, obj) => (d == null ? '' : d < 7 ? 'pr-r' : d < obj ? 'pr-a' : 'pr-v');
 
   // Si Rubí subió un inventario de Piedras Negras después de que se armaron los datos de la noche, se usa ese
@@ -148,7 +181,14 @@
     const colV = el('section', 'pr-col'); colV.append(el('h4', 'pr-h', 'Viajes · cambia el SKU o las tarimas y arriba se recalcula'), viajesBox);
     const colS = el('section', 'pr-col'); colS.append(el('h4', 'pr-h', 'Pronóstico por SKU'), resumenBox);
     const colI = el('section', 'pr-col'); colI.append(el('h4', 'pr-h', 'Días de inventario'), invBox);
-    wrap.append(bar, msg, tiles, colV, colS, colI);
+    const pend = (P.pendientes || []);
+    const etiq = { esta: 'Llega esta semana', S1: 'Llega en la S+1 (' + dia(P.S1) + ')', S2: 'Ya pedido para la S+2 (' + dia(P.S2) + ')' };
+    const colP = el('section', 'pr-col');
+    const totP = pend.reduce((a, x) => a + (x.productos || []).reduce((b, y) => b + (y.tarimas || 0), 0), 0);
+    colP.append(el('h4', 'pr-h', 'Ya pedido en el Programa de Franquicias · ' + pend.length + ' pedidos, ' + n0(totP) + ' tarimas'),
+      el('p', 'pp-mia', pend.length ? 'Estos pedidos ya están hechos (aunque estén detenidos por crédito). La sugerencia ya los cuenta, para no volver a pedir lo que viene en camino.' : 'No hay pedidos pendientes en el Programa.'));
+    ['esta', 'S1', 'S2'].forEach((k) => { const L = pend.filter((x) => x.semana === k); if (!L.length) return; const g = el('div', 'pr-viajes'); L.forEach((x) => g.append(tarjetaPedido(x))); colP.append(el('div', 'pg-sub', etiq[k]), g); });
+    wrap.append(bar, msg, tiles, colP, colV, colS, colI);
     cont.append(wrap);
 
     const bX = el('button', 'pp-btn pr-sec', 'Descargar Excel'); bX.type = 'button';
@@ -383,5 +423,5 @@
     return { nombre: 'PRONOSTICO S+2 ' + P.hojaS2 + '.xlsx', b64 };
   }
 
-  window.CPN_PRON = { render, sugerir, exportar, hlNecesario };
+  window.CPN_PRON = { render, sugerir, exportar, hlNecesario, programaCards };
 })();

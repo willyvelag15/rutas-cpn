@@ -3,9 +3,9 @@
    lo que compra en el año por producto y, si ya está en Power Sales, el detalle del mes (venta, margen, cómo reparte
    su producto y sus compras día por día). window.CPN_CLIDET.abrir(id) */
 (function () {
-  if (!window.dash) return;
   const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
-  const rows = (id) => { const d = dash.data(id); return d && d.status === 'ok' ? d.data : []; };
+  let SRC = null;   // páginas de Monse y Berenice: los datos vienen en su panel
+  const rows = (id) => { if (SRC) return SRC[id] || []; if (!window.dash) return []; const d = dash.data(id); return d && d.status === 'ok' ? d.data : []; };
   const n1 = (v) => (Math.round((v || 0) * 10) / 10).toLocaleString('es-MX', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const fec = (s) => (s ? String(s).slice(0, 10).split('-').reverse().join('/') : '—');
   const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -27,8 +27,8 @@
     return svg;
   }
 
-  function abrir(id) {
-    id = String(id);
+  function abrir(id, src) {
+    SRC = src || null; id = String(id);
     const C = rows('clientes').find((c) => String(c.id) === id) || {};
     const CR = (rows('crecimiento') || [])[0] || {};
     const info = (CR.info || {})[id] || {};
@@ -91,8 +91,8 @@
     // ---- el mes en Power Sales ----
     const sec = el('section', 'cd-sec');
     if (PS && window.CPN_CLI && window.CPN_CLI.detalle) {
-      sec.append(el('h4', null, 'Este mes en Power Sales (venta, margen y cómo reparte su producto)'));
-      const d = window.CPN_CLI.detalle(Object.assign({ banderas: [], oportunidades: [], riesgos: [] }, PS), rows('clientes_mes_det'), true, true, cerrar);
+      sec.append(el('h4', null, 'Este mes en Power Sales (cómo reparte su producto y sus compras)'));
+      const din = !SRC || SRC.dinero !== false; const d = window.CPN_CLI.detalle(Object.assign({ banderas: [], oportunidades: [], riesgos: [] }, PS), rows('clientes_mes_det'), din, din && !(SRC && SRC.sinMargen), cerrar);
       const cb = d.querySelector('.rc-det-cab'); if (cb) cb.remove();
       sec.append(d);
     } else sec.append(el('p', 'note', 'No tiene compras en Power Sales este mes' + (C.ruta === 'Ruta 5' ? ' (la Ruta 5 no está en Power Sales).' : '.')));

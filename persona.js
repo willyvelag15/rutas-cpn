@@ -221,7 +221,10 @@
       if (s.nota) c.append(el('p', 'pp-mia', s.nota));
       const box = el('div', 'envf rcli'); c.append(box); main.append(c);
       st.cli = st.cli || {};
-      window.CPN_CLI.render(box, { filas: s.cli.filas, det: s.cli.det, okRuta: ok, estado: st.cli, dinero: P.dinero !== false, sinMargen: !!s.cli.sinMargen });
+      // (Willy, 24-nov-2026) Monse y Berenice: al picarle a un cliente se abre su ficha completa, como en el admin
+      const fx = s.cli.fichas; const crS = (P.secciones || []).find((q) => q.id === 'crecimiento');
+      const ficha = fx && window.CPN_CLIDET ? (id) => window.CPN_CLIDET.abrir(id, { clientes: fx.clientes || [], crecimiento: crS && crS.crec ? [crS.crec] : [], clientes_mes: s.cli.filas, clientes_mes_det: s.cli.det, dinero: P.dinero !== false, sinMargen: !!s.cli.sinMargen }) : null;
+      window.CPN_CLI.render(box, { filas: s.cli.filas, det: s.cli.det, okRuta: ok, estado: st.cli, dinero: P.dinero !== false, sinMargen: !!s.cli.sinMargen, ficha });
       return;
     }
     if (s.id === 'envase' && s.mov && window.CPN_ENV) {

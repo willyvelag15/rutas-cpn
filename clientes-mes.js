@@ -147,7 +147,7 @@
       else tr.append(el('td', 'num', n1(x.cajas)));
       tr.append(el('td', 'num ' + ((x.ritmo || 0) >= 0.3 ? 'ok' : (x.ritmo || 0) <= -0.3 ? 'warn' : ''), x.ritmo == null ? 'nuevo' : (x.ritmo > 0 ? '+' : '') + pc(x.ritmo)), el('td', 'num', pc(x.saturacion)));
       const tdS = el('td'); x.banderas.filter((b, i, a) => a.indexOf(b) === i).forEach((b) => tdS.append(el('span', 'pill ' + (TONO[b] || ''), b), document.createTextNode(' '))); tr.append(tdS);
-      const ir = () => { st.sel = st.sel === x.id ? null : x.id; render(cont, o); const d = cont.querySelector('.rc-det'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+      const ir = () => { if (o.ficha) { o.ficha(x.id); return; } st.sel = st.sel === x.id ? null : x.id; render(cont, o); const d = cont.querySelector('.rc-det'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
       tr.addEventListener('click', ir); tr.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') ir(); });
       bb.append(tr);
     });
@@ -162,7 +162,7 @@
       b.append(nums);
       const ban = x.banderas.filter((q, i, a) => a.indexOf(q) === i);
       if (ban.length) { const bd = el('div'); ban.forEach((q) => bd.append(el('span', 'pill ' + (TONO[q] || ''), q), document.createTextNode(' '))); b.append(bd); }
-      b.addEventListener('click', () => { st.sel = st.sel === x.id ? null : x.id; render(cont, o); const d = cont.querySelector('.rc-det'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      b.addEventListener('click', () => { if (o.ficha) { o.ficha(x.id); return; } st.sel = st.sel === x.id ? null : x.id; render(cont, o); const d = cont.querySelector('.rc-det'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
       cards.append(b);
     });
     const selC = st.sel && F.find((x) => x.id === st.sel);
@@ -239,7 +239,7 @@
   if (!window.dash) return;
   const rows = (id) => (dash.data(id).status === 'ok' ? dash.data(id).data : []);
   const est = {};
-  dash.draw('rendCli', (e) => window.CPN_CLI.render(e, { filas: rows('clientes_mes'), det: rows('clientes_mes_det'), estado: est, dinero: true }));
+  dash.draw('rendCli', (e) => window.CPN_CLI.render(e, { filas: rows('clientes_mes'), det: rows('clientes_mes_det'), estado: est, dinero: true, ficha: window.CPN_CLIDET ? (id) => window.CPN_CLIDET.abrir(id) : null }));
   document.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => {
     if (b.getAttribute('data-vista') !== 'rendcli') return;
     const a = document.getElementById('top-tit'), s = document.getElementById('top-sub'); if (a) a.textContent = 'Rendimiento de clientes'; if (s) s.textContent = 'Acumulado del mes por cliente';

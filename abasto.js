@@ -66,11 +66,34 @@
     if (!L.length) { const tr = el('tr'); tr.append(el('td', null, 'Con lo que trae le alcanza.')); tb.append(tr); }
     t.append(tb); const w = el('div', 'tblwrap'); w.append(t); e.append(w);
   });
-  const TIT = { abasto: ['Abasto', 'Pedido sugerido en tarimas completas'] };
+  const TIT = { abasto: ['Almacén', 'Días de inventario, lo que viene y el pronóstico de Rubí'] };
   document.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => {
     const t = TIT[b.getAttribute('data-vista')]; if (!t) return;
     const a = document.getElementById('top-tit'), s = document.getElementById('top-sub'); if (a) a.textContent = t[0]; if (s) s.textContent = t[1];
   }));
+
+
+  // Almacén en el admin (Willy, 24-nov-2026): días de inventario con el último inventario de Rubí y lo que ya viene del Programa
+  const pronR = () => { const d = dash.data('pron_rubi'); return d && d.status === 'ok' && d.data && d.data.length ? d.data[0] : null; };
+  dash.draw('almInv', async (host) => {
+    const P = pronR(); if (!window.CPN_INVREP) return;
+    if (host._p === P && host._listo) return; host._p = P;
+    window.CPN_INVREP.render(host, P, P ? { archivo: P.inventarioArchivo, cuando: Date.parse((P.fecha || '') + 'T12:00') } : null);
+    const clave = window.CPN && window.CPN.sbAdmin; if (!clave || !window.cpnRpc || !P) return;
+    try {
+      const L = (await window.cpnRpc('mis_inventarios', { p_clave: clave })).filter((x) => x.almacen === 'Piedras Negras' && /\.xls[xm]?$/i.test(x.nombre || ''));
+      const u = L[0]; if (!u || !(Date.parse(u.subido_en) > Date.parse((P.generado || '') + 'Z'))) { host._listo = true; return; }
+      const f = await window.cpnRpc('admin_inventario', { p_clave: clave, p_id: u.id });
+      const bin = atob(f.contenido); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+      const R = await window.CPN_INVREP.leer(new Blob([a]));
+      window.CPN_INVREP.render(host, P, { archivo: u.nombre, cuando: Date.parse(u.subido_en), porClave: R.porClave, nombres: R.nombres });
+      host._listo = true;
+    } catch (e) { /* se queda con el de la noche */ }
+  });
+  dash.draw('almPrograma', (host) => {
+    const P = pronR(); if (!window.CPN_PRON || !window.CPN_PRON.programaCards) return;
+    if (host._p === P) return; host._p = P; window.CPN_PRON.programaCards(host, P);
+  });
 
   // Pronóstico S+2 editable (Willy, 20-nov-2026)
   dash.draw('pronEditable', (host) => {

@@ -72,6 +72,7 @@
     carga: 'M3 17h4l3-8h7l4 8M7 17v2M17 17v2M9 13h8',
     envase: 'M9 3h6M10 3v4l-3 4v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-9l-3-4V3M7 13h10',
     productos: 'M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9',
+    crecimiento: 'M3 17l6-6 4 4 8-8M15 7h6v6',
     avance: 'M12 3a9 9 0 1 0 9 9M12 7a5 5 0 1 0 5 5M12 11a1 1 0 1 0 1 1M21 3l-9 9',
     ventas: 'M4 19V9M10 19V5M16 19v-7M22 19H2',
     liquidaciones: 'M3 7h18v10H3zM12 12m-2.5 0a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0M6 10v4M18 10v4',
@@ -92,7 +93,7 @@
   };
   ['metaVend:avance', 'topVend:clientesMes', 'caidaVend:riesgo', 'satVend:saturacion', 'productosVend:productos', 'hoy:sinCompra'].forEach((x) => { const [k, v] = x.split(':'); if (!IC[k]) IC[k] = IC[v] || IC.ventas; });
   const icono = (k) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', IC[k] || IC.ventas); s.append(p); return s; };
-  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Pronóstico S+2', clientesMes: 'Clientes del mes', riesgo: 'Clientes en riesgo', saturacion: 'Saturación semanal', calidad: 'Calidad de datos', hoy: 'Tu lista de hoy', metaVend: 'Tu meta', topVend: 'Mejores clientes', caidaVend: 'Clientes en caída', satVend: 'Saturación', productosVend: 'Tus productos' };
+  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Pronóstico S+2', clientesMes: 'Clientes del mes', riesgo: 'Clientes en riesgo', saturacion: 'Saturación semanal', calidad: 'Calidad de datos', hoy: 'Tu lista de hoy', crecimiento: 'Crecen y caen', metaVend: 'Tu meta', topVend: 'Mejores clientes', caidaVend: 'Clientes en caída', satVend: 'Saturación', productosVend: 'Tus productos' };
 
   function tilesDe(s) { const t = el('div', 'hal-tiles'); (s.tiles || []).forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); return t; }
   function tablaDe(cols, filas, ok) {
@@ -170,6 +171,7 @@
     h.append(vb, icono(it.id), el('h3', null, it.s ? it.s.titulo : CORTO[it.id]));
     c.append(h);
     if (it.id === 'hoy') { c.append(listaHoy(P)); main.append(c); return; }
+    if (it.id === 'crecimiento' && window.CPN_CREC) { const b = el('div'); window.CPN_CREC.render(b, it.s.crec, { rutas: (P.rutas || []).map((r) => Number(String(r).replace(/\D/g, ''))) }); c.append(b); main.append(c); return; }
     // (Willy, 24-nov-2026) Programa Heineken de Rubí en recuadros, más fácil de leer
     if (it.id === 'programa' && P.pron && P.pron.programa && window.CPN_PRON && window.CPN_PRON.programaCards) { const b = el('div'); window.CPN_PRON.programaCards(b, P.pron); c.append(b); main.append(c); return; }
     if (it.id === 'inv') {

@@ -14,7 +14,7 @@
     opts = opts || {};
     cont.replaceChildren();
     if (!D || !(D.filas || []).length) { cont.append(el('p', 'pp-mia', 'Todavía no hay datos de la megabase para comparar.')); return; }
-    const st = cont._crec || (cont._crec = { per: 0, filtro: 'todos', prod: null, canal: null, ruta: null, todos: false });
+    const st = cont._crec || (cont._crec = { per: D.default != null ? D.default : D.periodos[0].id, filtro: 'todos', prod: null, canal: null, ruta: null, todos: false });
     const rutasDatos = [...new Set(D.clientes.map((c) => c[1]))].sort((a, b) => a - b);
     const R = opts.rutas && opts.rutas.length ? opts.rutas : rutasDatos;
     const ia = 2 + st.per * 2, ib = ia + 1;   // a = año pasado, b = este año
@@ -31,7 +31,7 @@
     bar.append(chips(D.periodos.map((p) => [p.id, p.etiqueta]), st.per, (v) => { st.per = v; }, 'Periodo'),
       chips([['todos', 'Todos'], ['crecen', 'Crecen'], ['caen', 'Caen']], st.filtro, (v) => { st.filtro = v; st.todos = false; }, 'Filtro'));
     if (R.length > 1) bar.append(chips([[null, 'Todas']].concat(R.map((r) => [r, 'R' + r])), st.ruta, (v) => { st.ruta = v; }, 'Ruta'));
-    cont.append(bar, el('p', 'pp-mia', D.periodos[st.per].nota + '. Hl de la megabase al ' + D.corte + '.'));
+    cont.append(bar, el('p', 'pp-mia', (D.periodos.find((p) => p.id === st.per) || D.periodos[0]).nota + '. Hl de la megabase al ' + D.corte + '.'));
 
     // ---- migas: Productos › producto › canal ----
     const mig = el('div', 'cr-mig');

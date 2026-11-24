@@ -1,6 +1,6 @@
 /* Reporte de días de inventario para Rubí (Willy, 24-nov-2026).
    Aparece a la derecha de "Subir inventario": en cuanto sube el Excel de Piedras Negras se lee en la misma página
-   (columna EnAlmacen) y se arma el reporte con la venta diaria de noviembre y lo que traen los camiones.
+   (columna EnAlmacen) y se arma el reporte con la venta diaria de noviembre (solo almacén, como viene en el Excel).
    Se puede imprimir o bajar en Excel. Semáforo: rojo < 7 días, amarillo < objetivo (20), verde ≥ objetivo.
    window.CPN_INVREP.render(cont, pron, { archivo, cuando, porClave, nombres })
    window.CPN_INVREP.leer(file) -> { porClave: {clave: cajas}, nombres: {clave: nombre} } */
@@ -44,7 +44,7 @@
       const b = base.get(k) || { clave: k, sku: '', producto: '', almacen: 0, camiones: 0, cxt: 0, ventaDia: 0, lxc: 0, facMes: 1 };
       const alm = src && src.porClave && src.porClave[k] != null ? src.porClave[k] : b.almacen;
       const nom = (src && src.nombres && src.nombres[k]) || b.producto || k;
-      const inv = (alm || 0) + (b.camiones || 0); const vd = b.ventaDia || 0; const lxc = b.lxc || 0;
+      const inv = alm || 0;   // (Willy, 24-nov-2026) solo lo que trae el Excel: inventario en almacén, sin camiones const vd = b.ventaDia || 0; const lxc = b.lxc || 0;
       if (!inv && !vd) return;
       const dias = vd > 0 ? inv / vd : null;
       let fin = null; if (dias != null) { fin = new Date(hoy); let n = dias; while (n >= 1) { fin.setDate(fin.getDate() + 1); if (esVenta(fin)) n--; } }
@@ -66,7 +66,7 @@
     let obj = 15; try { const g = Number(localStorage.getItem('cpn-invrep-obj')); if (g > 0) obj = g; } catch (e) { /* */ }
     const D = filas(pron, src);
     const cab = el('div', 'ir-cab');
-    const tit = el('div'); tit.append(el('b', null, 'Días de inventario'), el('small', null, (src && src.archivo ? src.archivo : pron.inventarioArchivo) + ' · ' + fechaEs(D.hoy) + ' · inventario = almacén + camiones · venta diaria del mes · mes = ' + D.mesNombre + ' (' + D.diasMes + ' días de venta' + (D.mesNombre === 'diciembre' ? ', con el aumento de diciembre del año pasado' : '') + ')'));
+    const tit = el('div'); tit.append(el('b', null, 'Días de inventario'), el('small', null, (src && src.archivo ? src.archivo : pron.inventarioArchivo) + ' · ' + fechaEs(D.hoy) + ' · inventario = solo almacén (lo que trae el Excel) · venta diaria del mes · mes = ' + D.mesNombre + ' (' + D.diasMes + ' días de venta' + (D.mesNombre === 'diciembre' ? ', con el aumento de diciembre del año pasado' : '') + ')'));
     const acc = el('div', 'ir-acc');
     const bP = el('button', 'pp-btn', 'Imprimir'); bP.type = 'button'; bP.addEventListener('click', () => imprimir(D, src, pron, obj));
     const bX = el('button', 'pp-btn pr-sec', 'Excel'); bX.type = 'button'; bX.addEventListener('click', async () => { try { bX.disabled = true; await excel(D, src, pron, obj); } catch (e) { window.alert('No se pudo armar el Excel: ' + e.message); } finally { bX.disabled = false; } });
@@ -89,7 +89,7 @@
     const C = { r: 'background:#F4C7C3;color:#9C0006;font-weight:700', a: 'background:#FFEB9C;color:#7F6000;font-weight:700', v: 'background:#C6EFCE;color:#006100;font-weight:700' };
     const filasH = D.R.map((f) => '<tr>' + celdas(f).map((v, i) => '<td' + (i > 2 ? ' class="n"' : '') + (i === 8 && sem(f.dias, obj) ? ' style="' + C[sem(f.dias, obj)] + '"' : '') + '>' + esc(v) + '</td>').join('') + '</tr>').join('');
     w.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Días de inventario ' + esc(fechaEs(D.hoy)) + '</title><style>@page{size:letter landscape;margin:10mm}body{font-family:Calibri,Arial,sans-serif;font-size:9.5px;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{font-size:15px;color:#1F5E3B;margin:0 0 2px}p{margin:0 0 6px;color:#555;font-style:italic}table{border-collapse:collapse;width:100%}th{background:#1F5E3B;color:#fff;padding:4px 3px;font-size:9px}td{border:1px solid #bbb;padding:2px 3px}td.n{text-align:center}tr:nth-child(even) td{background-color:#fafafa}td:nth-child(10){min-width:60px}</style></head><body>' +
-      '<h1>DÍAS DE INVENTARIO — ' + esc(fechaEs(D.hoy)) + '</h1><p>' + esc((src && src.archivo) || pron.inventarioArchivo) + ' · Inventario = almacén + camiones · venta diaria del mes · Rojo menos de 7 días · Amarillo menos de ' + obj + ' · Verde ' + obj + ' o más · Mes = ' + D.mesNombre + ' (' + D.diasMes + ' días de venta)</p>' +
+      '<h1>DÍAS DE INVENTARIO — ' + esc(fechaEs(D.hoy)) + '</h1><p>' + esc((src && src.archivo) || pron.inventarioArchivo) + ' · Inventario = solo almacén (lo que trae el Excel) · venta diaria del mes · Rojo menos de 7 días · Amarillo menos de ' + obj + ' · Verde ' + obj + ' o más · Mes = ' + D.mesNombre + ' (' + D.diasMes + ' días de venta)</p>' +
       '<table><thead><tr>' + COLS.map((c) => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>' + filasH + '</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>');
     w.document.close();
   }
@@ -97,7 +97,7 @@
   async function excel(D, src, pron, obj) {
     const X = await xlsx(); const B = { top: { style: 'thin', color: { rgb: 'BFBFBF' } }, bottom: { style: 'thin', color: { rgb: 'BFBFBF' } }, left: { style: 'thin', color: { rgb: 'BFBFBF' } }, right: { style: 'thin', color: { rgb: 'BFBFBF' } } };
     const SEM = { r: ['F4C7C3', '9C0006'], a: ['FFEB9C', '7F6000'], v: ['C6EFCE', '006100'] };
-    const rows = [['DÍAS DE INVENTARIO — ' + fechaEs(D.hoy)], [((src && src.archivo) || pron.inventarioArchivo) + ' · Inventario = almacén + camiones · Rojo menos de 7 días · Amarillo menos de ' + obj + ' · Verde ' + obj + ' o más · Mes = ' + D.mesNombre + ' (' + D.diasMes + ' días de venta)'], [], COLS];
+    const rows = [['DÍAS DE INVENTARIO — ' + fechaEs(D.hoy)], [((src && src.archivo) || pron.inventarioArchivo) + ' · Inventario = solo almacén (lo que trae el Excel) · Rojo menos de 7 días · Amarillo menos de ' + obj + ' · Verde ' + obj + ' o más · Mes = ' + D.mesNombre + ' (' + D.diasMes + ' días de venta)'], [], COLS];
     D.R.forEach((f) => rows.push([Number(f.clave), f.sku || '', f.producto, f.inv, f.cxt || '', f.tar == null ? '' : Math.round(f.tar * 10) / 10, Math.round(f.vd * 10) / 10, Math.round(f.vdHl * 100) / 100, f.dias == null ? 'sin venta' : Math.round(f.dias * 10) / 10, '', f.fin ? fechaEs(f.fin) : '', Math.round(f.sem), Math.round(f.semHl * 10) / 10, Math.round(f.mes), Math.round(f.mesHl * 10) / 10]));
     const ws = X.utils.aoa_to_sheet(rows);
     ws.A1.s = { font: { bold: true, sz: 14, color: { rgb: '1F5E3B' } } }; ws.A2.s = { font: { italic: true, sz: 9, color: { rgb: '595959' } } };

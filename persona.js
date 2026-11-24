@@ -187,7 +187,18 @@
         try { const L = await window.CPN_INVREP.leer(file); const u = { nombre: file.name, ts: Date.now(), porClave: L.porClave, nombres: L.nombres }; try { localStorage.setItem('cpn-inv-ult', JSON.stringify(u)); } catch (e) { /* */ } pinta({ archivo: u.nombre, cuando: u.ts, porClave: u.porClave, nombres: u.nombres }); }
         catch (e) { der.replaceChildren(el('p', 'pp-err', 'Se subió, pero no pude leer el Excel para el reporte: ' + e.message)); }
       });
-      if (pr) { const g = el('div', 'ir-grid'); g.append(izq, der); c.append(g); pinta(ultimo()); } else c.append(izq);
+      if (pr) {
+        const g = el('div', 'ir-grid'); g.append(izq, der); c.append(g); const u0 = ultimo(); pinta(u0);
+        // (Willy, 24-nov-2026) el último inventario de Piedras Negras que se subió, aunque se haya subido desde otra computadora
+        (async () => { try {
+          const L = (await rpc('mis_inventarios', { p_clave: clave() })).filter((x) => x.almacen === 'Piedras Negras' && /\.xls[xm]?$/i.test(x.nombre || ''));
+          const u = L[0]; if (!u || !(Date.parse(u.subido_en) > Date.parse((pr.generado || '') + 'Z')) || (u0 && u0.cuando >= Date.parse(u.subido_en) - 60000 && u0.porClave)) return;
+          const f = await rpc('mi_inventario', { p_clave: clave(), p_id: u.id }); if (!f || !f.contenido) return;
+          const bin = atob(f.contenido); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+          const R = await window.CPN_INVREP.leer(new Blob([a]));
+          pinta({ archivo: u.nombre, cuando: Date.parse(u.subido_en), porClave: R.porClave, nombres: R.nombres });
+        } catch (e) { /* sin la función en Supabase se queda con el de la noche */ } })();
+      } else c.append(izq);
       main.append(c); return;
     }
     if (it.id === 'pron') {

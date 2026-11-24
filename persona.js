@@ -164,13 +164,25 @@
     }
 
     const it = items.find((x) => x.id === st.sec);
-    { const root = document.querySelector('#persona .pp'); if (root) root.classList.toggle('pp-ancho', st.sec === 'pron'); }
+    { const root = document.querySelector('#persona .pp'); if (root) root.classList.toggle('pp-ancho', st.sec === 'pron' || st.sec === 'inv'); }
     const c = el('section', 'card pp-panel');
     const h = el('div', 'pp-sec-cab'); const vb = el('button', 'pp-volver'); vb.type = 'button'; vb.setAttribute('aria-label', 'Volver al inicio'); vb.textContent = '‹'; vb.addEventListener('click', () => { st.sec = null; pintarPanel(v); });
     h.append(vb, icono(it.id), el('h3', null, it.s ? it.s.titulo : CORTO[it.id]));
     c.append(h);
     if (it.id === 'hoy') { c.append(listaHoy(P)); main.append(c); return; }
-    if (it.id === 'inv') { c.append(await cajaInventario(true)); main.append(c); return; }
+    if (it.id === 'inv') {
+      // (Willy, 24-nov-2026) a la derecha, el reporte de días de inventario listo para imprimir
+      const pr = P.pron; const der = el('div', 'ir-der');
+      const pinta = (src) => { if (window.CPN_INVREP) window.CPN_INVREP.render(der, pr, src); };
+      const ultimo = () => { try { const u = JSON.parse(localStorage.getItem('cpn-inv-ult')); if (u && pr && u.ts > Date.parse((pr.generado || '') + 'Z')) return { archivo: u.nombre, cuando: u.ts, porClave: u.porClave, nombres: u.nombres }; } catch (e) { /* */ } return pr ? { archivo: pr.inventarioArchivo, cuando: Date.parse((pr.fecha || '') + 'T12:00') || Date.now() } : null; };
+      const izq = await cajaInventario(true, null, async (file, almacen) => {
+        if (!pr || almacen !== 'Piedras Negras' || !/\.xls[xm]?$/i.test(file.name) || !window.CPN_INVREP) return;
+        try { const L = await window.CPN_INVREP.leer(file); const u = { nombre: file.name, ts: Date.now(), porClave: L.porClave, nombres: L.nombres }; try { localStorage.setItem('cpn-inv-ult', JSON.stringify(u)); } catch (e) { /* */ } pinta({ archivo: u.nombre, cuando: u.ts, porClave: u.porClave, nombres: u.nombres }); }
+        catch (e) { der.replaceChildren(el('p', 'pp-err', 'Se subió, pero no pude leer el Excel para el reporte: ' + e.message)); }
+      });
+      if (pr) { const g = el('div', 'ir-grid'); g.append(izq, der); c.append(g); pinta(ultimo()); } else c.append(izq);
+      main.append(c); return;
+    }
     if (it.id === 'pron') {
       // Pronóstico S+2 editable (Willy, 20-nov-2026): la app sugiere el pedido en viajes y Rubí lo ajusta
       if (P.pron && window.CPN_PRON) {
@@ -405,7 +417,7 @@
   }
 
   /* ---------- Rubí sube el inventario de almacén (Piedras Negras y Mixtequilla), 17-nov-2026 ---------- */
-  async function cajaInventario(dentro, modo) {
+  async function cajaInventario(dentro, modo, alSubir) {
     const esPron = modo === 'pron';
     const c = el('div', 'pp-invbox'); c.id = esPron ? 'pp-s-pron' : 'pp-s-inv';
     c.append(el('p', 'pp-mia', esPron
@@ -438,6 +450,7 @@
       try {
         const b64 = await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => mal(new Error('No se pudo leer el archivo')); r.readAsDataURL(file); });
         await rpc('subir_inventario', { p_clave: clave(), p_almacen: sel.value, p_nombre: file.name, p_tipo: file.type || '', p_contenido: b64 });
+        if (alSubir) await alSubir(file, sel.value);
         msg.textContent = esPron ? 'Listo, se subió el pronóstico S+2.' : 'Listo, se subió el inventario de ' + sel.value + '.'; inp.value = ''; nomb.textContent = 'Ningún archivo elegido'; await pintaLista();
       } catch (e) { msg.textContent = e.message; }
       finally { b.disabled = false; b.textContent = 'Subir'; }

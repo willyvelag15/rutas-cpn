@@ -20,37 +20,34 @@
   const inicio = (p) => Math.max(0, Number(p.inicioS2) || 0);
   const diasDe = (p, cajasExtra) => (p.ventaDia > 0 ? (inicio(p) + (cajasExtra || 0) - DIAS_S2 * p.ventaDia) / p.ventaDia : null);
 
-  // ----- Sugerido: necesidad por días objetivo, luego lo que sobra de los Hl por rotación y pedidos anteriores -----
+  // ----- Sugerido (Willy, 24-nov-2026): a 20 días y SIN sobreinventario -----
+  // Cada SKU recibe solo lo que le falta para cerrar la S+2 con los días objetivo; si los Hl no alcanzan, se nivela
+  // (el que tiene menos días recibe primero). Ya no se reparte "lo que sobra" de los Hl: eso era lo que nos sobreinventariaba.
+  // Para completar viajes de 16/18 se agrega una tarima al que cierra con MENOS días, y se quita al que cierra con MÁS.
+  const rotan = (P) => (P.productos || []).filter((p) => p.hlTarima > 0 && p.cxt > 0 && p.ventaDia > 0 && p.hlDia > 0);
+  const needT = (p, d) => Math.max(0, ((d + DIAS_S2) * p.ventaDia - inicio(p)) / p.cxt);
+  function hlNecesario(P, dias) { return rotan(P).reduce((a, p) => a + redondeaT(needT(p, dias)) * p.hlTarima, 0); }
   function sugerir(P, dias, hl, nViajes) {
-    const items = (P.productos || []).filter((p) => p.hlTarima > 0 && p.cxt > 0 && p.ventaDia > 0 && p.hlDia > 0);
-    // 1) Nivelar días: buscar los días al cierre de la S+2 (d) con los que los Hl alcanzan para todos los que rotan;
-    //    el que tiene menos días recibe primero. Tope: los días objetivo de Rubí.
-    const needT = (p, d) => Math.max(0, ((d + DIAS_S2) * p.ventaDia - inicio(p)) / p.cxt);
+    const items = rotan(P);
     const hlCon = (d) => items.reduce((a, p) => a + needT(p, d) * p.hlTarima, 0);
     let lo = 0, hi = dias;
-    if (hlCon(hi) <= hl) lo = hi; else { for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (hlCon(m) <= hl) lo = m; else hi = m; } }
-    const T = {}; let usado = 0;
-    items.forEach((p) => { const t = redondeaT(needT(p, lo)); if (t > 0) { T[p.sku] = t; usado += t * p.hlTarima; } });
-    // 2) Si todos llegan a los días objetivo y sobran Hl: a lo que más rota y más se ha pedido; XX cuarto pesa el doble
-    //    (es el que siempre queremos tener aunque se quede más días).
-    const totHlDia = items.reduce((a, p) => a + p.hlDia, 0) || 1;
-    const resto = hl - usado;
-    const cand = items.filter((p) => p.hlDia >= 1);
-    if (resto > 0 && cand.length) {
-      const w = cand.map((p) => (0.5 * p.hlDia / totHlDia + 0.5 * (p.partPedidos || 0)) * (p.sku === XX ? 2 : 1));
-      const sw = w.reduce((a, b) => a + b, 0) || 1;
-      cand.forEach((p, i) => { const q = Math.floor(resto * w[i] / sw / p.hlTarima); if (q > 0) { T[p.sku] = (T[p.sku] || 0) + q; usado += q * p.hlTarima; } });
-    }
+    if (!(hl > 0) || hlCon(hi) <= hl) lo = hi; else { for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (hlCon(m) <= hl) lo = m; else hi = m; } }
+    const T = {};
+    items.forEach((p) => { const t = redondeaT(needT(p, lo)); if (t > 0) T[p.sku] = t; });
     let tot = Object.values(T).reduce((a, b) => a + b, 0);
-    // viajes: 4 normalmente, 5 solo en semana de quincena o fiestas (regla de Willy); nunca más de 5 si lo calcula la app
     const N = nViajes || Math.min(P.semanaFuerte ? 5 : 4, Math.max(1, Math.round(tot / 17)));
-    // viajes completos: entre 16·N y 18·N tarimas, preferimos 18
     const objetivo = Math.min(18 * N, Math.max(16 * N, tot)); const meta = objetivo % 2 ? objetivo + (objetivo + 1 <= 18 * N ? 1 : -1) : objetivo;
     const P_ = prodIndex(P);
-    while (tot < meta) { T[XX] = (T[XX] || 0) + 1; tot++; }
+    const diasCon = (s) => { const p = P_.get(+s); return p ? diasDe(p, (T[s] || 0) * p.cxt) : 1e9; };
+    while (tot < meta) {
+      let mejor = null, md = 1e9;
+      items.forEach((p) => { const d = diasCon(p.sku); if (d < md) { md = d; mejor = p.sku; } });
+      if (mejor == null) mejor = XX;
+      T[mejor] = (T[mejor] || 0) + 1; tot++;
+    }
     while (tot > meta) {
       let peor = null, pd = -1e9;
-      Object.keys(T).forEach((k) => { if (T[k] <= 0) return; const p = P_.get(+k); const d = p ? diasDe(p, T[k] * p.cxt) : 0; if (d > pd) { pd = d; peor = k; } });
+      Object.keys(T).forEach((k) => { if (T[k] <= 0) return; const d = diasCon(k); if (d > pd) { pd = d; peor = k; } });
       if (!peor) break; T[peor]--; tot--; if (!T[peor]) delete T[peor];
     }
     const n18 = (meta - 16 * N) / 2; const caps = Array.from({ length: N }, (_, i) => (i < n18 ? 18 : 16));
@@ -86,13 +83,28 @@
 
   const semaf = (d, obj) => (d == null ? '' : d < 7 ? 'pr-r' : d < obj ? 'pr-a' : 'pr-v');
 
-  function render(cont, P, opts) {
+  // Si Rubí subió un inventario de Piedras Negras después de que se armaron los datos de la noche, se usa ese
+  // (Willy, 24-nov-2026): el almacén de cada SKU cambia y el inicio de la S+2 se mueve lo mismo.
+  function conInventarioNuevo(P) {
+    const u = LS.get('cpn-inv-ult'); const gen = Date.parse((P.generado || '') + 'Z');
+    if (!u || !u.porClave || !(u.ts > gen)) return { P, fuente: { archivo: P.inventarioArchivo, cuando: P.generado ? new Date(gen) : null, nuevo: false } };
+    const productos = (P.productos || []).map((p) => {
+      const a = u.porClave[String(p.clave)]; if (a == null) return p;
+      const q = Object.assign({}, p); const dif = a - (p.almacen || 0); q.almacen = a; q.inicioS2 = (p.inicioS2 || 0) + dif;
+      q.diasHoy = p.ventaDia > 0 ? (a + (p.camiones || 0)) / p.ventaDia : null; return q;
+    });
+    return { P: Object.assign({}, P, { productos, inventarioArchivo: u.nombre }), fuente: { archivo: u.nombre, cuando: new Date(u.ts), nuevo: true } };
+  }
+  const fechaHora = (d) => (d ? d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }) + ', ' + d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '—');
+
+  function render(cont, P0, opts) {
     opts = opts || {};
     cont.replaceChildren();
+    const CI = conInventarioNuevo(P0 || {}); const P = P0 ? CI.P : P0;
     if (!P || !(P.productos || []).length) { cont.append(el('p', 'pp-mia', 'El pronóstico se arma con el inventario que subes. Sube el inventario y en la noche aparece aquí.')); return; }
-    const KEY = 'cpn-pron-' + P.S2;
+    const KEY = 'cpn-pron2-' + P.S2;
     let st = LS.get(KEY);
-    if (!st || !st.viajes) st = { dias: P.diasObjetivo || 15, hl: Math.round(P.hlSugerido || P.metaSemanaHl || 0), nViajes: P.viajes || 4, viajes: (P.sugerido || []).map((v, i) => ({ cap: i < (P.viajes18 || 0) ? 18 : 16, lineas: v.map((x) => ({ sku: x.sku, tarimas: x.tarimas })) })) };
+    if (!st || !st.viajes) { const d0 = P.diasObjetivo || 20; st = { dias: d0, hl: Math.round(hlNecesario(P, d0)), nViajes: null, viajes: [] }; st.viajes = sugerir(P, st.dias, st.hl, null); st.nViajes = st.viajes.length; st.hl = Math.round(st.viajes.reduce((a, v) => a + v.lineas.reduce((b, l) => b + l.tarimas * ((prodIndex(P).get(l.sku) || {}).hlTarima || 0), 0), 0)); }
     const M = prodIndex(P);
     const guarda = () => LS.set(KEY, st);
     const opcionesSku = (P.productos || []).slice().sort((a, b) => a.rotacion - b.rotacion);
@@ -102,7 +114,8 @@
     const bar = el('div', 'pr-bar');
     const info = el('div', 'pr-info');
     info.append(el('b', null, P.hojaS2.charAt(0) + P.hojaS2.slice(1).toLowerCase()),
-      el('span', null, 'S+2 · se manda el martes en Hl · inventario ' + (P.inventarioArchivo || '—').replace(/\.xlsx$/i, '')),
+      el('span', 'pr-fuente', 'Inventario que se usó: ' + (CI.fuente.archivo || '—') + ' · ' + (CI.fuente.nuevo ? 'subido ' : 'datos de ') + fechaHora(CI.fuente.cuando) + (CI.fuente.nuevo ? ' (el más nuevo que subiste)' : '')),
+      el('span', null, 'S+2 · se manda el martes en Hl · venta diaria del mes en Power Sales · lo que llega del Programa de Franquicias'),
       el('span', null, 'Meta ' + n0(P.metaSemanaHl) + ' Hl por semana · S+1 (' + dia(P.S1) + ') fija: ' + n0(sumProg(P)) + ' tarimas · ' + (P.semanaFuerte ? 'semana de quincena: hasta 5 viajes' : 'semana normal: 4 viajes')));
     const prm = el('div', 'pr-prm');
     const campo = (lab, val, min, max, step, on) => { const l = el('label', 'pr-campo'); l.append(el('span', null, lab)); const i = el('input'); i.type = 'number'; i.min = min; i.max = max; i.step = step; i.value = val; i.addEventListener('change', () => on(Number(i.value))); l.append(i); return l; };
@@ -141,7 +154,11 @@
       const t = (k, v, s, tono) => { const d = el('div', 'ht' + (tono ? ' ' + tono : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); tiles.append(d); };
       const n18 = st.viajes.filter((v) => v.cap === 18).length, n16 = st.viajes.length - n18;
       const malos = st.viajes.filter((v) => sumT(v) !== v.cap).length;
-      t('Pronóstico S+2', n1(R.tot.hl) + ' Hl', 'meta de la semana ' + n0(P.metaSemanaHl) + ' Hl', R.tot.hl < (P.metaSemanaHl || 0) * 0.95 ? 'warn' : '');
+      const hlNec = hlNecesario(P, st.dias);
+      t('Pronóstico S+2', n1(R.tot.hl) + ' Hl', 'meta de la semana ' + n0(P.metaSemanaHl) + ' Hl', '');
+      t('Para ' + st.dias + ' días', n1(hlNec) + ' Hl', 'lo que de verdad hace falta', R.tot.hl > hlNec + 40 ? 'warn' : '');
+      const sobran = R.filas.filter((f) => { const d = diasDe(f.p, f.cajas); return d != null && d > st.dias + 7; });
+      if (sobran.length) t('Sobreinventario', String(sobran.length) + ' SKU', 'cerrarían con más de ' + (st.dias + 7) + ' días: ' + sobran.slice(0, 3).map((f) => (f.p.desc || '').replace(/^\d+-/, '')).join(', '), 'bad');
       t('Tarimas', n0(R.tot.tarimas), st.viajes.length + ' viajes (' + n18 + ' de 18' + (n16 ? ', ' + n16 + ' de 16' : '') + ')', malos ? 'warn' : '');
       t('Cajas', n0(R.tot.cajas), R.filas.length + ' SKU');
       t('Costo', money(R.tot.costo), 'a costo de compra');
@@ -350,5 +367,5 @@
     return { nombre: 'PRONOSTICO S+2 ' + P.hojaS2 + '.xlsx', b64 };
   }
 
-  window.CPN_PRON = { render, sugerir, exportar };
+  window.CPN_PRON = { render, sugerir, exportar, hlNecesario };
 })();

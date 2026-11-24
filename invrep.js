@@ -31,8 +31,10 @@
     return { porClave, nombres };
   }
 
+  // Si la página todavía trae datos viejos (sin invRep), se usa el catálogo del pronóstico (Willy, 24-nov-2026)
+  const repDe = (pron) => (pron && (pron.invRep || []).length ? pron.invRep : ((pron && pron.productos) || []).map((p) => ({ clave: String(p.clave), sku: p.sku, producto: p.producto || (p.desc || '').replace(/^\d+-/, ''), almacen: p.almacen || 0, camiones: p.camiones || 0, cxt: p.cxt || 0, ventaDia: p.ventaDia || 0, lxc: p.lxc || 0, facMes: 1 })));
   function filas(pron, src) {
-    const base = new Map(); (pron.invRep || []).forEach((x) => base.set(String(x.clave), x));
+    const base = new Map(); repDe(pron).forEach((x) => base.set(String(x.clave), x));
     const claves = new Set(base.keys()); if (src && src.porClave) Object.keys(src.porClave).forEach((k) => claves.add(k));
     const hoy = src && src.cuando ? new Date(src.cuando) : new Date();
     const mesSig = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
@@ -60,8 +62,8 @@
 
   function render(cont, pron, src) {
     cont.replaceChildren();
-    if (!pron || !(pron.invRep || []).length) { cont.append(el('p', 'pp-mia', 'El reporte de días de inventario aparece cuando hay datos de venta.')); return; }
-    let obj = pron.diasObjetivo || 20; try { const g = Number(localStorage.getItem('cpn-invrep-obj')); if (g > 0) obj = g; } catch (e) { /* */ }
+    if (!pron || !repDe(pron).length) { cont.append(el('p', 'pp-mia', 'El reporte de días de inventario aparece cuando hay datos de venta.')); return; }
+    let obj = 15; try { const g = Number(localStorage.getItem('cpn-invrep-obj')); if (g > 0) obj = g; } catch (e) { /* */ }
     const D = filas(pron, src);
     const cab = el('div', 'ir-cab');
     const tit = el('div'); tit.append(el('b', null, 'Días de inventario'), el('small', null, (src && src.archivo ? src.archivo : pron.inventarioArchivo) + ' · ' + fechaEs(D.hoy) + ' · inventario = almacén + camiones · venta diaria del mes · mes = ' + D.mesNombre + ' (' + D.diasMes + ' días de venta' + (D.mesNombre === 'diciembre' ? ', con el aumento de diciembre del año pasado' : '') + ')'));

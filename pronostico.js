@@ -14,6 +14,7 @@
   const DIAS_S2 = 6;                 // días de venta de la semana S+2 (lunes a sábado)
   const LS = { get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* */ } }, del: (k) => { try { localStorage.removeItem(k); } catch (e) { /* */ } } };
 
+  const DIAS0 = 15;                  // Willy, 24-nov-2026: 15 días por defecto (Rubí lo mueve)
   const AJ0 = 15;                    // Willy, 24-nov-2026: pedir ~15% más de lo que hace falta (editable en la página)
   const redondeaT = (x) => (x <= 0 ? 0 : (x - Math.floor(x) >= 0.3 ? Math.ceil(x) : Math.floor(x)));
 
@@ -104,10 +105,17 @@
     cont.replaceChildren();
     const CI = conInventarioNuevo(P0 || {}); const P = P0 ? CI.P : P0;
     if (!P || !(P.productos || []).length) { cont.append(el('p', 'pp-mia', 'El pronóstico se arma con el inventario que subes. Sube el inventario y en la noche aparece aquí.')); return; }
-    const KEY = 'cpn-pron2-' + P.S2;
+    const KEY = 'cpn-pron3-' + P.S2;
     let st = LS.get(KEY);
     if (st && st.aj == null) st.aj = AJ0;
-    if (!st || !st.viajes) { const d0 = P.diasObjetivo || 20; st = { dias: d0, aj: AJ0, hl: Math.round(hlNecesario(P, d0, AJ0)), nViajes: null, viajes: [] }; st.viajes = sugerir(P, st.dias, st.hl, null, AJ0); st.nViajes = st.viajes.length; st.hl = Math.round(st.viajes.reduce((a, v) => a + v.lineas.reduce((b, l) => b + l.tarimas * ((prodIndex(P).get(l.sku) || {}).hlTarima || 0), 0), 0)); }
+    // "Crear" (Willy, 24-nov-2026): con los días y el % que ponga Rubí, la app saca los Hl y los viajes que hacen falta
+    const crear = () => {
+      const tar = rotan(P).reduce((a, p) => a + redondeaT(needT(p, st.dias, st.aj)), 0);
+      const N = Math.max(1, Math.round(tar / 17));
+      st.viajes = sugerir(P, st.dias, hlNecesario(P, st.dias, st.aj), N, st.aj); st.nViajes = N;
+      st.hl = Math.round(st.viajes.reduce((a, v) => a + v.lineas.reduce((b, l) => b + l.tarimas * ((prodIndex(P).get(l.sku) || {}).hlTarima || 0), 0), 0));
+    };
+    if (!st || !st.viajes) { st = { dias: P.diasObjetivo || DIAS0, aj: AJ0, hl: 0, nViajes: null, viajes: [] }; crear(); }
     const M = prodIndex(P);
     const guarda = () => LS.set(KEY, st);
     const opcionesSku = (P.productos || []).slice().sort((a, b) => a.rotacion - b.rotacion);
@@ -121,13 +129,17 @@
       el('span', null, 'S+2 · se manda el martes en Hl · venta diaria del mes en Power Sales · lo que llega del Programa de Franquicias'),
       el('span', null, 'Meta ' + n0(P.metaSemanaHl) + ' Hl por semana · S+1 (' + dia(P.S1) + ') fija: ' + n0(sumProg(P)) + ' tarimas · ' + (P.semanaFuerte ? 'semana de quincena: hasta 5 viajes' : 'semana normal: 4 viajes')));
     const prm = el('div', 'pr-prm');
-    const campo = (lab, val, min, max, step, on) => { const l = el('label', 'pr-campo'); l.append(el('span', null, lab)); const i = el('input'); if (lab === 'Hl a pedir') i.className = 'pr-hlin'; i.type = 'number'; i.min = min; i.max = max; i.step = step; i.value = val; i.addEventListener('change', () => on(Number(i.value))); l.append(i); return l; };
+    const campo = (lab, val, min, max, step, on) => { const l = el('label', 'pr-campo'); l.append(el('span', null, lab)); const i = el('input'); if (lab === 'Hl a pedir') i.className = 'pr-hlin'; if (lab === 'Viajes') i.className = 'pr-vjin'; i.type = 'number'; i.min = min; i.max = max; i.step = step; i.value = val; i.addEventListener('change', () => on(Number(i.value))); l.append(i); return l; };
+    const pon = (cls, v) => { const i = prm.querySelector('.' + cls); if (i) i.value = v; };
     prm.append(
-      campo('Días de inventario', st.dias, 3, 40, 1, (v) => { st.dias = v || 20; st.hl = Math.round(hlNecesario(P, st.dias, st.aj || 0)); guarda(); pinta(); const i = prm.querySelector('.pr-hlin'); if (i) i.value = st.hl; }),
-      campo('% extra', st.aj, -50, 100, 1, (v) => { st.aj = v || 0; st.hl = Math.round(hlNecesario(P, st.dias, st.aj)); guarda(); pinta(); const i = prm.querySelector('.pr-hlin'); if (i) i.value = st.hl; }),
-      campo('Hl a pedir', st.hl, 0, 3000, 1, (v) => { st.hl = v || 0; st.nViajes = null; guarda(); }),
-      campo('Viajes', st.nViajes || st.viajes.length, 1, 6, 1, (v) => { st.nViajes = v || null; guarda(); }));
-    const bSug = el('button', 'pp-btn', 'Armar sugerido'); bSug.type = 'button';
+      campo('Días de inventario', st.dias, 3, 60, 1, (v) => { st.dias = v || DIAS0; guarda(); }),
+      campo('% extra', st.aj, -50, 100, 1, (v) => { st.aj = v || 0; guarda(); }));
+    const bCrear = el('button', 'pp-btn', 'Crear'); bCrear.type = 'button';
+    bCrear.addEventListener('click', () => { if (st.viajes.some((v) => v.lineas.length) && !window.confirm('Esto reemplaza los viajes que tienes armados. ¿Seguir?')) return; crear(); guarda(); pon('pr-hlin', st.hl); pon('pr-vjin', st.nViajes); pinta(); msg.textContent = 'Sugerencia para ' + st.dias + ' días' + (st.aj ? ' con ' + (st.aj > 0 ? '+' : '') + st.aj + '%' : '') + ': ' + st.nViajes + ' viajes, ' + n0(st.hl) + ' Hl. Puedes mover lo que quieras.'; });
+    prm.append(bCrear,
+      campo('Hl a pedir', st.hl, 0, 5000, 1, (v) => { st.hl = v || 0; guarda(); }),
+      campo('Viajes', st.nViajes || st.viajes.length, 1, 10, 1, (v) => { st.nViajes = v || null; guarda(); }));
+    const bSug = el('button', 'pp-btn pr-sec', 'Armar con estos Hl y viajes'); bSug.type = 'button';
     bSug.addEventListener('click', () => { if (st.viajes.some((v) => v.lineas.length) && !window.confirm('Esto reemplaza los viajes que tienes armados. ¿Seguir?')) return; st.viajes = sugerir(P, st.dias, st.hl, st.nViajes, st.aj || 0); guarda(); pinta(); });
     prm.append(bSug);
     const acc = el('div', 'pr-acc'); const msg = el('p', 'pr-msg');

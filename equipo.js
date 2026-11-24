@@ -178,6 +178,38 @@
     const a = document.getElementById('top-tit'), s = document.getElementById('top-sub'); if (a) a.textContent = t[0]; if (s) s.textContent = t[1];
     cargar();
   }));
+
+  // ---- Datos espejo para las páginas de cada puesto ----
+  const PUESTOS_ESPEJO = ['almacen_pn', 'almacen_mix', 'recepcion', 'sistemas', 'encargada_mix'];
+  const DS_ESPEJO = ['diario', 'marcas', 'metas', 'motivos', 'historia', 'clientes', 'productos', 'canales', 'giros', 'temporada', 'utilruta', 'megameta', 'bono',
+    'empresa', 'empresa_ruta', 'gastovar', 'gastovar_mes', 'pronostico', 'vendedores', 'atencion', 'sinvisita', 'alejandose', 'bonifcli', 'crecerpob', 'crecercli',
+    'inventario', 'inventario_ruta', 'carga', 'carga_ruta', 'abasto_res', 'abasto_sku', 'pron_rubi', 'programa', 'clientes_mes', 'clientes_mes_det',
+    'calidad_clientes', 'saturacion_semanal', 'crecimiento', 'liquidacion_cruce', 'ventas_cedis'];
+  const SIN_DINERO_DS = ['gastovar', 'gastovar_mes', 'utilruta', 'bonifcli', 'bono'];
+  const DINERO_K = /^(margen|util|gv|neto$|ganamos$|perdida|ventaPerdida|bonif|promo|gasto|costoVisitas)/i;
+  function espejoDS(rutas, sinMargen) {
+    const R = new Set(rutas.map((r) => Number(String(r).replace(/\D/g, ''))));
+    const rn = (x) => { if (x == null || typeof x !== 'object' || Array.isArray(x)) return null; const v = x.rutaNum != null ? x.rutaNum : x.ruta; if (v == null) return null; const n = Number(String(v).replace(/\D/g, '')); return Number.isFinite(n) && n > 0 ? n : null; };
+    const limpia = (x) => { if (!sinMargen || !x || typeof x !== 'object' || Array.isArray(x)) return x; const o = {}; Object.keys(x).forEach((k) => { if (!DINERO_K.test(k)) o[k] = x[k]; }); return o; };
+    const out = {}; let ids = null;
+    DS_ESPEJO.forEach((k) => {
+      if (sinMargen && SIN_DINERO_DS.includes(k)) return;
+      const d = dash.data(k); if (!d || d.status !== 'ok') return; let v = d.data;
+      if (k === 'crecimiento' && Array.isArray(v) && v[0]) {
+        const C = v[0]; const keep = []; C.clientes.forEach((c, i) => { if (R.has(c[1])) keep.push(i); }); const nu = new Map(keep.map((o, i) => [o, i]));
+        const info = {}; keep.forEach((i) => { const id = String(C.clientes[i][0]); if (C.info && C.info[id]) info[id] = C.info[id]; });
+        const conc = C.concil ? Object.assign({}, C.concil, { porRuta: (C.concil.porRuta || []).filter((r) => R.has(r[0])), porCliente: (C.concil.porCliente || []).filter((r) => R.has(r[1])) }) : null;
+        if (conc) { const pr = conc.porRuta.filter((r) => r[0] !== 5); conc.mbComun = Math.round(pr.reduce((a, r) => a + r[1], 0) * 10) / 10; conc.psComun = Math.round(pr.reduce((a, r) => a + r[2], 0) * 10) / 10; conc.mbTotal = Math.round(conc.porRuta.reduce((a, r) => a + r[1], 0) * 10) / 10; }
+        out[k] = [Object.assign({}, C, { clientes: keep.map((i) => C.clientes[i]), filas: C.filas.filter((f) => nu.has(f[0])).map((f) => [nu.get(f[0])].concat(f.slice(1))), info, concil: conc })]; return;
+      }
+      if (Array.isArray(v)) {
+        if (k === 'clientes_mes_det') { if (!ids) ids = new Set((dash.data('clientes_mes').data || []).filter((c) => R.has(Number(c.rutaNum))).map((c) => String(c.id))); v = v.filter((r) => ids.has(String(r[0]))); }
+        else v = v.filter((x) => { const n = rn(x); return n == null || R.has(n); }).map(limpia);
+      }
+      out[k] = v;
+    });
+    return out;
+  }
   // Lo que generó la noche (generar_equipo.py) viaja cifrado en datos.enc.json; el panel lo sube a la base sin duplicar.
   async function sincronizar() {
     const d = dash.data('equipo_sync'); const R = d && d.status === 'ok' ? d.data : [];
@@ -189,6 +221,11 @@
       if (hal.length) await rpc('admin_cargar_hallazgos', { p_hallazgos: hal });
       const pn = dash.data('paneles'); const PN = pn && pn.status === 'ok' ? pn.data : [];
       if (PN.length) await rpc('admin_cargar_paneles', { p_paneles: PN.map((x) => ({ clave: x.clave, datos: x.datos })) });
+      // (Willy, 24-nov-2026) "si la interfaz se cambia en admin, también en Rubí, Monse, Bere…": cada puesto recibe los mismos
+      // datos del admin (filtrados a sus rutas y, para Bere, sin margen) para que su página use las mismas pantallas.
+      for (const x of PN) { if (!PUESTOS_ESPEJO.includes(x.clave)) continue;
+        try { await rpc('admin_cargar_paneles', { p_paneles: [{ clave: x.clave, datos: Object.assign({}, x.datos, { ds: espejoDS(x.datos.rutas || [], x.clave === 'encargada_mix') }) }] }); }
+        catch (e) { console.warn('[equipo] espejo', x.clave, e.message); } }
     } catch (e) { console.warn('[equipo] no se pudo sincronizar', e.message); }
   }
   window.addEventListener('cpn-admin-listo', async () => {

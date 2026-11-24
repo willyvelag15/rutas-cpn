@@ -92,7 +92,7 @@
     const sec = el('section', 'cd-sec');
     if (PS && window.CPN_CLI && window.CPN_CLI.detalle) {
       sec.append(el('h4', null, 'Este mes en Power Sales (cómo reparte su producto y sus compras)'));
-      const din = !SRC || SRC.dinero !== false; const d = window.CPN_CLI.detalle(Object.assign({ banderas: [], oportunidades: [], riesgos: [] }, PS), rows('clientes_mes_det'), din, din && !(SRC && SRC.sinMargen), cerrar);
+      const din = !SRC || SRC.dinero !== false; const sm = (SRC && SRC.sinMargen) || !!(window.CPN && window.CPN.sinMargen); const d = window.CPN_CLI.detalle(Object.assign({ banderas: [], oportunidades: [], riesgos: [] }, PS), rows('clientes_mes_det'), din, din && !sm, cerrar);
       const cb = d.querySelector('.rc-det-cab'); if (cb) cb.remove();
       sec.append(d);
     } else sec.append(el('p', 'note', 'No tiene compras en Power Sales este mes' + (C.ruta === 'Ruta 5' ? ' (la Ruta 5 no está en Power Sales).' : '.')));

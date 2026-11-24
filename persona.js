@@ -29,6 +29,12 @@
   const hoy = () => new Date(Date.now() - 6 * 3600e3).toISOString().slice(0, 10);
   const dia = (s) => { if (!s) return ''; const d = new Date(String(s).slice(0, 10) + 'T12:00:00'); return d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }); };
   const hora = (s) => (s ? new Date(s).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
+  // Sección del puesto -> pantalla del admin (Willy, 24-nov-2026)
+  const ESPEJO = { productos: 'productos', inventario: 'inventario', carga: 'inventario', abasto: 'abasto', avance: 'global', ventas: 'semana',
+    clientesMes: 'rendcli', clientesMesBere: 'rendcli', riesgo: 'rendcli', saturacion: 'rendcli', calidad: 'rendcli', margen: 'utilidad', gastovar: 'utilidad',
+    bonos: 'bono', bonificacion: 'bonificacion' };
+  const _VN = {}; const VNODO = (v) => { if (!_VN[v]) _VN[v] = document.getElementById('v-' + v); return _VN[v]; };
+  Object.values(ESPEJO).forEach((v) => VNODO(v));
   const st = { pin: null, yo: null, vista: null, todos: false, ruta: null, pzPer: null, sec: null };
   const clave = () => tok + ':' + (st.pin || '');
 
@@ -123,7 +129,15 @@
     if (st.yo.rol === 'almacen_mix') items.push({ id: 'inv' });
     if ((P.slides || []).length && window.CPN_PZ && !esVend) items.push({ id: 'slides' });
     if (esVend && P.hoy && (P.hoy.clientes || []).length) items.push({ id: 'hoy' });
-    S.forEach((s) => items.push({ id: s.id, s }));
+    // (Willy, 24-nov-2026) mismas pantallas que el admin: si el panel trae los datos del admin (ds), esas secciones se ven igual
+    const ESP = P.ds && window.dash && window.dash.cargar ? ESPEJO : null;
+    if (ESP) { window.CPN = window.CPN || {}; window.CPN.sinMargen = st.yo.rol === 'encargada_mix'; window.CPN.espejo = true; if (window.CPN._dsCargado !== P) { window.dash.cargar({ datasets: P.ds }); window.CPN._dsCargado = P; } }
+    const yaV = new Set();
+    S.forEach((s) => {
+      if (ESP && s.id === 'crecimiento' && S.some((q) => q.id === 'productos')) return;
+      const vv = ESP && ESP[s.id]; if (vv) { if (yaV.has(vv)) return; yaV.add(vv); }
+      items.push({ id: s.id, s });
+    });
     if (esVend && (P.slides || []).length && window.CPN_PZ) items.push({ id: 'slides' });
     if (st.sec && !items.some((x) => x.id === st.sec)) st.sec = null;
 
@@ -147,7 +161,7 @@
     const cab = el('div', 'pp-cabeza');
     cab.append(el('span', 'pp-mia', 'Datos al ' + dia(P.corte) + ' · se actualiza cada noche'));
     const rutas = P.rutas || [];
-    if (rutas.length > 1 && st.sec !== 'inv' && st.sec !== 'pron') {
+    if (rutas.length > 1 && st.sec !== 'inv' && st.sec !== 'pron' && !(P.ds && ESPEJO[st.sec])) {
       const f = el('div', 'pp-rutas'); ['Todas'].concat(rutas).forEach((x) => { const b = el('button', null, x === 'Todas' ? x : x.replace('Ruta ', 'R')); b.type = 'button'; b.setAttribute('aria-pressed', String((st.ruta || 'Todas') === x)); b.addEventListener('click', () => { st.ruta = x === 'Todas' ? null : x; pintarPanel(v); }); f.append(b); });
       cab.append(f);
     }
@@ -173,6 +187,13 @@
     const h = el('div', 'pp-sec-cab'); const vb = el('button', 'pp-volver'); vb.type = 'button'; vb.setAttribute('aria-label', 'Volver al inicio'); vb.textContent = '‹'; vb.addEventListener('click', () => { st.sec = null; pintarPanel(v); });
     h.append(vb, icono(it.id), el('h3', null, it.s ? it.s.titulo : CORTO[it.id]));
     c.append(h);
+    if (ESP && ESP[it.id] && VNODO(ESP[it.id])) {
+      const nodo = VNODO(ESP[it.id]); nodo.hidden = false; nodo.classList.add('pp-espejo');
+      nodo.querySelectorAll('[data-solo-admin]').forEach((x) => { x.hidden = true; });
+      if (window.CPN.sinMargen) nodo.querySelectorAll('[data-dinero]').forEach((x) => { x.hidden = true; });
+      c.append(nodo); main.append(c); { const root = document.querySelector('#persona .pp'); if (root) root.classList.add('pp-ancho'); }
+      setTimeout(() => window.dash.drawAll(), 30); return;
+    }
     if (it.id === 'hoy') { c.append(listaHoy(P)); main.append(c); return; }
     if (it.id === 'crecimiento' && window.CPN_CREC) { const b = el('div'); window.CPN_CREC.render(b, it.s.crec, { rutas: (P.rutas || []).map((r) => Number(String(r).replace(/\D/g, ''))) }); c.append(b); main.append(c); return; }
     // (Willy, 24-nov-2026) Programa Heineken de Rubí en recuadros, más fácil de leer

@@ -239,7 +239,7 @@
   if (!window.dash) return;
   const rows = (id) => (dash.data(id).status === 'ok' ? dash.data(id).data : []);
   const est = {};
-  dash.draw('rendCli', (e) => window.CPN_CLI.render(e, { filas: rows('clientes_mes'), det: rows('clientes_mes_det'), estado: est, dinero: true, ficha: window.CPN_CLIDET ? (id) => window.CPN_CLIDET.abrir(id) : null }));
+  dash.draw('rendCli', (e) => window.CPN_CLI.render(e, { filas: rows('clientes_mes'), det: rows('clientes_mes_det'), estado: est, dinero: true, sinMargen: !!(window.CPN && window.CPN.sinMargen), ficha: window.CPN_CLIDET ? (id) => window.CPN_CLIDET.abrir(id) : null }));
   document.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => {
     if (b.getAttribute('data-vista') !== 'rendcli') return;
     const a = document.getElementById('top-tit'), s = document.getElementById('top-sub'); if (a) a.textContent = 'Rendimiento de clientes'; if (s) s.textContent = 'Acumulado del mes por cliente';

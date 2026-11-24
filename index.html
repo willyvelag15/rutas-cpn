@@ -347,6 +347,7 @@ svg.rc-dona{width:100%;height:auto;max-width:220px;margin:0 auto;display:block;s
 .pr-inv thead th{position:sticky;top:0;background:var(--color-panel);z-index:1}
 .pr-ley{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--color-fg-muted)}
 /* Reporte de días de inventario junto a "Subir inventario" (24-nov-2026) */
+#persona .pp-espejo{display:block}#persona .pp-espejo .grid{margin-top:4px}
 #persona .ir-grid{display:grid;grid-template-columns:1fr;gap:18px}
 @media (min-width:1100px){#persona .ir-grid{grid-template-columns:minmax(300px,380px) 1fr;align-items:start}#persona .ir-grid .pp-inv{grid-template-columns:1fr}#persona .ir-grid .pp-inv .pp-btn{width:100%}}
 #persona .ir-der{display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -878,7 +879,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     <div class="grid">
       <div class="card wide">
         <h3>Rendimiento de clientes del mes</h3>
-        <p class="note">Todos los clientes, acumulado del 1 a hoy: venta, descuento, producto sin cargo, margen, si ganamos o perdemos con él, si crece o cae, saturación, oportunidades y riesgos. Busca un cliente o filtra; tócalo para ver cómo reparte sus compras por producto y día por día.</p>
+        <p class="note">Todos los clientes, acumulado del 1 a hoy: venta, descuento, producto sin cargo, <span data-dinero>margen, si ganamos o perdemos con él,</span> si crece o cae, saturación, oportunidades y riesgos. Busca un cliente o filtra; tócalo para ver cómo reparte sus compras por producto y día por día.</p>
         <div class="envf rcli" data-draw="rendCli"></div>
       </div>
       <div class="card wide">
@@ -1372,12 +1373,12 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <div data-draw="abaResumen"></div>
         <div data-draw="abaTabla"></div>
       </div>
-      <div class="card wide">
+      <div data-solo-admin class="card wide">
         <h3>Pronósticos que confirmó Rubí</h3>
         <p class="note">Cada vez que Rubí da "Confirmar y mandar" en su página queda aquí: semana, cuándo lo confirmó, Hl, tarimas, viajes y días objetivo. Toca "Ver" para el detalle por SKU y por viaje, o baja su Excel.</p>
         <div data-draw="pronConfirmados"></div>
       </div>
-      <div class="card wide">
+      <div data-solo-admin class="card wide">
         <h3>Pronóstico S+2 editable (el mismo que ve Rubí)</h3>
         <p class="note">Sugerido con el último inventario que subió Rubí. Puedes mover los viajes, cambiar los días objetivo y los Hl, y descargar el Excel con el formato del PRONOSTICO GENERAL.</p>
         <div data-draw="pronEditable"></div>
@@ -1901,7 +1902,7 @@ dash.calc('alertas', {
 <script src="direccion.js"></script>
 <script src="equipo.js"></script>
 <script src="mapa-real.js"></script>
-<script src="persona.js?v=63"></script>
+<script src="persona.js?v=64"></script>
 <script src="app.js"></script>
 </body>
 </html>

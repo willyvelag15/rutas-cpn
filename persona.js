@@ -17,7 +17,10 @@
   const ls = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }, del: (k) => { try { localStorage.removeItem(k); } catch (e) {} } };
   const deUrl = new URLSearchParams(location.search).get('p');
   if (deUrl) ls.set(LT, deUrl);
-  const tok = deUrl || ls.get(LT);
+  // (Willy, 24-nov-2026) sin ?p= en el link, el enlace guardado solo se usa en la app instalada en el celular;
+  // en el navegador, el link normal abre la app del administrador (antes abría la última página por persona).
+  const instalada = (() => { try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch (e) { return false; } })();
+  const tok = deUrl || (instalada ? ls.get(LT) : null);
 
   const AREA = { almacen_pn: 'Almacén Piedras Negras', almacen_mix: 'Almacén Mixtequilla', recepcion: 'Recepción', sistemas: 'SIAD y Power Sales', encargada_mix: 'Encargada Mixtequilla', vendedor: 'Vendedor', admin: 'Administrador' };
   const PRONTO = {};

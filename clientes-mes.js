@@ -231,7 +231,7 @@
     cont.append(el('p', 'pp-mia', 'Saturación = todo menos XX Lager. Grandes = el 25% de los clientes que más compran en la ruta; chicos = el 40% que menos. Si después de hablar con el vendedor la saturación de un cliente grande sube, se ve aquí semana a semana.'));
   }
 
-  window.CPN_CLI = { render, riesgo, satSem };
+  window.CPN_CLI = { render, riesgo, satSem, detalle };
 })();
 
 /* Pantalla del admin */

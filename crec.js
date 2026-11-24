@@ -81,9 +81,31 @@
     cont.append(grid);
   }
 
-  window.CPN_CREC = { render };
+  // Conciliación Power Sales contra megabase (Willy, 24-nov-2026: "todo tiene que cuadrar")
+  function concil(e, D) {
+    e.replaceChildren(); const C = D && D.concil;
+    if (!C) { e.append(el('p', 'pp-mia', 'Sin datos para conciliar.')); return; }
+    const dif = C.psComun - C.mbComun; const pct = C.mbComun ? dif / C.mbComun : 0;
+    const res = el('div', 'pr-tiles'); const t = (k, v, s, cls) => { const d = el('div', 'ht' + (cls ? ' ' + cls : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); res.append(d); };
+    t('Megabase', n1(C.mbComun) + ' Hl', 'rutas que están en Power Sales'); t('Power Sales', n1(C.psComun) + ' Hl', 'del 1 al ' + C.corte.slice(8) + ' (hay datos hasta el ' + C.ultimoPS.slice(8) + ')');
+    t('Diferencia', (dif >= 0 ? '+' : '') + n1(dif) + ' Hl', (Math.round(pct * 1000) / 10) + '%', Math.abs(pct) > 0.01 ? 'bad' : '');
+    t('Total megabase', n1(C.mbTotal) + ' Hl', 'con la Ruta 5 (no está en Power Sales)');
+    e.append(el('p', 'pp-mia', C.nota), res);
+    const tb = el('table', 'cpn-t'); const h = el('tr'); ['Ruta', 'Megabase', 'Power Sales', 'Diferencia', ''].forEach((x, i) => h.append(el('th', i && i < 4 ? 'num' : null, x))); tb.append(el('thead')); tb.tHead.append(h);
+    const b = el('tbody'); C.porRuta.forEach((r) => { const tr = el('tr'); const p = r[1] ? r[3] / r[1] : 0; const est = r[0] === 5 ? 'no está en Power Sales' : Math.abs(p) <= 0.01 ? '✓ cuadra' : '⚠ revisar'; tr.append(el('td', null, 'Ruta ' + r[0]), el('td', 'num', n1(r[1])), el('td', 'num', n1(r[2])), el('td', 'num', (r[3] >= 0 ? '+' : '') + n1(r[3])), el('td', Math.abs(p) > 0.01 && r[0] !== 5 ? 'bad' : '', est)); b.append(tr); });
+    tb.append(b); const w = el('div', 'tblwrap'); w.append(tb); e.append(w);
+    if ((C.porCliente || []).length) {
+      const d = el('details'); d.append(el('summary', null, 'Clientes que no cuadran (' + C.porCliente.length + ')'));
+      const t2 = el('table', 'cpn-t'); const h2 = el('tr'); ['Cliente', 'Ruta', 'Megabase', 'Power Sales', 'Diferencia'].forEach((x, i) => h2.append(el('th', i > 1 ? 'num' : null, x))); t2.append(el('thead')); t2.tHead.append(h2);
+      const b2 = el('tbody'); C.porCliente.forEach((r) => { const tr = el('tr'); tr.append(el('td', null, '#' + r[0] + ' · ' + r[2] + (r[3] && r[3] !== r[2] ? ' · ' + r[3] : '')), el('td', null, 'R' + r[1]), el('td', 'num', n1(r[4])), el('td', 'num', n1(r[5])), el('td', 'num', (r[6] >= 0 ? '+' : '') + n1(r[6]))); b2.append(tr); });
+      t2.append(b2); const w2 = el('div', 'tblwrap'); w2.append(t2); d.append(w2); e.append(d);
+    }
+  }
+
+  window.CPN_CREC = { render, concil };
   // Página del admin: sección Productos
   if (window.dash && window.dash.draw) {
+    window.dash.draw('concilPSMB', (e) => { const d = window.dash.data('crecimiento'); concil(e, d && d.status === 'ok' ? (Array.isArray(d.data) ? d.data[0] : d.data) : null); });
     window.dash.draw('crecimiento', (e) => { const d = window.dash.data('crecimiento'); render(e, d && d.status === 'ok' ? (Array.isArray(d.data) ? d.data[0] : d.data) : null, {}); });
   }
 })();

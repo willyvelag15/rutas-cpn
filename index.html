@@ -385,6 +385,17 @@ button.cr-card{cursor:pointer}button.cr-card:hover{border-color:var(--color-ok)}
 .cr-pct{font-weight:800;white-space:nowrap;font-size:15px}.cr-card.up .cr-pct{color:var(--color-ok)}.cr-card.down .cr-pct{color:var(--color-bad)}
 .cr-nums{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--color-fg-muted)}.cr-dif{font-weight:700;color:var(--color-fg)}
 .cr-sub{color:var(--color-fg-muted);font-size:12px}
+/* Detalle del cliente (24-nov-2026) */
+button.cli.cli-click{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer}button.cli.cli-click:hover{border-color:var(--color-ok)}
+.cd-fondo{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:28px 14px}
+.cd-caja{width:min(1100px,100%);background:var(--color-bg,#151815);color:var(--color-fg);border:1px solid var(--color-border-line,#333);border-radius:16px;padding:20px 22px;display:grid;gap:14px}
+.cd-cab{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.cd-cab h3{margin:0;font-size:20px}.cd-cab small{color:var(--color-fg-muted)}
+.cd-datos{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px 14px}.cd-datos div{display:grid}.cd-datos span{font-size:12px;color:var(--color-fg-muted)}.cd-datos b{font-size:14px}
+.cd-conc{margin:0;padding:8px 12px;border-radius:10px;font-weight:600;font-size:14px;background:color-mix(in srgb,var(--color-fg) 6%,transparent)}.cd-conc.ok{color:var(--color-ok)}.cd-conc.warn{color:#E9B949}
+.cd-sec h4{margin:4px 0 8px;font-size:15px}.cd-ley{font-size:13px;color:var(--color-fg-muted);margin:0 0 6px}.cd-ley i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle}
+.cd-barras{width:100%;height:auto}.cd-b25{fill:#8a8f98;background:#8a8f98}.cd-b26{fill:var(--color-ok,#3fb950);background:var(--color-ok,#3fb950)}.cd-eje{fill:var(--color-fg-muted);font-size:12px}
+.cd-prods{display:grid;gap:6px}.cd-prod{position:relative;display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:6px 10px;border-radius:8px;overflow:hidden;font-size:13.5px;background:color-mix(in srgb,var(--color-fg) 4%,transparent)}
+.cd-prod i{position:absolute;left:0;bottom:0;height:3px;background:var(--color-ok)}.cd-pv{font-weight:700;white-space:nowrap}.cd-pp{white-space:nowrap;font-size:12.5px}.cd-pp.up{color:var(--color-ok)}.cd-pp.down{color:var(--color-bad)}
 .pr-viaje{border:1px solid var(--color-border-line,var(--color-border));border-radius:12px;padding:10px;display:grid;gap:6px;background:var(--color-panel);align-content:start}
 .pr-vcab{display:flex;gap:8px;align-items:center}
 .pr-vcab b{font-size:14px;white-space:nowrap}
@@ -952,6 +963,11 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
           <button type="button" data-cartera="Ruta 13" aria-pressed="false">R13</button>
         </div>
         <div data-draw="carteraPie"></div>
+      </div>
+      <div class="card wide">
+        <h3>Conciliación · Power Sales contra megabase</h3>
+        <p class="note">Las dos fuentes al mismo corte. Si una ruta o un cliente no cuadra, sale aquí antes de que leas cualquier otro número.</p>
+        <div data-draw="concilPSMB"></div>
       </div>
       <div class="card wide">
         <h3>¿Qué productos crecen y cuáles caen?</h3>
@@ -1881,6 +1897,7 @@ dash.calc('alertas', {
 <script src="motum.js"></script>
 <script src="abasto.js"></script>
 <script src="crec.js"></script>
+<script src="clidet.js"></script>
 <script src="direccion.js"></script>
 <script src="equipo.js"></script>
 <script src="mapa-real.js"></script>

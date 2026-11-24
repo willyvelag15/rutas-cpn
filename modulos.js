@@ -181,7 +181,8 @@
     e.append(el('p', 'note', cl.length + ' clientes' + (cl.length > 60 ? ' · se muestran los primeros 60' : '')));
     const cls = { 'En riesgo': 'warn', Perdido: 'bad', Creciendo: 'ok', Nuevo: 'ok', Estable: '', Inactivo: '' };
     cl.slice(0, 60).forEach((c) => {
-      const card = el('div', 'cli');
+      const card = el('button', 'cli cli-click'); card.type = 'button'; card.title = 'Ver el detalle del cliente';
+      card.addEventListener('click', () => { if (window.CPN_CLIDET) window.CPN_CLIDET.abrir(c.id); });
       const top = el('div', 'cli-top');
       const nom = el('div'); nom.append(el('b', null, c.negocio), el('small', null, c.ruta + ' · #' + c.id + ' · ' + c.giro + (c.colonia ? ' · ' + c.colonia : '')));
       top.append(nom, el('span', 'pill ' + (cls[c.estado] || ''), c.estado));

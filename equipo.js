@@ -223,6 +223,10 @@
     const llam = R.filter((x) => x.tipo === 'llamada').map(quita), hal = R.filter((x) => x.tipo === 'hallazgo').map(quita);
     try { if (llam.length) await rpc('admin_cargar_llamadas', { p_llamadas: llam }); if (hal.length) await rpc('admin_cargar_hallazgos', { p_hallazgos: hal }); }
     catch (e) { console.warn('[equipo] llamadas/hallazgos', e.message); }
+    // (Willy, 25-nov-2026) supervisión: hallazgos de todas las rutas como TAREA para Monse y Bere (resuelven y escriben en qué quedó)
+    const tar = R.filter((x) => x.tipo === 'tarea').map((x) => ({ titulo: x.titulo, detalle: x.detalle, rol_destino: x.rol_destino, origen: x.origen || 'sistema', tipo: x.tipo_tarea || 'hallazgo',
+      datos: x.datos || {}, prioridad: x.prioridad || 'media', fecha_limite: x.fecha_limite || '', clave_unica: x.clave_unica }));
+    try { if (tar.length) await rpc('admin_guardar_tareas', { p_tareas: tar }); } catch (e) { console.warn('[equipo] tareas', e.message); }
     const pn = dash.data('paneles'); const PN = pn && pn.status === 'ok' ? pn.data : [];
     let ok = 0; const mal = [];
     for (const x of PN) {

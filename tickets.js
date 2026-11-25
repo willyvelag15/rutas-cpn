@@ -47,7 +47,7 @@
         const tr = el('tr', 'tk-row'); tr.tabIndex = 0;
         const gp = GPS_OK[t.g]; const gcell = el('td'); if (gp) gcell.append(el('span', 'pill ' + gp[1], gp[0])); else gcell.textContent = t.g ? t.g : '—';
         const cc = el('td', 'vc-nom'); cc.append(document.createTextNode(cliTxt(t))); if (t.d > 1) cc.append(el('span', 'pill warn tk-dup', t.d + ' tickets ese día'));
-        tr.append(el('td', null, t.t), el('td', null, fd(t.f) + (t.h ? ' · ' + t.h : '')), el('td', null, 'R' + t.r), cc, el('td', 'num', n0(t.cj)), el('td', 'num', $(t.m)), gcell);
+        tr.append(el('td', 'tk-folio', t.t), el('td', null, fd(t.f) + (t.h ? ' · ' + t.h : '')), el('td', null, 'R' + t.r), cc, el('td', 'num', n0(t.cj)), el('td', 'num', $(t.m)), gcell);
         tr.addEventListener('click', () => { st.abierto = st.abierto === t.t ? null : t.t; go(); }); filas.push(tr);
         if (st.abierto === t.t) {
           const dr = el('tr', 'tk-det'); const td = el('td'); td.colSpan = 7;
@@ -57,7 +57,7 @@
           td.append(box); dr.append(td); filas.push(dr);
         }
       });
-      cont.append(tabla([['Ticket'], ['Fecha y hora'], ['Ruta'], ['Cliente'], ['Cajas', 'num'], ['Monto', 'num'], ['Camión (Motum)']], filas)); mas(L.length);
+      cont.append(tabla([['Folio del ticket'], ['Fecha y hora'], ['Ruta'], ['Cliente'], ['Cajas', 'num'], ['Monto', 'num'], ['Camión (Motum)']], filas)); mas(L.length);
     } else if (st.vista === 'cliente') {
       const M = new Map(); F.forEach((t) => { const x = M.get(t.c) || { t0: t, n: 0, m: 0, cj: 0, dias: new Set(), ult: '' }; x.n++; x.m += t.m; x.cj += t.cj; x.dias.add(t.f); if (t.f > x.ult) x.ult = t.f; M.set(t.c, x); });
       const L = [...M.values()].sort((a, b) => b.m - a.m);

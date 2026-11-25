@@ -119,7 +119,9 @@
 
   async function pintarPanel(v) {
     const r = await rpc('mi_panel', { p_clave: clave() });
-    const P = r && r.datos;
+    let P = r && r.datos;
+    // (25-nov-2026) los paneles grandes viajan comprimidos (gzip + base64) para que suban completos cada noche
+    if (P && P.gz) { try { const bin = Uint8Array.from(atob(P.gz), (c) => c.charCodeAt(0)); const ds = new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip')); P = JSON.parse(await new Response(ds).text()); } catch (e) { console.error('[panel] gz', e); P = null; } }
     v.replaceChildren();
     if (!P) { v.append(el('p', 'pp-res', 'Tu resumen se carga con la actualización de la noche.')); return; }
     const esVend = st.yo.rol === 'vendedor';

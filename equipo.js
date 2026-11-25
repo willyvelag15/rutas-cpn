@@ -229,8 +229,10 @@
       marca('subiendo páginas del equipo ' + (ok + mal.length + 1) + ' de ' + PN.length + '…');
       // (Willy, 24-nov-2026) "si la interfaz se cambia en admin, también en Rubí, Monse, Bere…": cada puesto lleva los datos del admin filtrados.
       const datos = PUESTOS_ESPEJO.includes(x.clave) ? Object.assign({}, x.datos, { ds: espejoDS(x.datos.rutas || [], x.clave === 'encargada_mix') }) : x.datos;
+      const comp = async (obj) => { const st2 = new Blob([JSON.stringify(obj)]).stream().pipeThrough(new CompressionStream('gzip')); const b = new Uint8Array(await new Response(st2).arrayBuffer()); let t = ''; for (let i = 0; i < b.length; i += 0x8000) t += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return { gz: btoa(t), fecha: obj.fecha || null }; };
+      let envio = datos; try { envio = await comp(datos); } catch (e) { console.warn('[equipo] gzip', e.message); }
       let hecho = false;
-      for (let i = 0; i < 3 && !hecho; i++) { try { await rpc('admin_cargar_paneles', { p_paneles: [{ clave: x.clave, datos }] }); hecho = true; } catch (e) { console.warn('[equipo] panel', x.clave, e.message); await new Promise((r) => setTimeout(r, 2000 * (i + 1))); } }
+      for (let i = 0; i < 3 && !hecho; i++) { try { await rpc('admin_cargar_paneles', { p_paneles: [{ clave: x.clave, datos: envio }] }); hecho = true; } catch (e) { console.warn('[equipo] panel', x.clave, e.message); await new Promise((r) => setTimeout(r, 2000 * (i + 1))); } }
       if (hecho) ok++; else mal.push(x.clave);
     }
     marca(mal.length ? 'páginas del equipo: ' + ok + ' de ' + PN.length + ' (faltó ' + mal.join(', ') + ')' : 'páginas del equipo actualizadas (' + ok + ')', true);

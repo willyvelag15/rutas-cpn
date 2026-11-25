@@ -1,6 +1,6 @@
 /* Service worker: la app abre rápido y sin señal; los datos siempre se piden nuevos. */
-const CACHE = 'cpn-rutas-v67';
-const SHELL = ['./', 'index.html', 'app.js', 'runtime.js', 'cli-nombre.js', 'd3.min.js', 'leaflet.js', 'leaflet.css', 'mapa-real.js', 'modulos.js', 'modulos2.js', 'hallazgos.js', 'halcentro.js', 'envase-filtro.js', 'pronostico.js', 'invrep.js', 'crec.js', 'clidet.js', 'filtro.js', 'ventascli.js', 'cedis.js', 'clientes-mes.js', 'envase.js', 'presentacion.js', 'programa.js', 'html2canvas.min.js', 'motum.js', 'abasto.js', 'direccion.js', 'equipo.js', 'persona.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+const CACHE = 'cpn-rutas-v68';
+const SHELL = ['./', 'index.html', 'app.js', 'runtime.js', 'cli-nombre.js', 'd3.min.js', 'leaflet.js', 'leaflet.css', 'mapa-real.js', 'modulos.js', 'modulos2.js', 'hallazgos.js', 'halcentro.js', 'envase-filtro.js', 'pronostico.js', 'invrep.js', 'crec.js', 'clidet.js', 'filtro.js', 'ventascli.js', 'tickets.js', 'cedis.js', 'clientes-mes.js', 'envase.js', 'presentacion.js', 'programa.js', 'html2canvas.min.js', 'motum.js', 'abasto.js', 'direccion.js', 'equipo.js', 'persona.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -425,7 +425,9 @@ button.cli.cli-click{font:inherit;color:inherit;text-align:left;width:100%;curso
 .hc-tit{margin:2px 0 0;font-size:15px}.hc-meta{margin:0;font-size:12.5px;color:var(--color-fg-muted)}.hc-det{margin:0;font-size:13.5px;line-height:1.45}.hc-acc{margin:0;font-size:13px}
 .hc-btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}.hc-btns a.pill{text-decoration:none}
 .hc-foto{height:64px;border-radius:8px;cursor:zoom-in;object-fit:cover}
-.hc-mas{justify-self:center}.cd-pp.down{color:var(--color-bad)}
+.hc-mas{justify-self:center}
+.tk-row{cursor:pointer}.tk-row:hover td{background:color-mix(in srgb,var(--color-fg) 5%,transparent)}.tk-dup{margin-left:6px;font-size:11px}
+.tk-box{display:grid;gap:6px;padding:6px 4px}.tk-lin{list-style:none;margin:0;padding:0;display:grid;gap:4px}.tk-lin li{display:flex;justify-content:space-between;gap:12px;padding:5px 8px;border-radius:8px;background:color-mix(in srgb,var(--color-fg) 4%,transparent);font-size:13px}.cd-pp.down{color:var(--color-bad)}
 .pr-viaje{border:1px solid var(--color-border-line,var(--color-border));border-radius:12px;padding:10px;display:grid;gap:6px;background:var(--color-panel);align-content:start}
 .pr-vcab{display:flex;gap:8px;align-items:center}
 .pr-vcab b{font-size:14px;white-space:nowrap}
@@ -619,6 +621,7 @@ button.cli.cli-click{font:inherit;color:inherit;text-align:left;width:100%;curso
 <div class="side-g"><p>Ventas</p>
 <button type="button" data-vista="ruta" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Ruta por ruta</span></button>
 <button type="button" data-vista="semana" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Semana</span></button>
+<button type="button" data-vista="tickets" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v4a2 2 0 0 0 0 4v6H4v-6a2 2 0 0 0 0-4z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg><span>Tickets</span></button>
 <button type="button" data-vista="temporada" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 4 8-9"/><path d="M14 6h6v6"/></svg><span>Temporada</span></button>
 <button type="button" data-vista="vendedores" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0M16 4l1.5 1.5L20 3"/></svg><span>Vendedores</span></button>
 </div>
@@ -1220,6 +1223,15 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     </div>
   </section>
 
+  <section id="v-tickets" data-vista-sec="tickets" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Tickets</h3>
+        <p class="note">Cada ticket de Power Sales con su hora, productos y si el camión estaba ahí (Motum). Por ticket, por cliente, por día o por ruta; filtra por día, semana o mes. Pícale a un ticket para ver sus productos.</p>
+        <div data-draw="ticketsCentro"></div>
+      </div>
+    </div>
+  </section>
   <section id="v-semana" data-vista-sec="semana" hidden>
 
     <div class="grid" style="margin-bottom:16px">
@@ -1937,10 +1949,11 @@ dash.calc('alertas', {
 <script src="clidet.js"></script>
 <script src="filtro.js"></script>
 <script src="ventascli.js"></script>
+<script src="tickets.js"></script>
 <script src="direccion.js"></script>
 <script src="equipo.js"></script>
 <script src="mapa-real.js"></script>
-<script src="persona.js?v=67"></script>
+<script src="persona.js?v=68"></script>
 <script src="app.js"></script>
 </body>
 </html>

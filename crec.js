@@ -84,7 +84,7 @@
   // Conciliación Power Sales contra megabase (Willy, 24-nov-2026: "todo tiene que cuadrar")
   function concil(e, D) {
     e.replaceChildren(); const C = D && D.concil;
-    if (!C) { e.append(el('p', 'pp-mia', 'Sin datos para conciliar.')); return; }
+    if (!C) { e.append(el('p', 'pp-mia', 'Por ahora no se concilia contra la megabase: desde que la Ruta 5 entró a Power Sales, todo el mes sale de Power Sales (las 8 rutas). La megabase solo se usa para la historia (meses cerrados y el año pasado).')); return; }
     const dif = C.psComun - C.mbComun; const pct = C.mbComun ? dif / C.mbComun : 0;
     const res = el('div', 'pr-tiles'); const t = (k, v, s, cls) => { const d = el('div', 'ht' + (cls ? ' ' + cls : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); res.append(d); };
     t('Megabase', n1(C.mbComun) + ' Hl', 'rutas que están en Power Sales'); t('Power Sales', n1(C.psComun) + ' Hl', 'del 1 al ' + C.corte.slice(8) + ' (hay datos hasta el ' + C.ultimoPS.slice(8) + ')');

@@ -396,7 +396,16 @@ button.cli.cli-click{font:inherit;color:inherit;text-align:left;width:100%;curso
 .cd-sec h4{margin:4px 0 8px;font-size:15px}.cd-ley{font-size:13px;color:var(--color-fg-muted);margin:0 0 6px}.cd-ley i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle}
 .cd-barras{width:100%;height:auto}.cd-b25{fill:#8a8f98;background:#8a8f98}.cd-b26{fill:var(--color-ok,#3fb950);background:var(--color-ok,#3fb950)}.cd-eje{fill:var(--color-fg-muted);font-size:12px}
 .cd-prods{display:grid;gap:6px}.cd-prod{position:relative;display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:6px 10px;border-radius:8px;overflow:hidden;font-size:13.5px;background:color-mix(in srgb,var(--color-fg) 4%,transparent)}
-.cd-prod i{position:absolute;left:0;bottom:0;height:3px;background:var(--color-ok)}.cd-pv{font-weight:700;white-space:nowrap}.cd-pp{white-space:nowrap;font-size:12.5px}.cd-pp.up{color:var(--color-ok)}.cd-pp.down{color:var(--color-bad)}
+.cd-prod i{position:absolute;left:0;bottom:0;height:3px;background:var(--color-ok)}.cd-pv{font-weight:700;white-space:nowrap}.cd-pp{white-space:nowrap;font-size:12.5px}.cd-pp.up{color:var(--color-ok)}
+/* Ventas por cliente (24-nov-2026) */
+.vc-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 10px}
+.vc-sel,.vc-q{font:inherit;font-size:14px;padding:7px 10px;border-radius:10px;border:1px solid var(--color-border-line,#444);background:transparent;color:var(--color-fg)}
+.vc-q{width:100%;margin:10px 0 6px}
+.vc-rutas{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin:10px 0}
+.vc-ruta{font:inherit;color:inherit;text-align:left;cursor:pointer;display:grid;gap:2px;padding:10px 12px;border-radius:12px;border:1px solid var(--color-border-line,#444);background:transparent}
+.vc-ruta:hover{border-color:var(--color-ok)}.vc-ruta strong{font-size:18px}.vc-ruta small{color:var(--color-fg-muted);font-size:12px}
+.vc-link{font:inherit;border:0;background:none;color:inherit;text-align:left;cursor:pointer;padding:0;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 35%,transparent)}
+.vc-nom{min-width:240px}.cd-pp.down{color:var(--color-bad)}
 .pr-viaje{border:1px solid var(--color-border-line,var(--color-border));border-radius:12px;padding:10px;display:grid;gap:6px;background:var(--color-panel);align-content:start}
 .pr-vcab{display:flex;gap:8px;align-items:center}
 .pr-vcab b{font-size:14px;white-space:nowrap}
@@ -1194,6 +1203,14 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   </section>
 
   <section id="v-semana" data-vista-sec="semana" hidden>
+
+    <div class="grid" style="margin-bottom:16px">
+      <div class="card wide">
+        <h3>Ventas por cliente</h3>
+        <p class="note">Cuánto le ha comprado cada cliente a cada ruta, en pesos, cajas y Hl. Filtra por día, semana o mes y por ruta.</p>
+        <div data-draw="ventasCli"></div>
+      </div>
+    </div>
     <div class="cpn-hero">
       <p class="eyebrow">Resumen semanal · <span data-draw="semLabel" data-source="semana">—</span></p>
       <h2><span data-draw="semHl" data-source="semana" data-field="hl" data-where="ruta=TOTAL">—</span> Hl en la semana</h2>
@@ -1899,10 +1916,11 @@ dash.calc('alertas', {
 <script src="abasto.js"></script>
 <script src="crec.js"></script>
 <script src="clidet.js"></script>
+<script src="ventascli.js"></script>
 <script src="direccion.js"></script>
 <script src="equipo.js"></script>
 <script src="mapa-real.js"></script>
-<script src="persona.js?v=64"></script>
+<script src="persona.js?v=65"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -1147,7 +1147,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     <div class="grid" style="margin-top: var(--cds-gap-md)">
       <div class="card wide">
         <h3>Meta de noviembre</h3>
-        <p class="note">Hectolitros acumulados contra la meta de las 8 rutas (la Ruta 5 sale de la megabase). La línea dorada es lo que ya debería llevar según los días hábiles.</p>
+        <p class="note">Hectolitros acumulados contra la meta de las 8 rutas (todas de Power Sales; la Ruta 5 entró a Power Sales en noviembre). La línea dorada es lo que ya debería llevar según los días hábiles.</p>
         <div class="gauge" data-draw="gaugeTotal" data-source="mesRuta"></div>
         <div class="kv">
           <div><span>Llevamos</span><b data-draw="mHl" data-source="mesRuta" data-field="hlMes" data-where="ruta=TOTAL">—</b></div>
@@ -1160,7 +1160,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 
       <div class="card wide">
         <h3>Semáforo por ruta</h3>
-        <p class="note">Último día con venta. Verde, amarillo o rojo según efectividad y cumplimiento. La Ruta 5 no está en Power Sales: se muestra su promedio por día del mes según la megabase y no suma al total del día.</p>
+        <p class="note">Último día con venta. Verde, amarillo o rojo según efectividad y cumplimiento.</p>
         <div class="tblwrap">
           <table class="cpn-t" data-source="resumenDia" data-row-key="ruta">
             <thead><tr><th data-field="ruta">Ruta</th><th data-field="vendedor" class="hide-sm">Vendedor</th><th data-field="venta" class="num">Venta</th><th data-field="hl" class="num">Hl</th><th data-field="efectividad" class="num">Efectividad</th><th data-field="cumplimiento" class="num">Cumplimiento</th><th data-field="dropsize" class="num hide-sm">Ticket</th><th data-field="jornada" class="hide-sm">Jornada</th><th data-field="semaforo">Estado</th></tr></thead>
@@ -1991,7 +1991,7 @@ dash.calc('alertas', {
 <script src="direccion.js"></script>
 <script src="equipo.js"></script>
 <script src="mapa-real.js"></script>
-<script src="persona.js?v=75"></script>
+<script src="persona.js?v=76"></script>
 <script src="app.js"></script>
 </body>
 </html>

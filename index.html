@@ -427,6 +427,14 @@ button.cli.cli-click{font:inherit;color:inherit;text-align:left;width:100%;curso
 .hc-btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}.hc-btns a.pill{text-decoration:none}
 .hc-foto{height:64px;border-radius:8px;cursor:zoom-in;object-fit:cover}
 .hc-mas{justify-self:center}
+.br-svg{width:100%;height:auto;max-height:320px}.br-l{stroke:var(--color-border,#ccc);stroke-dasharray:4 4}.br-eje{fill:var(--color-fg-muted,#777);font-size:12px}.br-pt{cursor:pointer}.br-q{text-align:left;font:inherit;cursor:pointer}.br-q[aria-pressed="true"]{outline:2px solid var(--color-accent,#1F5E3B)}
+.mm-mapa{height:520px;border-radius:12px;overflow:hidden;margin:10px 0}.mm-lab{font-size:12px;color:var(--color-fg-muted);margin-right:6px}
+.ci-tit{margin:6px 0 10px}.ci-sub{margin:14px 0 6px}.ci-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.ci-col b{display:block;margin-bottom:4px}
+.bu{position:relative;flex:1;max-width:420px;margin:0 12px}.bu-in{width:100%;padding:8px 12px;border-radius:10px;border:1px solid var(--color-border,#ccc);background:var(--color-bg,#fff);color:inherit;font:inherit}
+.bu-res{position:absolute;top:100%;left:0;right:0;z-index:2000;background:var(--color-bg,#fff);border:1px solid var(--color-border,#ccc);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:420px;overflow:auto;margin-top:4px}
+.bu-it{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 12px;font:inherit;color:inherit;cursor:pointer;border-bottom:1px solid var(--color-border,#eee)}.bu-it.on,.bu-it:hover{background:color-mix(in srgb,var(--color-fg) 6%,transparent)}
+.bu-it b{display:block}.bu-it small{color:var(--color-fg-muted);font-size:12px}.bu-t{float:right;font-size:11px;color:var(--color-fg-muted)}.bu-nada{padding:10px;margin:0;color:var(--color-fg-muted)}
+@media(max-width:700px){.bu{order:3;flex-basis:100%;max-width:none;margin:6px 0 0}.topbar{flex-wrap:wrap}}
 .tk-row{cursor:pointer}.tk-row:hover td{background:color-mix(in srgb,var(--color-fg) 5%,transparent)}.tk-dup{margin-left:6px;font-size:11px}
 .tk-box{display:grid;gap:6px;padding:6px 4px}.tk-lin{list-style:none;margin:0;padding:0;display:grid;gap:4px}.tk-lin li{display:flex;justify-content:space-between;gap:12px;padding:5px 8px;border-radius:8px;background:color-mix(in srgb,var(--color-fg) 4%,transparent);font-size:13px}.cd-pp.down{color:var(--color-bad)}
 .pr-viaje{border:1px solid var(--color-border-line,var(--color-border));border-radius:12px;padding:10px;display:grid;gap:6px;background:var(--color-panel);align-content:start}
@@ -623,6 +631,8 @@ button.cli.cli-click{font:inherit;color:inherit;text-align:left;width:100%;curso
 <button type="button" data-vista="ruta" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Ruta por ruta</span></button>
 <button type="button" data-vista="semana" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Semana</span></button>
 <button type="button" data-vista="tickets" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v4a2 2 0 0 0 0 4v6H4v-6a2 2 0 0 0 0-4z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg><span>Tickets</span></button>
+<button type="button" data-vista="mercado" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg><span>Mapa de mercado</span></button>
+<button type="button" data-vista="cierre" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v5M8 14l3 3 5-6"/></svg><span>Cierre del mes</span></button>
 <button type="button" data-vista="temporada" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 4 8-9"/><path d="M14 6h6v6"/></svg><span>Temporada</span></button>
 <button type="button" data-vista="vendedores" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0M16 4l1.5 1.5L20 3"/></svg><span>Vendedores</span></button>
 </div>
@@ -940,6 +950,11 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <p class="note">Margen neto = margen del cliente menos lo que cuesta visitarlo (diésel por visita de Motum).</p>
         <div data-draw="bonLista"></div>
       </div>
+      <div class="card wide">
+        <h3>Retorno de la bonificación</h3>
+        <p class="note">¿Al cliente que le damos bonificación y promoción sí nos compra más? Cada punto es un cliente: a la derecha, más apoyo; arriba, crece en el año contra 2025. Pícale a un cuadro para filtrar o a un cliente para su ficha.</p>
+        <div data-draw="bonRetorno"></div>
+      </div>
       <div class="card">
         <h3>Por ruta</h3>
         <div data-draw="bonRutas"></div>
@@ -1230,6 +1245,24 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <h3>Tickets</h3>
         <p class="note">Cada ticket de Power Sales con su hora, productos y si el camión estaba ahí (Motum). Por ticket, por cliente, por día o por ruta; filtra por día, semana o mes. Pícale a un ticket para ver sus productos.</p>
         <div data-draw="ticketsCentro"></div>
+      </div>
+    </div>
+  </section>
+  <section id="v-mercado" data-vista-sec="mercado" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Mapa de mercado</h3>
+        <p class="note">Cada cliente en el mapa (ubicación de Motum; si no hay, donde se capturaron sus tickets). El tamaño es lo que compró en el año. Cambia el color, filtra y pícale a un punto para su ficha. Abajo, el resumen por población, colonia, canal o ruta (megabase, enero al último mes cerrado contra el año pasado).</p>
+        <div data-draw="mercadoMapa"></div>
+      </div>
+    </div>
+  </section>
+  <section id="v-cierre" data-vista-sec="cierre" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h3>Cierre del mes</h3>
+        <p class="note">El mes en una hoja: venta contra meta y contra el año pasado (METAS REALES), por ruta, gasto variable, clientes nuevos, perdidos, los que más crecen y caen, y el Programa si es el mes en curso. Escoge el mes e imprímelo.</p>
+        <div data-draw="cierreMes"></div>
       </div>
     </div>
   </section>
@@ -1948,13 +1981,17 @@ dash.calc('alertas', {
 <script src="abasto.js"></script>
 <script src="crec.js"></script>
 <script src="clidet.js"></script>
+<script src="bonret.js"></script>
+<script src="mercado.js"></script>
+<script src="cierre.js"></script>
+<script src="buscador.js"></script>
 <script src="filtro.js"></script>
 <script src="ventascli.js"></script>
 <script src="tickets.js"></script>
 <script src="direccion.js"></script>
 <script src="equipo.js"></script>
 <script src="mapa-real.js"></script>
-<script src="persona.js?v=69"></script>
+<script src="persona.js?v=70"></script>
 <script src="app.js"></script>
 </body>
 </html>

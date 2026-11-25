@@ -39,7 +39,9 @@
     items.forEach((p) => { const t = redondeaT(needT(p, lo, aj)); if (t > 0) T[p.sku] = t; });
     let tot = Object.values(T).reduce((a, b) => a + b, 0);
     const N = nViajes || Math.min(P.semanaFuerte ? 5 : 4, Math.max(1, Math.round(tot / 17)));
-    const objetivo = Math.min(18 * N, Math.max(16 * N, tot)); const meta = objetivo % 2 ? objetivo + (objetivo + 1 <= 18 * N ? 1 : -1) : objetivo;
+    const objetivo = Math.min(18 * N, Math.max(16 * N, tot)); let meta = objetivo % 2 ? objetivo + (objetivo + 1 <= 18 * N ? 1 : -1) : objetivo;
+    // (Willy, 25-nov-2026) un viaje de cuarto lager va de 18 tarimas = 120 Hl (18 × 6.63), nunca de 16: cada viaje que llena el cuarto es de 18.
+    const kx = Math.min(N, Math.round((T[XX] || 0) / 18 - 0.2)); if (kx > (meta - 16 * N) / 2) meta = 16 * N + 2 * kx;
     const P_ = prodIndex(P);
     const diasCon = (s) => { const p = P_.get(+s); return p ? diasDe(p, (T[s] || 0) * p.cxt) : 1e9; };
     while (tot < meta) {

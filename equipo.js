@@ -211,22 +211,29 @@
     return out;
   }
   // Lo que generó la noche (generar_equipo.py) viaja cifrado en datos.enc.json; el panel lo sube a la base sin duplicar.
+  // (25-nov-2026) Un panel por llamada (antes 7 MB en una sola, que a veces no subía nada) y cada puesto con su espejo en la
+  // misma llamada. Al terminar marca <html data-sync="listo"> (la tarea de la noche espera esa marca) y lo dice junto a "Actualizado".
   async function sincronizar() {
+    const marca = (txt, fin) => { const a = document.getElementById('actualizado'); if (a) { let s = a.querySelector('.sync-est'); if (!s) { s = document.createElement('span'); s.className = 'sync-est'; a.append(s); } s.textContent = ' · ' + txt; }
+      if (fin) document.documentElement.dataset.sync = 'listo'; };
     const d = dash.data('equipo_sync'); const R = d && d.status === 'ok' ? d.data : [];
-    if (!clave() || !R.length) return;
+    if (!clave()) { marca('sin conexión al equipo', true); return; }
+    document.documentElement.dataset.sync = 'subiendo';
     const quita = (x) => { const o = Object.assign({}, x); delete o.tipo; return o; };
     const llam = R.filter((x) => x.tipo === 'llamada').map(quita), hal = R.filter((x) => x.tipo === 'hallazgo').map(quita);
-    try {
-      if (llam.length) await rpc('admin_cargar_llamadas', { p_llamadas: llam });
-      if (hal.length) await rpc('admin_cargar_hallazgos', { p_hallazgos: hal });
-      const pn = dash.data('paneles'); const PN = pn && pn.status === 'ok' ? pn.data : [];
-      if (PN.length) await rpc('admin_cargar_paneles', { p_paneles: PN.map((x) => ({ clave: x.clave, datos: x.datos })) });
-      // (Willy, 24-nov-2026) "si la interfaz se cambia en admin, también en Rubí, Monse, Bere…": cada puesto recibe los mismos
-      // datos del admin (filtrados a sus rutas y, para Bere, sin margen) para que su página use las mismas pantallas.
-      for (const x of PN) { if (!PUESTOS_ESPEJO.includes(x.clave)) continue;
-        try { await rpc('admin_cargar_paneles', { p_paneles: [{ clave: x.clave, datos: Object.assign({}, x.datos, { ds: espejoDS(x.datos.rutas || [], x.clave === 'encargada_mix') }) }] }); }
-        catch (e) { console.warn('[equipo] espejo', x.clave, e.message); } }
-    } catch (e) { console.warn('[equipo] no se pudo sincronizar', e.message); }
+    try { if (llam.length) await rpc('admin_cargar_llamadas', { p_llamadas: llam }); if (hal.length) await rpc('admin_cargar_hallazgos', { p_hallazgos: hal }); }
+    catch (e) { console.warn('[equipo] llamadas/hallazgos', e.message); }
+    const pn = dash.data('paneles'); const PN = pn && pn.status === 'ok' ? pn.data : [];
+    let ok = 0; const mal = [];
+    for (const x of PN) {
+      marca('subiendo páginas del equipo ' + (ok + mal.length + 1) + ' de ' + PN.length + '…');
+      // (Willy, 24-nov-2026) "si la interfaz se cambia en admin, también en Rubí, Monse, Bere…": cada puesto lleva los datos del admin filtrados.
+      const datos = PUESTOS_ESPEJO.includes(x.clave) ? Object.assign({}, x.datos, { ds: espejoDS(x.datos.rutas || [], x.clave === 'encargada_mix') }) : x.datos;
+      let hecho = false;
+      for (let i = 0; i < 3 && !hecho; i++) { try { await rpc('admin_cargar_paneles', { p_paneles: [{ clave: x.clave, datos }] }); hecho = true; } catch (e) { console.warn('[equipo] panel', x.clave, e.message); await new Promise((r) => setTimeout(r, 2000 * (i + 1))); } }
+      if (hecho) ok++; else mal.push(x.clave);
+    }
+    marca(mal.length ? 'páginas del equipo: ' + ok + ' de ' + PN.length + ' (faltó ' + mal.join(', ') + ')' : 'páginas del equipo actualizadas (' + ok + ')', true);
   }
   window.addEventListener('cpn-admin-listo', async () => {
     const v = (location.hash.match(/^#v-(tareas|verificacion)$/) || [])[1]; const t = v && TIT[v];

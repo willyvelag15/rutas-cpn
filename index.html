@@ -405,7 +405,27 @@ button.cli.cli-click{font:inherit;color:inherit;text-align:left;width:100%;curso
 .vc-ruta{font:inherit;color:inherit;text-align:left;cursor:pointer;display:grid;gap:2px;padding:10px 12px;border-radius:12px;border:1px solid var(--color-border-line,#444);background:transparent}
 .vc-ruta:hover{border-color:var(--color-ok)}.vc-ruta strong{font-size:18px}.vc-ruta small{color:var(--color-fg-muted);font-size:12px}
 .vc-link{font:inherit;border:0;background:none;color:inherit;text-align:left;cursor:pointer;padding:0;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 35%,transparent)}
-.vc-nom{min-width:240px}.cd-pp.down{color:var(--color-bad)}
+.vc-nom{min-width:240px}
+/* Centro de hallazgos (24-nov-2026) */
+.hc{display:grid;gap:10px}
+.hc-fil{display:grid;gap:6px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--color-fg) 4%,transparent)}
+.hc-fil .vc-bar{margin:0}.hc-q{margin:0}
+.hc-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.hc-tab{font:inherit;color:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;border:1px solid var(--color-border-line,#444);background:transparent}
+.hc-tab b{font-size:15px}.hc-tab[aria-selected="true"]{background:var(--color-ok,#3fb950);border-color:transparent;color:#0b1a10}
+.hc-urg{font-style:normal;font-size:11px;font-weight:700;padding:1px 6px;border-radius:999px;background:color-mix(in srgb,var(--color-bad,#e5484d) 22%,transparent);color:var(--color-bad,#e5484d)}
+.hc-tab[aria-selected="true"] .hc-urg{background:rgba(0,0,0,.18);color:#0b1a10}
+.hc-ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hc-tipos{display:flex;flex-wrap:wrap;gap:6px}
+.hc-rutas{display:flex;flex-wrap:wrap;gap:6px}.hc-ruta{font:inherit;color:inherit;cursor:pointer;display:inline-flex;gap:6px;padding:6px 10px;border-radius:10px;border:1px solid var(--color-border-line,#444);background:transparent;font-size:13px}.hc-ruta:hover{border-color:var(--color-ok)}
+.hc-lista{display:grid;gap:8px}.hc-dia{margin:8px 0 0;font-size:13px;text-transform:capitalize;color:var(--color-fg-muted)}
+.hc-card{border:1px solid var(--color-border-line,#333);border-left:4px solid var(--color-border-line,#333);border-radius:12px;padding:10px 14px;display:grid;gap:4px}
+.hc-card.bad{border-left-color:var(--color-bad,#e5484d)}.hc-card.warn{border-left-color:#E9B949}.hc-card.ok{border-left-color:var(--color-ok,#3fb950)}
+.hc-cab{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.hc-tipo{font-weight:700;font-size:13px}.hc-monto{margin-left:auto;font-weight:800}
+.hc-tit{margin:2px 0 0;font-size:15px}.hc-meta{margin:0;font-size:12.5px;color:var(--color-fg-muted)}.hc-det{margin:0;font-size:13.5px;line-height:1.45}.hc-acc{margin:0;font-size:13px}
+.hc-btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}.hc-btns a.pill{text-decoration:none}
+.hc-foto{height:64px;border-radius:8px;cursor:zoom-in;object-fit:cover}
+.hc-mas{justify-self:center}.cd-pp.down{color:var(--color-bad)}
 .pr-viaje{border:1px solid var(--color-border-line,var(--color-border));border-radius:12px;padding:10px;display:grid;gap:6px;background:var(--color-panel);align-content:start}
 .pr-vcab{display:flex;gap:8px;align-items:center}
 .pr-vcab b{font-size:14px;white-space:nowrap}
@@ -766,14 +786,12 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       </div>
       <div class="card wide hal-card">
         <h3>Hallazgos · análisis de la IA</h3>
-        <p class="note">Busca ventas que el vendedor pudo simular: ticket a nombre de un cliente pero capturado lejos de su negocio o en la bodega, dos tickets el mismo día, clientes que ya no compraban o que de pronto compran mucho más. También ventas sin liquidar o con faltante. Son focos para confirmar con el cliente, no pruebas. Solo se muestran los de los últimos 7 días. Toca una ruta para ver solo la suya.</p>
+        <p class="note">Todo lo que encontró el análisis en un solo lugar: ventas y tickets dudosos, venta capturada lejos del negocio o a otra hora que el camión, alertas de las cámaras Motum, paradas sin cliente, clientes y saturación, y ventas sin liquidar. Filtra por día, semana o mes, ruta, categoría, tipo y gravedad.</p>
         <div data-draw="hallazgosResumen"></div>
         <div data-draw="hallazgosLista"></div>
         <h4 class="hal-sub">Liquidación día por día</h4>
         <p class="note">Cada día de venta (Scorecard de Power Sales) contra las liquidaciones de Power Sales que lo cubren. Se empatan por importe exacto y por la hora real en que se capturó la liquidación, no por la fecha que pone Power Sales (a veces pone el día siguiente aunque se liquidó esa misma noche). "Sin liquidación" solo sale si ningún pago lo cubre.</p>
         <div data-draw="liqCruce"></div>
-        <h4 class="hal-sub">Camión (Motum) contra Power Sales</h4>
-        <p class="note">Para cada venta se busca dónde estaba el camión con GPS de Motum mientras duró la visita y se compara con donde está el negocio del cliente. Confirmada = el camión estuvo a menos de 250 m. Las rutas 2 y 4 no tienen GPS.</p>
         <div data-draw="hallazgosGps"></div>
       </div>
       <div class="card">
@@ -1904,6 +1922,7 @@ dash.calc('alertas', {
 <script src="modulos.js"></script>
 <script src="modulos2.js"></script>
 <script src="hallazgos.js"></script>
+<script src="halcentro.js"></script>
 <script src="envase-filtro.js"></script>
 <script src="pronostico.js"></script>
 <script src="invrep.js?v=63"></script>
@@ -1921,7 +1940,7 @@ dash.calc('alertas', {
 <script src="direccion.js"></script>
 <script src="equipo.js"></script>
 <script src="mapa-real.js"></script>
-<script src="persona.js?v=66"></script>
+<script src="persona.js?v=67"></script>
 <script src="app.js"></script>
 </body>
 </html>

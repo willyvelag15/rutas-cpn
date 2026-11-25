@@ -7,26 +7,31 @@
   const ORD = { alta: 0, media: 1, baja: 2 };
   const NOM = { alta: 'Urgente', media: 'Revisar', baja: 'Para saber' };
   const CLS = { alta: 'bad', media: 'warn', baja: 'ok' };
-  const st = { grav: 'importantes', ruta: 'todas', todos: false };
+  const st = { grav: 'importantes', ruta: 'todas', todos: false, per: 'mes' };
+  // (Willy, 24-nov-2026) filtro por día, semana o mes
+  const enPer = (f) => !window.CPN_FILTRO || window.CPN_FILTRO.pasa({ per: st.per, dia: st.dia, sem: st.sem }, f, null);
+  const redib = () => { st.todos = false; st.gpsTodos = false; ['hallazgosResumen', 'hallazgosLista', 'hallazgosGps'].forEach((n) => dash.draw(n)); };
   window.addEventListener('cpn-ir', (ev) => { const r = ev.detail.ruta; if (!r || ev.detail.vista !== 'hoy') return; st.ruta = r; st.todos = false; st.gpsTodos = false; st.grav = 'importantes'; ['hallazgosResumen', 'hallazgosLista', 'hallazgosGps'].forEach((n) => dash.draw(n)); });
 
   function lista() {
-    return rows('hallazgos').slice().sort((a, b) => ORD[a.gravedad] - ORD[b.gravedad] || (b.fecha > a.fecha ? 1 : b.fecha < a.fecha ? -1 : 0) || b.monto - a.monto);
+    return rows('hallazgos').filter((h) => enPer(h.fecha)).sort((a, b) => ORD[a.gravedad] - ORD[b.gravedad] || (b.fecha > a.fecha ? 1 : b.fecha < a.fecha ? -1 : 0) || b.monto - a.monto);
   }
 
   dash.draw('hallazgosResumen', (e) => {
     e.replaceChildren();
-    const H = rows('hallazgos'); const R = rows('hallazgos_ruta');
-    if (!H.length && !R.length) { e.append(el('p', 'note', 'No hay hallazgos en los últimos 7 días.')); return; }
+    const H0 = rows('hallazgos'); const R = rows('hallazgos_ruta');
+    if (window.CPN_FILTRO) e.append(window.CPN_FILTRO.barra(st, { fechas: H0.map((h) => h.fecha), sinRuta: true, onChange: redib }));
+    const H = H0.filter((h) => enPer(h.fecha));
+    if (!H.length && !R.length) { e.append(el('p', 'note', 'No hay hallazgos en este periodo.')); return; }
     const altas = H.filter((h) => h.gravedad === 'alta').length;
     const porLiq = R.reduce((a, r) => a + Math.max(0, r.porLiquidar || 0), 0);
     const tiles = el('div', 'hal-tiles');
     const t = (k, v, s, cls) => { const d = el('div', 'hal-tile' + (cls ? ' ' + cls : '')); d.append(el('span', null, k), el('b', null, v)); if (s) d.append(el('small', null, s)); tiles.append(d); };
     const sim = H.filter((h) => h.tipo === 'Posible venta simulada');
-    const vsim = R.reduce((a, r) => a + (r.ventaSospechosa || 0), 0);
+    const vsim = st.per === 'mes' ? R.reduce((a, r) => a + (r.ventaSospechosa || 0), 0) : sim.reduce((a, h) => a + (h.monto || 0), 0);
     t('Ventas que pueden ser simuladas', F.money(vsim), sim.length + ' clientes por confirmar', vsim > 0 ? 'bad' : '');
-    t('Urgentes', F.int(altas), 'de ' + F.int(H.length) + ' hallazgos de los últimos 7 días', altas ? 'bad' : '');
-    t('Venta sin liquidar', F.money(porLiq), 'según liquidaciones de Power Sales', porLiq > 0 ? 'bad' : '');
+    t('Urgentes', F.int(altas), 'de ' + F.int(H.length) + ' hallazgos · ' + (window.CPN_FILTRO ? window.CPN_FILTRO.etiqueta(st) : ''), altas ? 'bad' : '');
+    t('Venta sin liquidar', F.money(porLiq), 'en el mes, según liquidaciones de Power Sales', porLiq > 0 ? 'bad' : '');
     const peor = R.slice().sort((a, b) => (b.pctSospechosa || 0) - (a.pctSospechosa || 0) || b.puntaje - a.puntaje)[0];
     if (peor) t('Ruta a revisar primero', peor.ruta, peor.vendedor + ' · ' + F.pct(peor.pctSospechosa || 0) + ' de su venta es dudosa', '');
     e.append(tiles);
@@ -103,7 +108,7 @@
       b.append(n, s1); caja.append(b);
     });
     e.append(caja);
-    let L = X.filter((x) => NOCONF[x.estado] && (st.ruta === 'todas' || x.ruta === st.ruta)).sort((a, b) => b.venta - a.venta);
+    let L = X.filter((x) => NOCONF[x.estado] && enPer(x.fecha) && (st.ruta === 'todas' || x.ruta === st.ruta)).sort((a, b) => b.venta - a.venta);
     const ul = el('ol', 'acciones hal-lista');
     const n = st.gpsTodos ? L.length : Math.min(8, L.length);
     L.slice(0, n).forEach((x) => {

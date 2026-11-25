@@ -507,9 +507,16 @@
   /* ---------- Hallazgos (solo lo que se encontró; sin recomendaciones) ---------- */
   const GRAV = { alta: ['Importante', 'bad'], media: ['Revisar', 'warn'], baja: ['Para saber', 'ok'] };
   async function pintarHallazgos(v) {
-    const H = await rpc('mis_hallazgos', { p_clave: clave() });
+    const H0 = await rpc('mis_hallazgos', { p_clave: clave() });
     v.replaceChildren();
-    v.append(el('p', 'pp-res', H.length ? H.length + (H.length === 1 ? ' hallazgo' : ' hallazgos') + ' de los últimos 7 días.' : 'Sin hallazgos en los últimos 7 días.'));
+    // (Willy, 24-nov-2026) filtrar por día, semana, mes, ruta y gravedad
+    const hf = st.hf || (st.hf = { per: 'mes', grav: 'todas' });
+    const repinta = () => { st.todos = false; pintarHallazgos(v); };
+    if (window.CPN_FILTRO) v.append(window.CPN_FILTRO.barra(hf, { fechas: H0.map((h) => h.fecha), rutas: H0.map((h) => h.ruta), onChange: repinta }));
+    const gs = el('div', 'cr-seg'); [['todas', 'Todos'], ['alta', 'Urgentes'], ['media', 'Revisar'], ['baja', 'Para saber']].forEach(([k, t]) => { const b = el('button', null, t); b.type = 'button'; b.setAttribute('aria-pressed', String(hf.grav === k)); b.addEventListener('click', () => { hf.grav = k; repinta(); }); gs.append(b); });
+    v.append(gs);
+    const H = H0.filter((h) => (!window.CPN_FILTRO || window.CPN_FILTRO.pasa(hf, h.fecha, h.ruta)) && (hf.grav === 'todas' || h.gravedad === hf.grav));
+    v.append(el('p', 'pp-res', H.length ? H.length + (H.length === 1 ? ' hallazgo' : ' hallazgos') + (window.CPN_FILTRO ? ' · ' + window.CPN_FILTRO.etiqueta(hf) : '') + '.' : 'Sin hallazgos con este filtro.'));
     if (H.length) v.append(el('p', 'pp-mia', 'Es lo que encontró el análisis de la noche en tu área, para que lo revises y decidas.'));
     const n = st.todos ? H.length : Math.min(15, H.length); let dia0 = null;
     H.slice(0, n).forEach((h) => {
@@ -518,7 +525,7 @@
       if (g) cab.append(el('span', 'pill ' + cls, g)); if (h.ruta) cab.append(el('span', 'pill', h.ruta)); cab.append(el('span', 'pp-lim', h.tipo));
       c.append(cab, el('h3', null, h.titulo)); if (h.detalle) c.append(el('p', 'pp-det', h.detalle)); v.append(c);
     });
-    if (H.length > n) { const b = el('button', 'hal-mas', 'Ver los ' + H.length); b.type = 'button'; b.addEventListener('click', () => { st.todos = true; pintar(); }); v.append(b); }
+    if (H.length > n) { const b = el('button', 'hal-mas', 'Ver los ' + H.length); b.type = 'button'; b.addEventListener('click', () => { st.todos = true; pintarHallazgos(v); }); v.append(b); }
   }
 
   /* ---------- Tareas ---------- */

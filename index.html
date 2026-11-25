@@ -1190,7 +1190,7 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 
       <div class="card">
         <h3>Avance por ruta</h3>
-        <p class="note">Hectolitros del mes contra la meta de cada ruta.</p>
+        <p class="note">Hectolitros del mes contra la meta de cada ruta. Solo clientes punto de venta y centro de consumo: lo de Oxxo, Tiendas 3B y Walmart no cuenta para el avance ni para los bonos (va aparte), salvo en la Ruta 5, que es la ruta de cadenas.</p>
         <div data-draw="avanceRutas" data-source="mesRuta"></div>
       </div>
       <div class="card wide" data-solo-admin>
@@ -1574,7 +1574,7 @@ dash.calc('mesRuta', {
       const mb = m.fuente === 'megabase';
       const hlMes = mb ? (m.hlMes || 0) : d.reduce((a, r) => a + r.hl, 0);
       const nd = mb ? (m.diasMegabase || n) : n;
-      return { ruta: m.ruta, rutaNum: m.rutaNum, vendedor: m.vendedor + (mb ? ' (megabase)' : ''), metaHl: m.metaHl, hlMes, cajasMes: mb ? (m.cajasMes || 0) : d.reduce((a, r) => a + r.cajas, 0), ventaMes: mb ? (m.ventaMes || 0) : d.reduce((a, r) => a + r.venta, 0),
+      return { ruta: m.ruta, rutaNum: m.rutaNum, vendedor: m.vendedor + (mb ? ' (megabase)' : ''), metaHl: m.metaHl, hlMes, hlCadenas: d.reduce((a, r) => a + (r.hlCadenas || 0), 0), cajasMes: mb ? (m.cajasMes || 0) : d.reduce((a, r) => a + r.cajas, 0), ventaMes: mb ? (m.ventaMes || 0) : d.reduce((a, r) => a + r.venta, 0),
         avance: m.metaHl ? hlMes / m.metaHl : 0, esperado: n / habiles, diasTrans: n, proyeccion: nd ? hlMes / nd * habiles : 0,
         faltaPorDia: Math.max(0, (m.metaHl - hlMes) / Math.max(1, habiles - n)), metaDia: m.metaHl / habiles, nov25Hl: m.nov25Hl,
         millerCajas: mb ? (m.millerCajas || 0) : d.reduce((a, r) => a + (r.millerCajas || 0), 0), auLataCajas: mb ? (m.auLataCajas || 0) : d.reduce((a, r) => a + (r.auLataCajas || 0), 0), au24Cajas: mb ? (m.au24Cajas || 0) : d.reduce((a, r) => a + (r.au24Cajas || 0), 0), megabase: mb, corteMegabase: m.corteMegabase };
@@ -1781,7 +1781,9 @@ dash.calc('alertas', {
       const bar = document.createElement('div'); bar.className = 'gauge'; bar.style.height = '12px'; const f = document.createElement('i'); f.style.width = Math.min(100, r.avance * 100) + '%'; const e = document.createElement('em'); e.style.left = Math.min(100, r.esperado * 100) + '%'; bar.append(f, e);
       row.style.gridTemplateColumns = '6.5rem 1fr auto';
       const v = document.createElement('span'); v.style.textAlign = 'right'; v.style.fontVariantNumeric = 'tabular-nums'; v.style.whiteSpace = 'nowrap'; v.className = r.avance >= r.esperado ? 'ok' : r.avance >= r.esperado * 0.85 ? 'warn' : 'bad';
-      const hv = document.createElement('b'); hv.textContent = F.hl(r.hlMes) + ' Hl'; const pv = document.createElement('small'); pv.textContent = ' de ' + F.int(r.metaHl) + ' · ' + F.pct(r.avance); v.append(hv, pv); row.append(n, bar, v); el.append(row);
+      const hv = document.createElement('b'); hv.textContent = F.hl(r.hlMes) + ' Hl'; const pv = document.createElement('small'); pv.textContent = ' de ' + F.int(r.metaHl) + ' · ' + F.pct(r.avance); v.append(hv, pv);
+      if (r.hlCadenas > 0.05 && r.ruta !== 'TOTAL') { const cv = document.createElement('small'); cv.style.display = 'block'; cv.style.color = 'var(--color-fg-muted)'; cv.textContent = '+' + F.hl(r.hlCadenas) + ' Hl de Oxxo/3B aparte (no cuentan)'; v.append(cv); }
+      row.append(n, bar, v); el.append(row);
     });
   });
 })();
@@ -2021,7 +2023,7 @@ dash.calc('alertas', {
 <script src="direccion.js"></script>
 <script src="equipo.js"></script>
 <script src="mapa-real.js"></script>
-<script src="persona.js?v=77"></script>
+<script src="persona.js?v=78"></script>
 <script src="app.js"></script>
 </body>
 </html>

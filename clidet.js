@@ -81,7 +81,7 @@
       const bands = el('div', 'hc-btns'); [...(PS && PS.banderas || [])].forEach((b) => bands.append(el('span', 'pill ' + (/cayendo|riesgo|sin satur|perd/i.test(b) ? 'bad' : /crec/i.test(b) ? 'ok' : 'warn'), b))); if (bands.children.length) sec.append(bands);
       [...(PS && PS.riesgos || [])].forEach((r) => sec.append(el('p', 'cd-alerta bad', '⚠ ' + r)));
       [...(PS && PS.oportunidades || [])].forEach((r) => sec.append(el('p', 'cd-alerta ok', '↗ ' + r)));
-      if (PS && C.rutaNum && PS.rutaNum && Number(C.rutaNum) !== Number(PS.rutaNum)) sec.append(el('p', 'cd-alerta warn', '⚠ No cuadra la ruta: en la megabase está en Ruta ' + C.rutaNum + ' y en Power Sales en Ruta ' + PS.rutaNum + '.'));
+      if (PS && C.rutaNum && PS.rutaNum && Number(C.rutaNum) !== Number(PS.rutaNum)) sec.append(el('p', 'cd-alerta warn', Number(C.rutaNum) === 5 ? 'En la megabase este cliente es de la Ruta 5: su historia y la venta capturada a mano son de la Ruta 5 y NO se le cuentan a la Ruta ' + PS.rutaNum + '. A la Ruta ' + PS.rutaNum + ' solo le cuenta lo que compra por Power Sales.' : '⚠ No cuadra la ruta: en la megabase está en Ruta ' + C.rutaNum + ' y en Power Sales en Ruta ' + PS.rutaNum + '.'));
       if (g.children.length) caja.append(sec); }
 
     // ---- conciliación del mes ----

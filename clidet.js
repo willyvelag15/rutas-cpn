@@ -43,7 +43,7 @@
     const cab = el('div', 'cd-cab'); const t = el('div');
     const neg = C.negocio || (PS && PS.cliente) || id; const prop = info.prop && tit(info.prop) !== neg ? tit(info.prop) : '';
     t.append(el('h3', null, '#' + id + ' · ' + neg + (prop ? ' · ' + prop : '')),
-      el('small', null, [C.ruta || (PS && PS.ruta), PS && PS.vendedor, C.estado].filter(Boolean).join(' · ')));
+      el('small', null, [(PS && PS.ruta) || C.ruta, PS && PS.vendedor, C.estado].filter(Boolean).join(' · ')));
     const x = el('button', 'pill', 'Cerrar'); x.type = 'button'; x.addEventListener('click', cerrar); cab.append(t, x); caja.append(cab);
 
     const datos = el('div', 'cd-datos');
@@ -52,8 +52,40 @@
       .filter(([, v]) => v && v !== '—').forEach(([k, v]) => { const d = el('div'); d.append(el('span', null, k), el('b', null, v)); datos.append(d); });
     caja.append(datos);
 
+    // ---- cómo está el cliente (Willy, 24-nov-2026: bonificación, saturación y caída general) ----
+    { const sm = !!(window.CPN && window.CPN.sinMargen) || !!(SRC && SRC.sinMargen);
+      const B = rows('bonifcli').find((b) => String(b.clienteId) === id);
+      const pc = (v) => (v == null || !isFinite(v) ? '—' : (v > 0 ? '+' : '') + Math.round(v * 100) + '%');
+      const pp = (v) => (v == null || !isFinite(v) ? '—' : (Math.round(v * 1000) / 10) + '%');
+      const mon = (v) => '$' + Math.round(v || 0).toLocaleString('es-MX');
+      const sec = el('section', 'cd-sec'); sec.append(el('h4', null, 'Cómo está el cliente'));
+      const g = el('div', 'pr-tiles cd-salud'); const tl = (k, v, s2, cls) => { const d = el('div', 'ht' + (cls ? ' ' + cls : '')); d.append(el('span', null, k), el('b', null, v)); if (s2) d.append(el('small', null, s2)); g.append(d); };
+      const ton = (v) => (v == null ? '' : v <= -0.1 ? 'bad' : v < 0 ? 'warn' : 'ok');
+      // caída general
+      if (info.m25 && conc) { const mi = Number(conc.corte.slice(5, 7)) - 1; const a = info.m25.slice(0, mi).reduce((x, y) => x + y, 0), b = info.m26.slice(0, mi).reduce((x, y) => x + y, 0); const v = a ? (b - a) / a : null; tl('En el año (ene a ' + MES[mi - 1] + ')', pc(v), n1(b) + ' Hl contra ' + n1(a) + ' Hl', ton(v)); }
+      if (C.hlMes3 != null && C.hlMes3_2025) { const v = (C.hlMes3 - C.hlMes3_2025) / C.hlMes3_2025; tl('Últimos 3 meses vs año pasado', pc(v), n1(C.hlMes3) + ' Hl/mes contra ' + n1(C.hlMes3_2025), ton(v)); }
+      if (C.hlMes3 != null && C.hlMesAntes) { const v = (C.hlMes3 - C.hlMesAntes) / C.hlMesAntes; tl('Últimos 3 meses vs los 3 anteriores', pc(v), n1(C.hlMes3) + ' contra ' + n1(C.hlMesAntes) + ' Hl/mes', ton(v)); }
+      if (PS && PS.prom3Hl) tl('Este mes (proyección)', pc(PS.ritmo), 'va para ' + n1(PS.proyHl) + ' Hl contra ' + n1(PS.prom3Hl) + ' de promedio', ton(PS.ritmo));
+      // saturación
+      if (PS && PS.saturacion != null) { const ref = PS.rutaSatGrandes != null && (PS.hl || 0) >= 20 ? PS.rutaSatGrandes : PS.rutaSat; const v = PS.saturacion - (ref || 0);
+        tl('Saturación del mes', pp(PS.saturacion), 'su ruta ' + pp(PS.rutaSat) + ' · grandes ' + pp(PS.rutaSatGrandes) + ' · chicos ' + pp(PS.rutaSatChicos) + ' (meta 10%)', PS.saturacion < 0.1 ? 'bad' : v < 0 ? 'warn' : 'ok');
+        if ((PS.satSem || []).length) tl('Saturación por semana', PS.satSem.map((x) => pp(x[1])).join(' · '), 'semanas del ' + PS.satSem.map((x) => x[0].slice(8)).join(', ')); }
+      // bonificación y dinero (no para Bere)
+      if (!sm && B) { tl('Bonificación + promoción', pp(B.gi), mon(B.bonif) + ' bonificación + ' + mon(B.promo) + ' promoción de ' + mon(B.ingreso) + ' (' + B.corte + ')', B.gi > 0.2 ? 'warn' : '');
+        tl('Gasto por Hl', mon(B.gastoHl), 'su ruta ' + mon(B.rutaGastoHl) + (B.exceso > 0 ? ' · ' + mon(B.exceso) + ' de más' : ''), B.gastoHl > B.rutaGastoHl * 1.1 ? 'bad' : ''); }
+      if (PS) { tl('Descuento del mes', pp(PS.venta ? (PS.descuento || 0) / PS.venta : 0), mon(PS.descuento) + ' de ' + mon(PS.venta) + ' de venta');
+        if (!sm) tl('Margen del mes', mon(PS.margen), pp(PS.margenPct) + ' · neto ' + mon(PS.neto) + (PS.ganamos ? ' · sí ganamos' : ' · perdemos'), PS.ganamos ? 'ok' : 'bad');
+        tl('Visitas y compras', (PS.compras || 0) + ' de ' + (PS.visitas || 0), 'compras de visitas · visita ' + (PS.diasVisita || []).join(', ') + (PS.proxVisita ? ' · próxima ' + fec(PS.proxVisita) : '')); }
+      if (!sm && C.perdidaMes > 0) tl('Lo que se deja de vender', mon(C.ventaPerdidaMes) + '/mes', 'margen que se pierde ' + mon(C.perdidaMes) + '/mes', 'bad');
+      sec.append(g);
+      const bands = el('div', 'hc-btns'); [...(PS && PS.banderas || [])].forEach((b) => bands.append(el('span', 'pill ' + (/cayendo|riesgo|sin satur|perd/i.test(b) ? 'bad' : /crec/i.test(b) ? 'ok' : 'warn'), b))); if (bands.children.length) sec.append(bands);
+      [...(PS && PS.riesgos || [])].forEach((r) => sec.append(el('p', 'cd-alerta bad', '⚠ ' + r)));
+      [...(PS && PS.oportunidades || [])].forEach((r) => sec.append(el('p', 'cd-alerta ok', '↗ ' + r)));
+      if (PS && C.rutaNum && PS.rutaNum && Number(C.rutaNum) !== Number(PS.rutaNum)) sec.append(el('p', 'cd-alerta warn', '⚠ No cuadra la ruta: en la megabase está en Ruta ' + C.rutaNum + ' y en Power Sales en Ruta ' + PS.rutaNum + '.'));
+      if (g.children.length) caja.append(sec); }
+
     // ---- conciliación del mes ----
-    if (conc && (C.ruta === 'Ruta 5' || (PS && PS.rutaNum === 5))) caja.append(el('p', 'cd-conc', 'La Ruta 5 no está en Power Sales: sus números salen solo de la megabase.'));
+    if (conc && (PS ? PS.rutaNum === 5 : C.ruta === 'Ruta 5')) caja.append(el('p', 'cd-conc', 'La Ruta 5 no está en Power Sales: sus números salen solo de la megabase.'));
     else if (conc) {
       const mi = Number(conc.corte.slice(5, 7)) - 1; const mb = info.m26 ? info.m26[mi] : null;
       const pc = (conc.porCliente || []).find((r) => String(r[0]) === id);
@@ -95,7 +127,7 @@
       const din = !SRC || SRC.dinero !== false; const sm = (SRC && SRC.sinMargen) || !!(window.CPN && window.CPN.sinMargen); const d = window.CPN_CLI.detalle(Object.assign({ banderas: [], oportunidades: [], riesgos: [] }, PS), rows('clientes_mes_det'), din, din && !sm, cerrar);
       const cb = d.querySelector('.rc-det-cab'); if (cb) cb.remove();
       sec.append(d);
-    } else sec.append(el('p', 'note', 'No tiene compras en Power Sales este mes' + (C.ruta === 'Ruta 5' ? ' (la Ruta 5 no está en Power Sales).' : '.')));
+    } else sec.append(el('p', 'note', 'No tiene compras en Power Sales este mes' + (!PS && C.ruta === 'Ruta 5' ? ' (la Ruta 5 no está en Power Sales).' : '.')));
     caja.append(sec);
 
     const of = [...new Set([...(C.huecosFoco || []), ...(C.huecos || [])])];

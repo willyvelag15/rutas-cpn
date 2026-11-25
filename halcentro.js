@@ -34,12 +34,20 @@
     g('hallazgos').forEach((h) => it.push({ cat: catDe(h.tipo), tipo: h.tipo, grav: h.gravedad || 'baja', fecha: h.fecha, ruta: rn(h.rutaNum || h.ruta), vendedor: h.vendedor,
       clienteId: h.clienteId, cliente: h.clienteId ? '#' + h.clienteId + ' · ' + tit(h.cliente) + (h.prop && tit(h.prop) !== tit(h.cliente) ? ' · ' + tit(h.prop) : '') : tit(h.cliente), monto: h.monto, detalle: h.detalle, accion: h.accion, extra: h.veces > 1 ? h.veces + ' veces en el mes' : '' }));
     const NOCONF = { 'Camión nunca pasó': 'alta', 'Camión en la bodega': 'alta', 'Camión pasó a otra hora': 'media', 'Cerca': 'baja' };
-    g('motum_cruce').forEach((x) => { if (!NOCONF[x.estado]) return;
-      const det = x.estado === 'Camión nunca pasó' ? 'En todo el día el camión no estuvo cerca del negocio (lo más cerca: ' + n0(x.dDia) + ' m). La venta se capturó a ' + n0(x.dCaptura) + ' m del negocio.'
-        : x.estado === 'Camión pasó a otra hora' ? 'A la hora del ticket el camión estaba a ' + n0(x.dCamion) + ' m; sí pasó cerca (' + n0(x.dDia) + ' m) en otro momento del día.'
-          : x.estado === 'Cerca' ? 'El camión estuvo a ' + n0(x.dCamion) + ' m del negocio a la hora del ticket.' : 'La venta se registró con el camión en la bodega.';
+    const dm = (v) => (v == null ? '—' : v < 1000 ? n0(v) + ' m' : (Math.round(v / 100) / 10).toLocaleString('es-MX') + ' km');
+    const MC = g('motum_cruce'); const veces = {}; MC.forEach((x) => { if (NOCONF[x.estado] && x.estado !== 'Cerca') veces[x.clienteId] = (veces[x.clienteId] || 0) + 1; });
+    MC.forEach((x) => { if (!NOCONF[x.estado]) return;
+      const h = x.hora ? 'A las ' + x.hora : 'A la hora del ticket';
+      const tel = x.dCaptura == null ? '' : x.dCaptura <= 300 ? ' El teléfono del vendedor estaba junto al camión (a ' + dm(x.dCaptura) + ' de él), o sea que el ticket no se hizo en la tienda.' : ' El teléfono del vendedor estaba a ' + dm(x.dCaptura) + ' del camión (pudo bajarse a pie o ir en otro vehículo).';
+      let det, acc;
+      if (x.estado === 'Camión nunca pasó') { det = h + ', cuando se hizo el ticket, el camión estaba a ' + dm(x.dCamion) + ' del negocio.' + tel + ' En todo el día el camión no se acercó a menos de ' + dm(x.dDia) + ' del negocio.'; acc = 'Preguntarle a ' + (x.vendedor || 'el vendedor') + ' cómo entregó y llamar al cliente para confirmar que recibió el producto y cuánto.'; }
+      else if (x.estado === 'Camión pasó a otra hora') { det = h + ', cuando se hizo el ticket, el camión estaba a ' + dm(x.dCamion) + ' del negocio, pero en otro momento del día sí pasó a ' + dm(x.dDia) + '.' + tel + ' Lo más probable: entregó a una hora y capturó a otra.'; acc = 'Pedir que el ticket se haga al momento de entregar, en la tienda.'; }
+      else if (x.estado === 'Cerca') { det = h + ' el camión estaba a ' + dm(x.dCamion) + ' del negocio (se pudo estacionar a la vuelta).'; acc = 'Solo para saber; si se repite, revisar el punto del cliente en Motum.'; }
+      else { det = h + ' el camión estaba en la bodega y se hizo el ticket.' + tel; acc = 'Llamar al cliente para confirmar que recibió el producto.'; }
       it.push({ cat: 'gps', tipo: x.estado, grav: NOCONF[x.estado], fecha: x.fecha, hora: x.hora, ruta: rn(x.rutaNum || x.ruta), vendedor: x.vendedor, clienteId: x.clienteId,
-        cliente: '#' + x.clienteId + ' · ' + tit(x.cliente) + (x.prop && tit(x.prop) !== tit(x.cliente) ? ' · ' + tit(x.prop) : ''), monto: x.venta, detalle: det + (x.ubic ? ' ' + x.ubic : ''), accion: 'Llamar al cliente para confirmar que recibió el producto.' }); });
+        cliente: '#' + x.clienteId + ' · ' + tit(x.cliente) + (x.prop && tit(x.prop) !== tit(x.cliente) ? ' · ' + tit(x.prop) : ''), monto: x.venta,
+        detalle: det + (x.ubic === 'Motum' ? ' (ubicación del cliente: punto de Motum)' : x.ubic ? ' (ubicación del cliente: ' + x.ubic + ')' : ''), accion: acc,
+        extra: veces[x.clienteId] > 1 && x.estado !== 'Cerca' ? veces[x.clienteId] + ' tickets de este cliente este mes con el camión lejos' : '' }); });
     g('motum_alertas').forEach((a) => it.push({ cat: 'motum', tipo: a.tipo, grav: a.gravedad === 'alta' || a.gravedad === 'Alta' ? 'alta' : a.gravedad === 'baja' || a.gravedad === 'Baja' ? 'baja' : 'media', fecha: a.fecha, hora: a.hora, ruta: rn(a.ruta),
       cliente: 'Unidad ' + (a.unidad || ''), detalle: [a.calle, a.velocidad != null ? a.velocidad + ' km/h' : ''].filter(Boolean).join(' · '), lat: a.lat, lng: a.lng, imgs: a.imgs || [] }));
     g('paradas').forEach((p) => it.push({ cat: 'motum', tipo: 'Parada sin cliente', grav: 'media', fecha: p.fecha, hora: p.inicio, ruta: rn(p.rutaNum || p.ruta), vendedor: p.vendedor,

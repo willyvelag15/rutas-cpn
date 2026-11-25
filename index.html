@@ -435,6 +435,7 @@ button.cli.cli-click{font:inherit;color:inherit;text-align:left;width:100%;curso
 .bu-it{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 12px;font:inherit;color:inherit;cursor:pointer;border-bottom:1px solid var(--color-border,#eee)}.bu-it.on,.bu-it:hover{background:color-mix(in srgb,var(--color-fg) 6%,transparent)}
 .bu-it b{display:block}.bu-it small{color:var(--color-fg-muted);font-size:12px}.bu-t{float:right;font-size:11px;color:var(--color-fg-muted)}.bu-nada{padding:10px;margin:0;color:var(--color-fg-muted)}
 @media(max-width:700px){.bu{order:3;flex-basis:100%;max-width:none;margin:6px 0 0}.topbar{flex-wrap:wrap}}
+.mbcmp{display:grid;grid-template-columns:1fr 1fr;gap:28px}.mbcmp .brandrow{min-height:34px;align-items:center}.mbcmp-t{margin:0 0 8px;font-size:13px;color:var(--color-fg-muted)}@media(max-width:800px){.mbcmp{grid-template-columns:1fr}}
 .tk-row{cursor:pointer}.tk-row:hover td{background:color-mix(in srgb,var(--color-fg) 5%,transparent)}.tk-dup{margin-left:6px;font-size:11px}
 .tk-box{display:grid;gap:6px;padding:6px 4px}.tk-lin{list-style:none;margin:0;padding:0;display:grid;gap:4px}.tk-lin li{display:flex;justify-content:space-between;gap:12px;padding:5px 8px;border-radius:8px;background:color-mix(in srgb,var(--color-fg) 4%,transparent);font-size:13px}.cd-pp.down{color:var(--color-bad)}
 .pr-viaje{border:1px solid var(--color-border-line,var(--color-border));border-radius:12px;padding:10px;display:grid;gap:6px;background:var(--color-panel);align-content:start}
@@ -1192,6 +1193,14 @@ table.cpn-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         <p class="note">Hectolitros del mes contra la meta de cada ruta.</p>
         <div data-draw="avanceRutas" data-source="mesRuta"></div>
       </div>
+      <div class="card wide" data-solo-admin>
+        <h3>Avance por ruta · real contra megabase</h3>
+        <p class="note" data-draw="avanceMBnota"></p>
+        <div class="mbcmp">
+          <div><h4 class="mbcmp-t">Real · Power Sales (al último día)</h4><div data-draw="avanceRutas" data-source="mesRuta" data-total="1"></div></div>
+          <div><h4 class="mbcmp-t">Megabase (con lo capturado a mano)</h4><div data-draw="avanceMB"></div></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1688,7 +1697,7 @@ dash.calc('alertas', {
 
   dash.draw('tablaRutas', (tb) => {
     const g = get('resumenDia'); tb.replaceChildren(); if (g.status !== 'ok') return;
-    g.data.filter((r) => r.ruta !== 'TOTAL').forEach((r) => {
+    g.data.filter((r) => r.ruta !== 'TOTAL' || el.dataset.total).forEach((r) => {
       const tr = document.createElement('tr');
       const td = (v, cls) => { const c = document.createElement('td'); c.textContent = v; if (cls) c.className = cls; tr.append(c); return c; };
       const k = td(r.ruta); k.style.fontWeight = '600'; k.style.color = window.CPN.routeColor[r.ruta];
@@ -1743,11 +1752,32 @@ dash.calc('alertas', {
   };
   dash.draw('mezcla', (el) => { const g = get('mezcla'); if (g.status !== 'ok') { el.replaceChildren(); return; } window.CPN.brandList(el, g.data); });
 
+  // (Willy, 25-nov-2026) Mismo cuadro con TODO de la megabase: la izquierda es lo real (Power Sales), esta es la de la megabase.
+  const mbMes = () => { const g = get('crecimiento'); const C = g.status === 'ok' ? (Array.isArray(g.data) ? g.data[0] : g.data) : null; return C && C.mbMes; };
+  dash.draw('avanceMBnota', (el) => { const M = mbMes(); el.textContent = M ? 'Izquierda: lo real de Power Sales al último día. Derecha: lo que dice la megabase al ' + F.dia(M.corte) + ' (' + M.diasHabiles + ' de 25 días hábiles); debajo de cada ruta, lo real de Power Sales a ese mismo día y la diferencia (lo que la megabase trae de más o de menos). Solo para comparar: no cambia ningún número de la app.' : 'Sin megabase.'; });
+  dash.draw('avanceMB', (el) => {
+    el.replaceChildren(); const M = mbMes(); if (!M) return;
+    const metas = new Map((get('metas').data || []).map((m) => [m.rutaNum, m])); const esp = M.diasHabiles / 25;
+    let tMb = 0, tPs = 0, tMeta = 0;
+    const fila = (nombre, color, mb, ps, meta, total) => {
+      const av = meta ? mb / meta : 0; const d = mb - ps;
+      const row = document.createElement('div'); row.className = 'brandrow'; row.style.gridTemplateColumns = '6.5rem 1fr auto';
+      const n = document.createElement('span'); n.className = 'chip'; const sw = document.createElement('i'); sw.style.background = color; const t = document.createElement('span'); t.textContent = nombre; if (total) t.style.fontWeight = '700'; n.append(sw, t);
+      const bar = document.createElement('div'); bar.className = 'gauge'; bar.style.height = '12px'; const f = document.createElement('i'); f.style.width = Math.min(100, av * 100) + '%'; const e = document.createElement('em'); e.style.left = Math.min(100, esp * 100) + '%'; bar.append(f, e);
+      const v = document.createElement('span'); v.style.textAlign = 'right'; v.style.fontVariantNumeric = 'tabular-nums'; v.style.whiteSpace = 'nowrap'; v.className = av >= esp ? 'ok' : av >= esp * 0.85 ? 'warn' : 'bad';
+      const hv = document.createElement('b'); hv.textContent = F.hl(mb) + ' Hl'; const pv = document.createElement('small'); pv.textContent = ' de ' + F.int(meta) + ' · ' + F.pct(av);
+      const dv = document.createElement('small'); dv.style.display = 'block'; dv.style.color = 'var(--color-fg-muted)'; dv.textContent = 'real ' + F.hl(ps) + ' · ' + (d >= 0 ? '+' : '') + F.hl(d) + ' Hl';
+      if (Math.abs(d) >= 3) { dv.style.color = d > 0 ? 'var(--color-warn, #E9B949)' : 'var(--color-bad, #e5484d)'; dv.style.fontWeight = '600'; }
+      v.append(hv, pv, dv); row.append(n, bar, v); el.append(row);
+    };
+    M.porRuta.forEach(([r, mb, ps]) => { const m = metas.get(r) || {}; const meta = m.metaHl || 0; tMb += mb; tPs += ps; tMeta += meta; fila('Ruta ' + r, (window.CPN.routeColor || {})['Ruta ' + r] || '#888', mb, ps, meta); });
+    fila('Total', 'transparent', tMb, tPs, tMeta, true);
+  });
   dash.draw('avanceRutas', (el) => {
     const g = get('mesRuta'); el.replaceChildren(); if (g.status !== 'ok') return;
-    g.data.filter((r) => r.ruta !== 'TOTAL').forEach((r) => {
+    g.data.filter((r) => r.ruta !== 'TOTAL' || el.dataset.total).forEach((r) => {
       const row = document.createElement('div'); row.className = 'brandrow';
-      const n = document.createElement('span'); n.className = 'chip'; const sw = document.createElement('i'); sw.style.background = window.CPN.routeColor[r.ruta]; const t = document.createElement('span'); t.textContent = r.ruta; n.append(sw, t);
+      const n = document.createElement('span'); n.className = 'chip'; const sw = document.createElement('i'); sw.style.background = window.CPN.routeColor[r.ruta]; const t = document.createElement('span'); t.textContent = r.ruta === 'TOTAL' ? 'Total' : r.ruta; if (r.ruta === 'TOTAL') { t.style.fontWeight = '700'; sw.style.background = 'transparent'; } n.append(sw, t);
       const bar = document.createElement('div'); bar.className = 'gauge'; bar.style.height = '12px'; const f = document.createElement('i'); f.style.width = Math.min(100, r.avance * 100) + '%'; const e = document.createElement('em'); e.style.left = Math.min(100, r.esperado * 100) + '%'; bar.append(f, e);
       row.style.gridTemplateColumns = '6.5rem 1fr auto';
       const v = document.createElement('span'); v.style.textAlign = 'right'; v.style.fontVariantNumeric = 'tabular-nums'; v.style.whiteSpace = 'nowrap'; v.className = r.avance >= r.esperado ? 'ok' : r.avance >= r.esperado * 0.85 ? 'warn' : 'bad';
@@ -1880,7 +1910,7 @@ dash.calc('alertas', {
   put('semDias', () => { const t = tot('semana'); return t ? String(t.dias) : null; });
   dash.draw('tablaSemana', (tb) => {
     const g = get('semana'); tb.replaceChildren(); if (g.status !== 'ok') return;
-    g.data.filter((r) => r.ruta !== 'TOTAL').forEach((r) => {
+    g.data.filter((r) => r.ruta !== 'TOTAL' || el.dataset.total).forEach((r) => {
       const tr = document.createElement('tr'); const td = (v, cls) => { const c = document.createElement('td'); c.textContent = v; if (cls) c.className = cls; tr.append(c); return c; };
       td(String(r.lugar)); const k = td(r.ruta); k.style.fontWeight = '600'; k.style.color = window.CPN.routeColor[r.ruta]; td(r.vendedor, 'hide-sm'); td(F.hl(r.hl), 'num'); td(F.hl(r.metaSemana), 'num hide-sm');
       const esperado = r.dias / 6; td(F.pct(r.avance), 'num ' + (r.avance >= esperado ? 'ok' : r.avance >= esperado * 0.85 ? 'warn' : 'bad'));
@@ -1991,7 +2021,7 @@ dash.calc('alertas', {
 <script src="direccion.js"></script>
 <script src="equipo.js"></script>
 <script src="mapa-real.js"></script>
-<script src="persona.js?v=76"></script>
+<script src="persona.js?v=77"></script>
 <script src="app.js"></script>
 </body>
 </html>

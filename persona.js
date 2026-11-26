@@ -393,9 +393,9 @@
     const COL = ['#1F7A45', '#E0A526', '#3B82C4', '#C2410C', '#8B5CF6', '#0EA5A4', '#DB2777', '#65A30D', '#94A3B8'];
     const w = el('section', 'card pp-mix');
     const h = el('div', 'pp-mix-cab'); h.append(el('h3', null, 'Tu cartera por marca')); w.append(h);
-    const ok = sat >= 0.10;
+    const ok = sat >= 0.13;
     const res = el('div', 'hal-tiles');
-    [['Saturación', Math.round(sat * 100) + '%', 'meta: 10% o más', ok ? 'ok' : 'bad'], ['XX Lager', Math.round((1 - sat) * 100) + '%', 'máximo 90%', ok ? 'ok' : 'bad']].forEach(([k, v, s0, tono]) => { const d = el('div', 'hal-tile ' + tono); d.append(el('span', null, k), el('b', null, v), el('small', null, s0)); res.append(d); });
+    [['Saturación', Math.round(sat * 100) + '%', 'meta: 13% o más', ok ? 'ok' : 'bad'], ['XX Lager', Math.round((1 - sat) * 100) + '%', 'máximo 87%', ok ? 'ok' : 'bad']].forEach(([k, v, s0, tono]) => { const d = el('div', 'hal-tile ' + tono); d.append(el('span', null, k), el('b', null, v), el('small', null, s0)); res.append(d); });
     w.append(res);
     const cuerpo = el('div', 'pp-mix-cuerpo');
     const NS = 'http://www.w3.org/2000/svg';
@@ -414,7 +414,7 @@
     const ley = el('ul', 'pp-ley');
     top.forEach(([n, v], i) => { const li = el('li'); const sw = el('i'); sw.style.background = COL[i % COL.length]; li.append(sw, el('span', null, n), el('b', null, Math.round(v / tot * 100) + '%'), el('small', null, (Math.round(v * 10) / 10).toLocaleString('es-MX') + ' Hl')); ley.append(li); });
     cuerpo.append(svg, ley); w.append(cuerpo);
-    w.append(el('p', 'pp-mia', ok ? 'Vas bien: traes ' + Math.round(sat * 100) + '% de saturación. Mantenlo arriba de 10%.' : 'Te falta saturación: vendes ' + Math.round((1 - sat) * 100) + '% de XX Lager. Ofrece otras marcas para llegar al 10%: unos ' + (Math.round(Math.max(0, (0.10 * tot - (tot - xx)) / 0.9) * 10) / 10) + ' Hl más de otras marcas.'));
+    w.append(el('p', 'pp-mia', ok ? 'Vas bien: traes ' + Math.round(sat * 100) + '% de saturación. Mantenlo arriba de 13%.' : 'Te falta saturación: vendes ' + Math.round((1 - sat) * 100) + '% de XX Lager. Ofrece otras marcas para llegar al 13%: unos ' + (Math.round(Math.max(0, (0.13 * tot - (tot - xx)) / 0.87) * 10) / 10) + ' Hl más de otras marcas.'));
     w.append(el('p', 'pp-mia', 'Hectolitros del mes. Saturación = todo lo que no es XX Lager.'));
     return w;
   }

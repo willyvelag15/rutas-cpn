@@ -68,7 +68,7 @@
       if (PS && PS.prom3Hl) tl('Este mes (proyección)', pc(PS.ritmo), 'va para ' + n1(PS.proyHl) + ' Hl contra ' + n1(PS.prom3Hl) + ' de promedio', ton(PS.ritmo));
       // saturación
       if (PS && PS.saturacion != null) { const ref = PS.rutaSatGrandes != null && (PS.hl || 0) >= 20 ? PS.rutaSatGrandes : PS.rutaSat; const v = PS.saturacion - (ref || 0);
-        tl('Saturación del mes', pp(PS.saturacion), 'su ruta ' + pp(PS.rutaSat) + ' · grandes ' + pp(PS.rutaSatGrandes) + ' · chicos ' + pp(PS.rutaSatChicos) + ' (meta 10%)', PS.saturacion < 0.1 ? 'bad' : v < 0 ? 'warn' : 'ok');
+        tl('Saturación del mes', pp(PS.saturacion), 'su ruta ' + pp(PS.rutaSat) + ' · grandes ' + pp(PS.rutaSatGrandes) + ' · chicos ' + pp(PS.rutaSatChicos) + ' (meta 13%)', PS.saturacion < 0.13 ? 'bad' : v < 0 ? 'warn' : 'ok');
         if ((PS.satSem || []).length) tl('Saturación por semana', PS.satSem.map((x) => pp(x[1])).join(' · '), 'semanas del ' + PS.satSem.map((x) => x[0].slice(8)).join(', ')); }
       // bonificación y dinero (no para Bere)
       if (!sm && B) { tl('Bonificación + promoción', pp(B.gi), mon(B.bonif) + ' bonificación + ' + mon(B.promo) + ' promoción de ' + mon(B.ingreso) + ' (' + B.corte + ')', B.gi > 0.2 ? 'warn' : '');

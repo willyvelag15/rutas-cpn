@@ -17,11 +17,11 @@
   const colorDe = (x, canales) => {
     if (st.color === 'ruta') return RC[x.r] || '#888';
     if (st.color === 'canal') return CC[canales.indexOf(x.canal) % CC.length];
-    if (st.color === 'sat') return x.sat == null ? '#8a8f98' : x.sat < 0.05 ? '#e5484d' : x.sat < 0.1 ? '#E9B949' : '#30a46c';
+    if (st.color === 'sat') return x.sat == null ? '#8a8f98' : x.sat < 0.05 ? '#e5484d' : x.sat < 0.13 ? '#E9B949' : '#30a46c';
     return x.crec == null ? '#8a8f98' : x.crec <= -0.1 ? '#e5484d' : x.crec < 0 ? '#E9B949' : x.crec < 0.1 ? '#8fd19e' : '#30a46c';
   };
   const LEY = { crec: [['#e5484d', 'cae 10% o más'], ['#E9B949', 'cae menos de 10%'], ['#8fd19e', 'crece hasta 10%'], ['#30a46c', 'crece 10% o más'], ['#8a8f98', 'sin dato']],
-    sat: [['#e5484d', 'saturación < 5%'], ['#E9B949', '5% a 10%'], ['#30a46c', '10% o más'], ['#8a8f98', 'sin compra este mes']] };
+    sat: [['#e5484d', 'saturación < 5%'], ['#E9B949', '5% a 13%'], ['#30a46c', '13% o más'], ['#8a8f98', 'sin compra este mes']] };
 
   dash.draw('mercadoMapa', (e) => {
     const M = rows('mercado'); if (!M.length) { e.replaceChildren(el('p', 'note', 'Sin datos del mapa todavía.')); return; }

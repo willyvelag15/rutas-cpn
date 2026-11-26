@@ -231,7 +231,7 @@
           const R = await window.CPN_INVREP.leer(new Blob([a]));
           pinta({ archivo: u.nombre, cuando: Date.parse(u.subido_en), porClave: R.porClave, nombres: R.nombres });
         } catch (e) { /* sin la función en Supabase se queda con el de la noche */ } })();
-      } else c.append(izq);
+      } else { c.append(izq); c.append(el('p', 'pp-mia', 'El reporte de días de inventario aparece aquí en cuanto tu página reciba la venta del mes (se actualiza cada noche).')); }
       main.append(c); return;
     }
     if (it.id === 'pron') {

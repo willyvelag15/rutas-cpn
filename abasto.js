@@ -66,7 +66,7 @@
     if (!L.length) { const tr = el('tr'); tr.append(el('td', null, 'Con lo que trae le alcanza.')); tb.append(tr); }
     t.append(tb); const w = el('div', 'tblwrap'); w.append(t); e.append(w);
   });
-  const TIT = { abasto: ['Almacén', 'Días de inventario, lo que viene y el pronóstico de Rubí'] };
+  const TIT = { abasto: ['Almacén', 'Días de inventario de Piedras Negras y Mixtequilla, lo que viene y el pronóstico de Rubí'] };
   document.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => {
     const t = TIT[b.getAttribute('data-vista')]; if (!t) return;
     const a = document.getElementById('top-tit'), s = document.getElementById('top-sub'); if (a) a.textContent = t[0]; if (s) s.textContent = t[1];
@@ -89,6 +89,32 @@
       window.CPN_INVREP.render(host, P, { archivo: u.nombre, cuando: Date.parse(u.subido_en), porClave: R.porClave, nombres: R.nombres });
       host._listo = true;
     } catch (e) { /* se queda con el de la noche */ }
+  });
+  // (Willy, 25-nov-2026) el mismo reporte para Mixtequilla: el último inventario que subió Joselin (o Rubí) y la venta diaria de las rutas 4 y 6
+  const pronMix = () => {
+    const P = pronR(); const d = dash.data('dias_mix'); const M = d && d.status === 'ok' && d.data && d.data.length ? d.data[0] : null;
+    if (!P || !M || !M.ventaDiaMix) return null;
+    const alm = {}; (M.filas || []).forEach((x) => { alm[x.clave] = x.almacen || 0; });
+    const cat = {}; (P.invRep || []).forEach((x) => { cat[String(x.clave)] = x; });
+    const ks = new Set([...Object.keys(cat), ...Object.keys(M.ventaDiaMix), ...Object.keys(alm)]);
+    const invRep = [...ks].map((k) => { const b = cat[k] || {}; return { clave: k, sku: b.sku || '', producto: b.producto || k, almacen: alm[k] || 0, camiones: 0, cxt: b.cxt || 0, ventaDia: M.ventaDiaMix[k] || 0, lxc: b.lxc || 0, facMes: b.facMes || 1 }; });
+    return { generado: P.generado, fecha: M.fecha || P.fecha, inventarioArchivo: M.archivo || 'sin inventario de Mixtequilla', invRep };
+  };
+  dash.draw('almInvMix', async (host) => {
+    const P = pronMix(); if (!window.CPN_INVREP) return;
+    if (!P) { host.replaceChildren(); const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Falta la venta de las rutas 4 y 6: aparece con la actualización de la noche.'; host.append(p); return; }
+    if (host._p === P && host._listo) return; host._p = P;
+    window.CPN_INVREP.render(host, P, { archivo: P.inventarioArchivo, cuando: Date.parse((P.fecha || '') + 'T12:00') });
+    const clave = window.CPN && window.CPN.sbAdmin; if (!clave || !window.cpnRpc) return;
+    try {
+      const L = (await window.cpnRpc('mis_inventarios', { p_clave: clave })).filter((x) => x.almacen === 'Mixtequilla' && /\.xls[xm]?$/i.test(x.nombre || ''));
+      const u = L[0]; if (!u) { host._listo = true; return; }
+      const f = await window.cpnRpc('admin_inventario', { p_clave: clave, p_id: u.id });
+      const bin = atob(f.contenido); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+      const R = await window.CPN_INVREP.leer(new Blob([a]));
+      window.CPN_INVREP.render(host, P, { archivo: u.nombre, cuando: Date.parse(u.subido_en), porClave: R.porClave, nombres: R.nombres });
+      host._listo = true;
+    } catch (e) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'No se pudo leer el inventario de Mixtequilla: ' + e.message; host.append(p); }
   });
   dash.draw('almPrograma', (host) => {
     const P = pronR(); if (!window.CPN_PRON || !window.CPN_PRON.programaCards) return;

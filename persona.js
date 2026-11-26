@@ -76,6 +76,9 @@
     inicio: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
     cierre: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
     abasto: 'M3 20h18M5 20V10h6v10M13 20V6h6v14',
+    diasInvPN: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+    diasInvMIX: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+    bonosTodas: 'M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8 21h8M9 17h6',
     programa: 'M2 16V6h11v10M13 9h4.5l3.5 4v3h-8M6 18.5a2 2 0 1 0 0-.01M17 18.5a2 2 0 1 0 0-.01',
     inventario: 'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10',
     carga: 'M3 17h4l3-8h7l4 8M7 17v2M17 17v2M9 13h8',
@@ -104,7 +107,7 @@
   };
   ['metaVend:avance', 'topVend:clientesMes', 'caidaVend:riesgo', 'satVend:saturacion', 'productosVend:productos', 'hoy:sinCompra'].forEach((x) => { const [k, v] = x.split(':'); if (!IC[k]) IC[k] = IC[v] || IC.ventas; });
   const icono = (k) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', IC[k] || IC.ventas); s.append(p); return s; };
-  const CORTO = { avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Pronóstico S+2', clientesMes: 'Clientes del mes', riesgo: 'Clientes en riesgo', saturacion: 'Saturación semanal', calidad: 'Calidad de datos', hoy: 'Tu lista de hoy', tickets: 'Tickets', ventasCli: 'Ventas por cliente', crecimiento: 'Crecen y caen', metaVend: 'Tu meta', topVend: 'Mejores clientes', caidaVend: 'Clientes en caída', satVend: 'Saturación', productosVend: 'Tus productos' };
+  const CORTO = { diasInvPN: 'Días de inventario PN', diasInvMIX: 'Días de inventario Mixtequilla', bonosTodas: 'Bonos de todas las rutas', avance: 'Avance', ventas: 'Ventas', productos: 'Productos', liquidaciones: 'Liquidaciones', envase: 'Envase', scorecard: 'Scorecard', sinCompra: 'Sin compra', trasRegreso: 'Ventas en CEDIS', paradas: 'Paradas', bonos: 'Bonos', abasto: 'Abasto', programa: 'Programa Heineken', inventario: 'Inventario camiones', carga: 'Carga', bonificacion: 'Bonificación', gastovar: 'Gasto variable', margen: 'Margen', cierre: 'Cierre del día', slides: 'Presentación', inv: 'Subir inventario', pron: 'Pronóstico S+2', clientesMes: 'Clientes del mes', riesgo: 'Clientes en riesgo', saturacion: 'Saturación semanal', calidad: 'Calidad de datos', hoy: 'Tu lista de hoy', tickets: 'Tickets', ventasCli: 'Ventas por cliente', crecimiento: 'Crecen y caen', metaVend: 'Tu meta', topVend: 'Mejores clientes', caidaVend: 'Clientes en caída', satVend: 'Saturación', productosVend: 'Tus productos' };
 
   function tilesDe(s) { const t = el('div', 'hal-tiles'); (s.tiles || []).forEach((x) => { const d = el('div', 'hal-tile' + (x.tono ? ' ' + x.tono : '')); d.append(el('span', null, x.k), el('b', null, x.v)); if (x.s) d.append(el('small', null, x.s)); t.append(d); }); return t; }
   function tablaDe(cols, filas, ok) {

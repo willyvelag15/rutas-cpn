@@ -66,7 +66,7 @@
     if (!L.length) { const tr = el('tr'); tr.append(el('td', null, 'Con lo que trae le alcanza.')); tb.append(tr); }
     t.append(tb); const w = el('div', 'tblwrap'); w.append(t); e.append(w);
   });
-  const TIT = { abasto: ['Almacén', 'Días de inventario de Piedras Negras y Mixtequilla, lo que viene y el pronóstico de Rubí'] };
+  const TIT = { abasto: ['Almacén', 'Lo que viene y el pronóstico de Rubí (los días de inventario están en Inventarios)'] };
   document.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => {
     const t = TIT[b.getAttribute('data-vista')]; if (!t) return;
     const a = document.getElementById('top-tit'), s = document.getElementById('top-sub'); if (a) a.textContent = t[0]; if (s) s.textContent = t[1];

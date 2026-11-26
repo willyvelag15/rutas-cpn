@@ -68,12 +68,14 @@
     const q = el('input', 'vc-sel'); q.type = 'search'; q.placeholder = 'Buscar producto'; q.value = st.q; q.setAttribute('aria-label', 'Buscar producto');
     q.addEventListener('input', () => { st.q = q.value.trim().toLowerCase(); clearTimeout(q._t); q._t = setTimeout(() => { pintar(); const n = E.querySelector('input[type=search]'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250); });
     bar.append(tabs, q); E.append(bar);
-    if (st.tab === 'pn') {
-      const F = rows('abasto_sku').map((x) => ({ clave: x.clave, producto: x.producto, almacen: x.almacen, camiones: x.camiones, ventaDia: x.ventaDia, dias: x.diasHoy }));
-      E.append(almacen(F, res.fecha, 'Inventario que sube Rubí', 'Almacén de Piedras Negras + lo que traen todos los camiones, contra la venta diaria de toda la empresa en el mes.'));
-    } else if (st.tab === 'mix') {
-      if (!M.fecha || !(M.filas || []).length) E.append(el('p', 'note', 'Todavía no hay inventario de Mixtequilla procesado. Joselin (o Rubí) lo sube en su página y la corrida de la noche lo calcula aquí.'));
-      else E.append(almacen(M.filas, M.fecha, M.archivo, 'Almacén de Mixtequilla + lo que traen los camiones de las rutas 4 y 6, contra la venta diaria de esas rutas en el mes.'));
+    // (Willy, 25-nov-2026) los dos almacenes con el mismo reporte que imprimen Rubí y Joselin (último Excel subido, de más a menos venta);
+    // se quitó de Almacén para no repetirlo. Los contenedores se guardan para no volver a bajar el Excel cada vez que se pinta.
+    st.hosts = st.hosts || {};
+    if (st.tab === 'pn' || st.tab === 'mix') {
+      const k = st.tab === 'pn' ? 'almInv' : 'almInvMix';
+      if (!st.hosts[k]) { st.hosts[k] = el('div'); st.hosts[k].setAttribute('data-draw', k); }
+      E.append(el('p', 'note', st.tab === 'pn' ? 'Último inventario de Piedras Negras que subió Rubí, contra la venta diaria de toda la empresa en el mes.' : 'Último inventario de Mixtequilla que subió Joselin (o Rubí), contra la venta diaria de las rutas 4 y 6 en el mes (incluye el Oxxo y el 3B que surte la 4).'), st.hosts[k]);
+      dash.draw(k);
     } else E.append(rutas());
   }
 

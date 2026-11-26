@@ -133,7 +133,7 @@
     const S = (P.secciones || []).map((s) => (st.ruta && s.porRuta && s.porRuta[st.ruta]) ? Object.assign({}, s, s.porRuta[st.ruta]) : s);
     const items = [];
     if (st.yo.rol === 'almacen_pn') items.push({ id: 'inv' }, { id: 'pron' });
-    if (st.yo.rol === 'almacen_mix') items.push({ id: 'inv' });
+    if (st.yo.rol === 'almacen_mix') items.push({ id: 'inv' });   // (25-nov-2026) con el mismo reporte de días de inventario que Rubí
     if ((P.slides || []).length && window.CPN_PZ && !esVend) items.push({ id: 'slides' });
     if (esVend && P.hoy && (P.hoy.clientes || []).length) items.push({ id: 'hoy' });
     // (Willy, 24-nov-2026) mismas pantallas que el admin: si el panel trae los datos del admin (ds), esas secciones se ven igual
@@ -211,18 +211,20 @@
     if (it.id === 'inv') {
       // (Willy, 24-nov-2026) a la derecha, el reporte de días de inventario listo para imprimir
       const pr = P.pron; const der = el('div', 'ir-der');
+      // (Willy, 25-nov-2026) Joselin tiene el mismo reporte con el inventario de Mixtequilla y la venta de las rutas 4 y 6
+      const ALM = st.yo.rol === 'almacen_mix' ? 'Mixtequilla' : 'Piedras Negras'; const LSK = st.yo.rol === 'almacen_mix' ? 'cpn-inv-ult-mix' : 'cpn-inv-ult';
       const pinta = (src) => { try { if (window.CPN_INVREP) window.CPN_INVREP.render(der, pr, src); } catch (e) { der.replaceChildren(el('p', 'pp-err', 'No se pudo armar el reporte: ' + e.message)); } };
-      const ultimo = () => { try { const u = JSON.parse(localStorage.getItem('cpn-inv-ult')); if (u && pr && u.ts > Date.parse((pr.generado || '') + 'Z')) return { archivo: u.nombre, cuando: u.ts, porClave: u.porClave, nombres: u.nombres }; } catch (e) { /* */ } return pr ? { archivo: pr.inventarioArchivo, cuando: Date.parse((pr.fecha || '') + 'T12:00') || Date.now() } : null; };
+      const ultimo = () => { try { const u = JSON.parse(localStorage.getItem(LSK)); if (u && pr && u.ts > Date.parse((pr.generado || '') + 'Z')) return { archivo: u.nombre, cuando: u.ts, porClave: u.porClave, nombres: u.nombres }; } catch (e) { /* */ } return pr ? { archivo: pr.inventarioArchivo, cuando: Date.parse((pr.fecha || '') + 'T12:00') || Date.now() } : null; };
       const izq = await cajaInventario(true, null, async (file, almacen) => {
-        if (!pr || almacen !== 'Piedras Negras' || !/\.xls[xm]?$/i.test(file.name) || !window.CPN_INVREP) return;
-        try { const L = await window.CPN_INVREP.leer(file); const u = { nombre: file.name, ts: Date.now(), porClave: L.porClave, nombres: L.nombres }; try { localStorage.setItem('cpn-inv-ult', JSON.stringify(u)); } catch (e) { /* */ } pinta({ archivo: u.nombre, cuando: u.ts, porClave: u.porClave, nombres: u.nombres }); }
+        if (!pr || almacen !== ALM || !/\.xls[xm]?$/i.test(file.name) || !window.CPN_INVREP) return;
+        try { const L = await window.CPN_INVREP.leer(file); const u = { nombre: file.name, ts: Date.now(), porClave: L.porClave, nombres: L.nombres }; try { localStorage.setItem(LSK, JSON.stringify(u)); } catch (e) { /* */ } pinta({ archivo: u.nombre, cuando: u.ts, porClave: u.porClave, nombres: u.nombres }); }
         catch (e) { der.replaceChildren(el('p', 'pp-err', 'Se subió, pero no pude leer el Excel para el reporte: ' + e.message)); }
       });
       if (pr) {
         const g = el('div', 'ir-grid'); g.append(izq, der); c.append(g); const u0 = ultimo(); pinta(u0);
         // (Willy, 24-nov-2026) el último inventario de Piedras Negras que se subió, aunque se haya subido desde otra computadora
         (async () => { try {
-          const L = (await rpc('mis_inventarios', { p_clave: clave() })).filter((x) => x.almacen === 'Piedras Negras' && /\.xls[xm]?$/i.test(x.nombre || ''));
+          const L = (await rpc('mis_inventarios', { p_clave: clave() })).filter((x) => x.almacen === ALM && /\.xls[xm]?$/i.test(x.nombre || ''));
           const u = L[0]; if (!u || !(Date.parse(u.subido_en) > Date.parse((pr.generado || '') + 'Z')) || (u0 && u0.cuando >= Date.parse(u.subido_en) - 60000 && u0.porClave)) return;
           const f = await rpc('mi_inventario', { p_clave: clave(), p_id: u.id }); if (!f || !f.contenido) return;
           const bin = atob(f.contenido); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);

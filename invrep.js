@@ -21,11 +21,14 @@
     const X = await xlsx(); const buf = await file.arrayBuffer();
     const wb = X.read(new Uint8Array(buf), { type: 'array' }); const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = X.utils.sheet_to_json(ws, { header: 1, defval: null });
-    const h = rows.findIndex((r) => r && r.some((x) => String(x || '').trim() === 'idProducto'));
-    if (h < 0) throw new Error('no encontré la columna idProducto');
-    const H = rows[h].map((x) => String(x || '').trim());
-    const ci = H.indexOf('idProducto'), cp = H.indexOf('Producto'), ca = H.indexOf('EnAlmacen') >= 0 ? H.indexOf('EnAlmacen') : H.indexOf('StockTotal');
-    if (ca < 0) throw new Error('no encontré la columna EnAlmacen');
+    // (25-nov-2026) acepta el formato de Power Sales (idProducto/EnAlmacen) y otros encabezados comunes (Clave, Existencia, Cantidad…), para Joselin
+    const N = (x) => String(x || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const KC = ['idproducto', 'clave', 'clave ps', 'codigo', 'cve', 'id', 'producto id', 'productnumber'], KA = ['enalmacen', 'stocktotal', 'existencia', 'existencias', 'en almacen', 'inventario', 'cantidad', 'cajas', 'fisico', 'conteo'];
+    const h = rows.findIndex((r) => r && r.some((x) => KC.includes(N(x))) && r.some((x) => KA.includes(N(x))));
+    if (h < 0) throw new Error('no encontré las columnas de clave (idProducto) y cantidad (EnAlmacen)');
+    const H = rows[h].map(N);
+    const ci = KC.map((k) => H.indexOf(k)).find((i) => i >= 0), cp = ['producto', 'descripcion', 'nombre', 'productname'].map((k) => H.indexOf(k)).find((i) => i >= 0) ?? -1;
+    const ca = KA.map((k) => H.indexOf(k)).find((i) => i >= 0);
     const porClave = {}, nombres = {};
     rows.slice(h + 1).forEach((r) => { if (!r || r[ci] == null || !/^\d+$/.test(String(r[ci]).trim())) return; const k = String(r[ci]).trim(); porClave[k] = Number(r[ca]) || 0; if (cp >= 0 && r[cp]) nombres[k] = String(r[cp]).trim(); });
     return { porClave, nombres };
